@@ -1,15 +1,65 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+# ========================== Android Studio 核心配置（纯Java安卓必忽略） ==========================
+# IDE配置目录（包含布局、运行配置、代码风格等，无需提交）
+.idea/
+# 本地属性文件（存储SDK路径、本地签名配置等敏感/个性化信息）
 local.properties
+# AS生成的模块索引文件
+*.iml
+*.ipr
+*.iws
+# AS编译输出目录
+out/
+
+# ========================== Gradle 构建产物/缓存 ==========================
+# Gradle全局缓存（体积大，协作环境可重建）
+.gradle/
+# 模块编译产物（每个module的build目录）
+*/build/
+# 根工程编译产物
+build/
+# Gradle缓存（保留wrapper核心文件，仅忽略缓存）
+.gradle/caches/
+.gradle/wrapper/dists/
+!gradle/wrapper/gradle-wrapper.jar  # 保留gradle-wrapper.jar（协作必备，保证构建一致性）
+!gradle/wrapper/gradle-wrapper.properties  # 保留wrapper配置文件
+
+# ========================== 安卓构建输出（纯Java场景） ==========================
+# 编译产物
+*.apk
+*.ap_
+*.dex
+*.class
+# 打包中间文件
+*.aar
+*.jar
+!libs/*.jar  # 保留libs目录下手动引入的第三方jar包（纯Java安卓常用）
+!**/src/main/**/*.jar  # 保留src/main下自定义jar包
+
+# ========================== 敏感文件（绝对禁止提交） ==========================
+# 签名文件（Java安卓打包必备，含密钥）
+*.jks
+*.keystore
+*.p12
+*.pfx
+# 签名配置文件
+signing.properties
+
+# ========================== 系统/工具缓存 ==========================
+# macOS系统隐藏文件
+.DS_Store
+.AppleDouble
+.LSOverride
+# Windows系统缓存
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+# Linux系统缓存
+*~
+# 日志/临时文件
+*.log
+*.tmp
+*.bak
+# 性能分析文件（AS Profiler生成）
+*.hprof
+# 设备调试捕获文件
+captures/
