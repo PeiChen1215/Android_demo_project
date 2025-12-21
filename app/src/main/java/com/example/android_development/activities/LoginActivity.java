@@ -20,6 +20,7 @@ import com.example.android_development.util.PrefsManager;
 
 public class LoginActivity extends AppCompatActivity {
     final boolean ischeckuserdb = false;
+    final boolean ischeckproductdb = false;
 
     private EditText editTextUsername;
     private EditText editTextPassword;
@@ -61,6 +62,9 @@ public class LoginActivity extends AppCompatActivity {
 
         //debug输出所有的用户数据库成员
         if(ischeckuserdb) debugPrintAllUsers();
+
+        //debug输出检测商品数据库
+        if(ischeckproductdb) debugPrintAllProducts();
     }
 
     //debug输出所有的用户数据库成员
@@ -102,6 +106,44 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    //debug打印所有商品
+    private void debugPrintAllProducts() {
+        try {
+            SQLiteDatabase db = new DatabaseHelper(this).getReadableDatabase();
+
+            Cursor cursor = db.query(
+                    Constants.TABLE_PRODUCTS,
+                    null, // 所有列
+                    null, // 无筛选条件
+                    null, // 无参数
+                    null, // 无分组
+                    null, // 无过滤
+                    null  // 无排序
+            );
+
+            android.util.Log.d("DEBUG", "=== 商品总数: " + cursor.getCount() + " ===");
+
+            if (cursor.moveToFirst()) {
+                do {
+                    String id = cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_PRODUCT_ID));
+                    String name = cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_PRODUCT_NAME));
+                    double price = cursor.getDouble(cursor.getColumnIndexOrThrow(Constants.COLUMN_PRICE));
+                    int stock = cursor.getInt(cursor.getColumnIndexOrThrow(Constants.COLUMN_STOCK));
+                    String category = cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_CATEGORY));
+
+                    android.util.Log.d("DEBUG", "商品: " + name +
+                            " | 价格: " + price +
+                            " | 库存: " + stock +
+                            " | 分类: " + category);
+                } while (cursor.moveToNext());
+            }
+
+            cursor.close();
+            db.close();
+        } catch (Exception e) {
+            android.util.Log.e("DEBUG", "查询商品表错误: " + e.getMessage());
+        }
+    }
     private void setupClickListeners() {
         buttonLogin.setOnClickListener(new View.OnClickListener() {
             @Override

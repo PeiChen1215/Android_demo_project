@@ -28,4 +28,28 @@ public class Constants {
     public static final String ROLE_STOCK = "stock";
     public static final String ROLE_BUYER = "buyer";          // 采购员（采购子系统）
     public static final String ROLE_INVENTORY = "inventory";  // 盘点员（盘点子系统）
+
+    // 商品表
+    public static final String TABLE_PRODUCTS = "products";
+    public static final String COLUMN_PRODUCT_ID = "product_id";
+    public static final String COLUMN_PRODUCT_NAME = "product_name";
+    public static final String COLUMN_CATEGORY = "category";
+    public static final String COLUMN_BRAND = "brand";
+    public static final String COLUMN_PRICE = "price";
+    public static final String COLUMN_COST = "cost";  // 成本价
+    public static final String COLUMN_STOCK = "stock";
+    public static final String COLUMN_MIN_STOCK = "min_stock";  // 最低库存预警
+    public static final String COLUMN_UNIT = "unit";  // 单位（如：瓶、袋、个）
+    public static final String COLUMN_BARCODE = "barcode";  // 条码
+    public static final String COLUMN_DESCRIPTION = "description";
+    public static final String COLUMN_SUPPLIER_ID = "supplier_id";
+    public static final String COLUMN_UPDATED_AT = "updated_at";
+
+    // 商品分类
+    public static final String CATEGORY_DAILY = "daily";      // 日用品
+    public static final String CATEGORY_FOOD = "food";        // 食品
+    public static final String CATEGORY_DRINK = "drink";      // 饮料
+    public static final String CATEGORY_SNACK = "snack";      // 零食
+    public static final String CATEGORY_CLEANING = "cleaning"; // 清洁用品
+    public static final String CATEGORY_OTHER = "other";      // 其他
 }

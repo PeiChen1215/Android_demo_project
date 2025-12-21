@@ -20,4 +20,27 @@ public class DbContract {
     // 用户表删除SQL
     public static final String SQL_DROP_TABLE_USERS =
             "DROP TABLE IF EXISTS " + Constants.TABLE_USERS;
+
+    // 商品表创建SQL
+    public static final String SQL_CREATE_TABLE_PRODUCTS =
+            "CREATE TABLE " + Constants.TABLE_PRODUCTS + " (" +
+                    Constants.COLUMN_PRODUCT_ID + " TEXT PRIMARY KEY," +
+                    Constants.COLUMN_PRODUCT_NAME + " TEXT NOT NULL," +
+                    Constants.COLUMN_CATEGORY + " TEXT," +
+                    Constants.COLUMN_BRAND + " TEXT," +
+                    Constants.COLUMN_PRICE + " REAL NOT NULL," +
+                    Constants.COLUMN_COST + " REAL," +
+                    Constants.COLUMN_STOCK + " INTEGER DEFAULT 0," +
+                    Constants.COLUMN_MIN_STOCK + " INTEGER DEFAULT 0," +
+                    Constants.COLUMN_UNIT + " TEXT," +
+                    Constants.COLUMN_BARCODE + " TEXT UNIQUE," +
+                    Constants.COLUMN_DESCRIPTION + " TEXT," +
+                    Constants.COLUMN_SUPPLIER_ID + " TEXT," +
+                    Constants.COLUMN_CREATED_AT + " INTEGER," +
+                    Constants.COLUMN_UPDATED_AT + " INTEGER" +
+                    ")";
+
+    // 商品表删除SQL
+    public static final String SQL_DROP_TABLE_PRODUCTS =
+            "DROP TABLE IF EXISTS " + Constants.TABLE_PRODUCTS;
 }
