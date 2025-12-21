@@ -37,40 +37,56 @@
                 android:textSize="14sp"
                 android:textColor="@color/black"
                 android:lineSpacingExtra="4dp"/>
+
+            <!-- 添加角色描述TextView -->
+            <TextView
+                android:id="@+id/textViewRoleDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="角色描述加载中..."
+                android:textSize="12sp"
+                android:textColor="@color/gray"
+                android:lineSpacingExtra="2dp"/>
         </LinearLayout>
 
-        <!-- 角色描述 -->
+        <!-- 功能按钮区域 -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="角色描述"
-            android:textSize="16sp"
+            android:text="系统功能"
+            android:textSize="18sp"
             android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="12dp"/>
 
-        <TextView
-            android:id="@+id/textViewRoleDescription"
+        <!-- 商品管理按钮 -->
+        <Button
+            android:id="@+id/buttonProductManage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="角色描述加载中..."
-            android:textSize="14sp"
-            android:textColor="@color/gray"
-            android:background="@android:color/white"
-            android:padding="16dp"
-            android:layout_marginBottom="32dp"
-            android:lineSpacingExtra="4dp"/>
+            android:text="商品管理"
+            android:layout_marginBottom="12dp"/>
 
-        <!-- 简单提示 -->
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- 其他功能按钮占位 -->
+        <Button
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="系统功能开发中..."
-            android:textSize="14sp"
-            android:textColor="@color/primary"
-            android:textStyle="italic"
-            android:layout_gravity="center"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="32dp"/>
+            android:text="销售收银（开发中）"
+            android:layout_marginBottom="12dp"
+            android:enabled="false"/>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="库存盘点（开发中）"
+            android:layout_marginBottom="12dp"
+            android:enabled="false"/>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="采购管理（开发中）"
+            android:layout_marginBottom="32dp"
+            android:enabled="false"/>
 
         <Button
             android:id="@+id/buttonLogout"

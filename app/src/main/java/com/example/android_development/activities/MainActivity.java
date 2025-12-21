@@ -43,11 +43,25 @@ public class MainActivity extends AppCompatActivity {
         setupClickListeners();
     }
 
+    // 在initViews方法中添加
     private void initViews() {
         textViewWelcome = findViewById(R.id.textViewWelcome);
         textViewUserInfo = findViewById(R.id.textViewUserInfo);
-        textViewRoleDescription = findViewById(R.id.textViewRoleDescription);
         buttonLogout = findViewById(R.id.buttonLogout);
+        textViewRoleDescription = findViewById(R.id.textViewRoleDescription);
+        // 商品管理按钮 - 对所有角色显示
+        Button buttonProductManage = findViewById(R.id.buttonProductManage);
+        if (buttonProductManage != null) {
+            buttonProductManage.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // 所有角色都跳转到同一个ProductListActivity
+                    // 在ProductListActivity内部根据角色控制权限
+                    Intent intent = new Intent(MainActivity.this, ProductListActivity.class);
+                    startActivity(intent);
+                }
+            });
+        }
     }
 
     private void initData() {
