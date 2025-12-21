@@ -17,7 +17,9 @@ import com.example.android_development.model.User;
 import com.example.android_development.util.Constants;
 import com.example.android_development.util.PrefsManager;
 
+
 public class LoginActivity extends AppCompatActivity {
+    final boolean ischeckuserdb = false;
 
     private EditText editTextUsername;
     private EditText editTextPassword;
@@ -58,47 +60,47 @@ public class LoginActivity extends AppCompatActivity {
         prefsManager = new PrefsManager(this);
 
         //debug输出所有的用户数据库成员
-        //debugPrintAllUsers();
+        if(ischeckuserdb) debugPrintAllUsers();
     }
 
     //debug输出所有的用户数据库成员
-//    private void debugPrintAllUsers() {
-//        try {
-//            // 直接查询数据库
-//            SQLiteDatabase db = new DatabaseHelper(this).getReadableDatabase();
-//            Cursor cursor = db.query(
-//                    Constants.TABLE_USERS,
-//                    null, // 所有列
-//                    null, // 无筛选条件
-//                    null, // 无参数
-//                    null, // 无分组
-//                    null, // 无过滤
-//                    null  // 无排序
-//            );
-//
-//            android.util.Log.d("DEBUG", "=== 数据库用户总数: " + cursor.getCount() + " ===");
-//
-//            if (cursor.moveToFirst()) {
-//                do {
-//                    String userId = cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_USER_ID));
-//                    String username = cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_USERNAME));
-//                    String password = cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_PASSWORD));
-//                    String role = cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_ROLE));
-//                    String fullName = cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_FULL_NAME));
-//
-//                    android.util.Log.d("DEBUG", "用户: " + username +
-//                            " | 密码: " + password +
-//                            " | 角色: " + role +
-//                            " | 姓名: " + fullName);
-//                } while (cursor.moveToNext());
-//            }
-//
-//            cursor.close();
-//            db.close();
-//        } catch (Exception e) {
-//            android.util.Log.e("DEBUG", "查询数据库错误: " + e.getMessage());
-//        }
-//    }
+    private void debugPrintAllUsers() {
+        try {
+            // 直接查询数据库
+            SQLiteDatabase db = new DatabaseHelper(this).getReadableDatabase();
+            Cursor cursor = db.query(
+                    Constants.TABLE_USERS,
+                    null, // 所有列
+                    null, // 无筛选条件
+                    null, // 无参数
+                    null, // 无分组
+                    null, // 无过滤
+                    null  // 无排序
+            );
+
+            android.util.Log.d("DEBUG", "=== 数据库用户总数: " + cursor.getCount() + " ===");
+
+            if (cursor.moveToFirst()) {
+                do {
+                    String userId = cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_USER_ID));
+                    String username = cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_USERNAME));
+                    String password = cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_PASSWORD));
+                    String role = cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_ROLE));
+                    String fullName = cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_FULL_NAME));
+
+                    android.util.Log.d("DEBUG", "用户: " + username +
+                            " | 密码: " + password +
+                            " | 角色: " + role +
+                            " | 姓名: " + fullName);
+                } while (cursor.moveToNext());
+            }
+
+            cursor.close();
+            db.close();
+        } catch (Exception e) {
+            android.util.Log.e("DEBUG", "查询数据库错误: " + e.getMessage());
+        }
+    }
 
     private void setupClickListeners() {
         buttonLogin.setOnClickListener(new View.OnClickListener() {
