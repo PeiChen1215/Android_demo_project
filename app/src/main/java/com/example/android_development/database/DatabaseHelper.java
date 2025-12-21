@@ -84,8 +84,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // 删除旧表，创建新表（注意：这会丢失所有数据！）
-        db.execSQL(DbContract.SQL_DROP_TABLE_USERS);
+        // 删除所有表
+        db.execSQL("DROP TABLE IF EXISTS " + Constants.TABLE_USERS);
+        // 重新创建表
         onCreate(db);
+        android.util.Log.d("DEBUG", "数据库从版本 " + oldVersion + " 升级到 " + newVersion);
     }
 }
