@@ -52,6 +52,10 @@
             android:name=".activities.StockHistoryActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".activities.SaleActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

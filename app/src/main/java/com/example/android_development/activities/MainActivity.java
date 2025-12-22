@@ -62,6 +62,32 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+            // 库存盘点入口
+            Button buttonStockCount = findViewById(R.id.buttonStockCount);
+            if (buttonStockCount != null) {
+                buttonStockCount.setOnClickListener(v -> {
+                    Intent intent = new Intent(MainActivity.this, StockCountActivity.class);
+                    startActivity(intent);
+                });
+            }
+
+            // 采购管理入口
+            Button buttonPurchase = findViewById(R.id.buttonPurchase);
+            if (buttonPurchase != null) {
+                buttonPurchase.setOnClickListener(v -> {
+                    Intent intent = new Intent(MainActivity.this, PurchaseListActivity.class);
+                    startActivity(intent);
+                });
+            }
+            // 销售收银入口
+            Button buttonPOS = findViewById(R.id.buttonPOS);
+            if (buttonPOS != null) {
+                buttonPOS.setEnabled(true);
+                buttonPOS.setOnClickListener(v -> {
+                    Intent intent = new Intent(MainActivity.this, com.example.android_development.activities.SaleActivity.class);
+                    startActivity(intent);
+                });
+            }
     }
 
     private void initData() {

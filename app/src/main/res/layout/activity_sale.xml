@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <EditText
+        android:id="@+id/et_product_id"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="商品 ID 或 条码" />
+
+    <EditText
+        android:id="@+id/et_qty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:hint="数量" />
+
+    <Button
+        android:id="@+id/btn_add_line"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="加入销售" />
+
+    <ListView
+        android:id="@+id/list_lines"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <TextView
+        android:id="@+id/tv_total"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="合计: 0.00"
+        android:textSize="18sp"
+        android:paddingTop="8dp" />
+
+    <Button
+        android:id="@+id/btn_checkout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="结账" />
+
+</LinearLayout>

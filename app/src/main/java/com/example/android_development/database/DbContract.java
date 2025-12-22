@@ -35,6 +35,7 @@ public class DbContract {
                     Constants.COLUMN_UNIT + " TEXT," +
                     Constants.COLUMN_BARCODE + " TEXT UNIQUE," +
                     Constants.COLUMN_DESCRIPTION + " TEXT," +
+                    Constants.COLUMN_THUMB_URL + " TEXT," +
                     Constants.COLUMN_SUPPLIER_ID + " TEXT," +
                     Constants.COLUMN_CREATED_AT + " INTEGER," +
                     Constants.COLUMN_UPDATED_AT + " INTEGER" +
@@ -73,4 +74,97 @@ public class DbContract {
     // 库存事务表删除SQL
     public static final String SQL_DROP_TABLE_STOCK_TRANSACTIONS =
             "DROP TABLE IF EXISTS " + Constants.TABLE_STOCK_TRANSACTIONS;
+
+    // 供应商表创建SQL
+    public static final String SQL_CREATE_TABLE_SUPPLIERS =
+            "CREATE TABLE " + Constants.TABLE_SUPPLIERS + " (" +
+                    Constants.COLUMN_SUPPLIER_ID + " TEXT PRIMARY KEY," +
+                    Constants.COLUMN_SUPPLIER_NAME + " TEXT NOT NULL," +
+                    Constants.COLUMN_SUPPLIER_CONTACT + " TEXT," +
+                    Constants.COLUMN_SUPPLIER_PHONE + " TEXT," +
+                    Constants.COLUMN_SUPPLIER_EMAIL + " TEXT" +
+                    ")";
+
+    public static final String SQL_DROP_TABLE_SUPPLIERS =
+            "DROP TABLE IF EXISTS " + Constants.TABLE_SUPPLIERS;
+
+    // 采购订单表创建SQL
+    public static final String SQL_CREATE_TABLE_PURCHASE_ORDERS =
+            "CREATE TABLE " + Constants.TABLE_PURCHASE_ORDERS + " (" +
+                    Constants.COLUMN_PO_ID + " TEXT PRIMARY KEY," +
+                    Constants.COLUMN_PO_SUPPLIER_ID + " TEXT," +
+                    Constants.COLUMN_PO_STATUS + " TEXT," +
+                    Constants.COLUMN_PO_CREATED_AT + " INTEGER," +
+                    Constants.COLUMN_PO_EXPECTED_AT + " INTEGER," +
+                    Constants.COLUMN_PO_TOTAL + " REAL" +
+                    ")";
+
+    public static final String SQL_DROP_TABLE_PURCHASE_ORDERS =
+            "DROP TABLE IF EXISTS " + Constants.TABLE_PURCHASE_ORDERS;
+
+    // 采购订单行表
+    public static final String SQL_CREATE_TABLE_PURCHASE_LINES =
+            "CREATE TABLE " + Constants.TABLE_PURCHASE_LINES + " (" +
+                    Constants.COLUMN_PO_LINE_ID + " TEXT PRIMARY KEY," +
+                    Constants.COLUMN_PO_LINE_PO_ID + " TEXT NOT NULL," +
+                    Constants.COLUMN_PO_LINE_PRODUCT_ID + " TEXT," +
+                    Constants.COLUMN_PO_LINE_SKU + " TEXT," +
+                    Constants.COLUMN_PO_LINE_QTY + " INTEGER," +
+                    Constants.COLUMN_PO_LINE_PRICE + " REAL" +
+                    ")";
+
+    public static final String SQL_DROP_TABLE_PURCHASE_LINES =
+            "DROP TABLE IF EXISTS " + Constants.TABLE_PURCHASE_LINES;
+
+    // 盘点表
+    public static final String SQL_CREATE_TABLE_STOCK_COUNTS =
+            "CREATE TABLE " + Constants.TABLE_STOCK_COUNTS + " (" +
+                    Constants.COLUMN_STOCK_COUNT_ID + " TEXT PRIMARY KEY," +
+                    Constants.COLUMN_STOCK_COUNT_STATUS + " TEXT," +
+                    Constants.COLUMN_STOCK_COUNT_CREATED_BY + " TEXT," +
+                    Constants.COLUMN_STOCK_COUNT_CREATED_AT + " INTEGER" +
+                    ")";
+
+    public static final String SQL_DROP_TABLE_STOCK_COUNTS =
+            "DROP TABLE IF EXISTS " + Constants.TABLE_STOCK_COUNTS;
+
+    // 盘点行表
+    public static final String SQL_CREATE_TABLE_STOCK_COUNT_LINES =
+            "CREATE TABLE " + Constants.TABLE_STOCK_COUNT_LINES + " (" +
+                    Constants.COLUMN_STOCK_COUNT_LINE_ID + " TEXT PRIMARY KEY," +
+                    Constants.COLUMN_STOCK_COUNT_LINE_COUNT_ID + " TEXT NOT NULL," +
+                    Constants.COLUMN_STOCK_COUNT_LINE_PRODUCT_ID + " TEXT," +
+                    Constants.COLUMN_STOCK_COUNT_LINE_SKU + " TEXT," +
+                    Constants.COLUMN_STOCK_COUNT_LINE_EXPECTED_QTY + " INTEGER," +
+                    Constants.COLUMN_STOCK_COUNT_LINE_COUNTED_QTY + " INTEGER" +
+                    ")";
+
+    public static final String SQL_DROP_TABLE_STOCK_COUNT_LINES =
+            "DROP TABLE IF EXISTS " + Constants.TABLE_STOCK_COUNT_LINES;
+
+    // 销售/收银表（收据）
+    public static final String SQL_CREATE_TABLE_SALES =
+            "CREATE TABLE " + Constants.TABLE_SALES + " (" +
+                    Constants.COLUMN_SALE_ID + " TEXT PRIMARY KEY," +
+                    Constants.COLUMN_SALE_TOTAL + " REAL NOT NULL," +
+                    Constants.COLUMN_SALE_PAID + " REAL," +
+                    Constants.COLUMN_SALE_USER_ID + " TEXT," +
+                    Constants.COLUMN_SALE_TIMESTAMP + " INTEGER" +
+                    ")";
+
+    public static final String SQL_CREATE_TABLE_SALE_LINES =
+            "CREATE TABLE " + Constants.TABLE_SALE_LINES + " (" +
+                    Constants.COLUMN_SALE_LINE_ID + " TEXT PRIMARY KEY," +
+                    Constants.COLUMN_SALE_LINE_SALE_ID + " TEXT NOT NULL," +
+                    Constants.COLUMN_SALE_LINE_PRODUCT_ID + " TEXT," +
+                    Constants.COLUMN_SALE_LINE_PRODUCT_NAME + " TEXT," +
+                    Constants.COLUMN_SALE_LINE_QTY + " INTEGER NOT NULL," +
+                    Constants.COLUMN_SALE_LINE_PRICE + " REAL NOT NULL" +
+                    ")";
+
+    public static final String SQL_DROP_TABLE_SALES =
+            "DROP TABLE IF EXISTS " + Constants.TABLE_SALES;
+
+    public static final String SQL_DROP_TABLE_SALE_LINES =
+            "DROP TABLE IF EXISTS " + Constants.TABLE_SALE_LINES;
 }

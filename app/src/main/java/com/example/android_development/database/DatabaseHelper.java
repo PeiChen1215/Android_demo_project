@@ -54,6 +54,29 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         // 创建库存事务表
         db.execSQL(DbContract.SQL_CREATE_TABLE_STOCK_TRANSACTIONS);
 
+                // 创建供应商/采购/盘点相关表（模块脚手架）
+                try {
+                        db.execSQL(DbContract.SQL_CREATE_TABLE_SUPPLIERS);
+                } catch (Exception ignored) {}
+                        try {
+                                db.execSQL(DbContract.SQL_CREATE_TABLE_SALES);
+                        } catch (Exception ignored) {}
+                        try {
+                                db.execSQL(DbContract.SQL_CREATE_TABLE_SALE_LINES);
+                        } catch (Exception ignored) {}
+                try {
+                        db.execSQL(DbContract.SQL_CREATE_TABLE_PURCHASE_ORDERS);
+                } catch (Exception ignored) {}
+                try {
+                        db.execSQL(DbContract.SQL_CREATE_TABLE_PURCHASE_LINES);
+                } catch (Exception ignored) {}
+                try {
+                        db.execSQL(DbContract.SQL_CREATE_TABLE_STOCK_COUNTS);
+                } catch (Exception ignored) {}
+                try {
+                        db.execSQL(DbContract.SQL_CREATE_TABLE_STOCK_COUNT_LINES);
+                } catch (Exception ignored) {}
+
                 // 创建商品相关索引以提高查询性能
                 try {
                         db.execSQL(DbContract.SQL_CREATE_INDEX_PRODUCTS_NAME);
@@ -696,6 +719,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 }
                 }
     }
+
+        @Override
+        public void onConfigure(SQLiteDatabase db) {
+                super.onConfigure(db);
+                // 在打开数据库时保障产品表包含 thumb_url 列（兼容老版本）
+                try {
+                        ensureColumnExists(db, Constants.TABLE_PRODUCTS, Constants.COLUMN_THUMB_URL, "TEXT");
+                } catch (Exception ignored) {}
+        }
 
         // 根据条码查询商品（返回 Product 对象）
         public Product getProductByBarcodeObject(String barcode) {

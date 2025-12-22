@@ -2,16 +2,27 @@ package com.example.android_development.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Patterns;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import com.bumptech.glide.Glide;
 import com.example.android_development.R;
 import com.example.android_development.database.DatabaseHelper;
 import com.example.android_development.database.ProductDAO;
 import com.example.android_development.model.Product;
 import com.example.android_development.util.Constants;
 import com.example.android_development.util.PrefsManager;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ProductDetailActivity extends AppCompatActivity {
 
@@ -24,6 +35,9 @@ public class ProductDetailActivity extends AppCompatActivity {
     private TextView textViewProductBarcode;
     private TextView textViewProductDescription;
 
+    private EditText editTextThumbUrl;
+    private ImageView imageViewThumbPreview;
+
     private Button buttonBack;
     private Button buttonEdit;
     private Button buttonHistory;
@@ -33,6 +47,10 @@ public class ProductDetailActivity extends AppCompatActivity {
     private PrefsManager prefsManager;
     private String currentUserRole;
 
+    private Handler previewHandler;
+    private Runnable previewRunnable;
+    private final int PREVIEW_DELAY_MS = 600;
+    private ExecutorService networkExecutor = Executors.newSingleThreadExecutor();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,6 +89,9 @@ public class ProductDetailActivity extends AppCompatActivity {
         buttonBack = findViewById(R.id.buttonBack);
         buttonHistory = findViewById(R.id.buttonHistory);
         buttonEdit = findViewById(R.id.buttonEdit);
+        // thumb url editor + preview
+        editTextThumbUrl = findViewById(R.id.editTextThumbUrl);
+        imageViewThumbPreview = findViewById(R.id.imageViewThumbPreview);
     }
 
     private void setupUIByRole() {
@@ -139,6 +160,46 @@ public class ProductDetailActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // 初始化预览 handler 和 runnable
+        previewHandler = new Handler(Looper.getMainLooper());
+        previewRunnable = new Runnable() {
+            @Override
+            public void run() {
+                String url = editTextThumbUrl.getText() != null ? editTextThumbUrl.getText().toString().trim() : "";
+                if (isValidImageUrl(url)) {
+                    Glide.with(ProductDetailActivity.this)
+                            .load(url)
+                            .centerCrop()
+                            .into(imageViewThumbPreview);
+                } else {
+                    imageViewThumbPreview.setImageDrawable(null);
+                }
+            }
+        };
+
+        // TextWatcher: 防抖处理，输入停止后进行预览
+        if (editTextThumbUrl != null) {
+            editTextThumbUrl.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    if (previewHandler != null && previewRunnable != null) {
+                        previewHandler.removeCallbacks(previewRunnable);
+                        previewHandler.postDelayed(previewRunnable, PREVIEW_DELAY_MS);
+                    }
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) { }
+            });
+        }
+    }
+
     private void displayProductInfo() {
         textViewProductName.setText(currentProduct.getName());
         textViewProductCategory.setText(getString(R.string.label_category, getCategoryName(currentProduct.getCategory())));
@@ -175,5 +236,13 @@ public class ProductDetailActivity extends AppCompatActivity {
             default:
                 return category;
         }
+    }
+
+    private boolean isValidImageUrl(String url) {
+        if (url == null || url.isEmpty()) return false;
+        if (!Patterns.WEB_URL.matcher(url).matches()) return false;
+        String lower = url.toLowerCase();
+        if (!(lower.startsWith("http://") || lower.startsWith("https://"))) return false;
+        return lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".gif") || lower.endsWith(".webp") || lower.endsWith(".bmp") || lower.endsWith(".svg");
     }
 }

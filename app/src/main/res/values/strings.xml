@@ -33,6 +33,12 @@
     <string name="stock_tx_detail">库存: %1$d → %2$d | 操作人: %3$s</string>
     <string name="stock_tx_detail_with_role">库存: %1$d → %2$d | 操作人: %3$s (%4$s)</string>
     <string name="btn_history">记录</string>
+    <string name="label_purchase_list">采购订单</string>
+    <string name="label_stock_counts">库存盘点</string>
+    <string name="btn_new_purchase">新建采购单</string>
+    <string name="btn_new_count">新建盘点单</string>
+    <string name="no_pos">暂无采购订单</string>
+    <string name="no_counts">暂无盘点记录</string>
     
     <!-- Product list / query -->
     <string name="title_product_manage">商品管理</string>

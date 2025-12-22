@@ -23,6 +23,7 @@ public class ProductDAO {
         ContentValues values = new ContentValues();
         values.put(Constants.COLUMN_PRODUCT_ID, product.getId());
         values.put(Constants.COLUMN_PRODUCT_NAME, product.getName());
+        values.put(Constants.COLUMN_THUMB_URL, product.getThumbUrl());
         values.put(Constants.COLUMN_CATEGORY, product.getCategory());
         values.put(Constants.COLUMN_BRAND, product.getBrand());
         values.put(Constants.COLUMN_PRICE, product.getPrice());
@@ -43,6 +44,7 @@ public class ProductDAO {
     public int updateProduct(Product product) {
         ContentValues values = new ContentValues();
         values.put(Constants.COLUMN_PRODUCT_NAME, product.getName());
+        values.put(Constants.COLUMN_THUMB_URL, product.getThumbUrl());
         values.put(Constants.COLUMN_CATEGORY, product.getCategory());
         values.put(Constants.COLUMN_BRAND, product.getBrand());
         values.put(Constants.COLUMN_PRICE, product.getPrice());
@@ -516,6 +518,7 @@ public class ProductDAO {
         return new String[] {
                 Constants.COLUMN_PRODUCT_ID,
                 Constants.COLUMN_PRODUCT_NAME,
+                Constants.COLUMN_THUMB_URL,
                 Constants.COLUMN_CATEGORY,
                 Constants.COLUMN_BRAND,
                 Constants.COLUMN_PRICE,
@@ -533,23 +536,7 @@ public class ProductDAO {
 
     // 将Cursor转换为Product对象
     private Product cursorToProduct(Cursor cursor) {
-        Product product = new Product();
-
-        product.setId(cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_PRODUCT_ID)));
-        product.setName(cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_PRODUCT_NAME)));
-        product.setCategory(cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_CATEGORY)));
-        product.setBrand(cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_BRAND)));
-        product.setPrice(cursor.getDouble(cursor.getColumnIndexOrThrow(Constants.COLUMN_PRICE)));
-        product.setCost(cursor.getDouble(cursor.getColumnIndexOrThrow(Constants.COLUMN_COST)));
-        product.setStock(cursor.getInt(cursor.getColumnIndexOrThrow(Constants.COLUMN_STOCK)));
-        product.setMinStock(cursor.getInt(cursor.getColumnIndexOrThrow(Constants.COLUMN_MIN_STOCK)));
-        product.setUnit(cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_UNIT)));
-        product.setBarcode(cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_BARCODE)));
-        product.setDescription(cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_DESCRIPTION)));
-        product.setSupplierId(cursor.getString(cursor.getColumnIndexOrThrow(Constants.COLUMN_SUPPLIER_ID)));
-        product.setCreatedAt(cursor.getLong(cursor.getColumnIndexOrThrow(Constants.COLUMN_CREATED_AT)));
-        product.setUpdatedAt(cursor.getLong(cursor.getColumnIndexOrThrow(Constants.COLUMN_UPDATED_AT)));
-
-        return product;
+        // Delegate to Product.fromCursor which handles thumb_url and missing columns safely
+        return Product.fromCursor(cursor);
     }
 }

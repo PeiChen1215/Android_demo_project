@@ -5,8 +5,10 @@ import android.os.Bundle;
 import android.view.View;
 import com.google.android.material.snackbar.Snackbar;
 import android.widget.Button;
-import android.widget.ListView;
-import android.widget.SimpleAdapter;
+import android.widget.ImageButton;
+import androidx.recyclerview.widget.RecyclerView;
+import com.example.android_development.adapters.ProductAdapter;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,20 +25,19 @@ import java.util.Map;
 
 public class ProductListActivity extends AppCompatActivity {
 
-    private ListView listViewProducts;
+    private RecyclerView listViewProducts;
     private TextView textViewEmpty;
     private TextView textViewTitle;
-    private Button buttonAddProduct;
-    private Button buttonStockHistory;
+    private ImageButton buttonAddProduct;
+    private ImageButton buttonStockHistory;
     private android.widget.EditText etSearch;
     private Button buttonSearch;
     private Button buttonClearSearch;
-    private Button buttonBack;
+    private ImageButton buttonBack;
     private ProductDAO productDAO;
     private List<Product> productList;
-    private SimpleAdapter simpleAdapter;
+    private ProductAdapter simpleAdapter;
     private List<Map<String, String>> adapterData;
-    private android.view.View footerView;
     private Button btnLoadMore;
     private static final int PAGE_SIZE = 20;
     private int currentOffset = 0;
@@ -81,6 +82,7 @@ public class ProductListActivity extends AppCompatActivity {
 
     private void initViews() {
         listViewProducts = findViewById(R.id.listViewProducts);
+        btnLoadMore = findViewById(R.id.btnLoadMore);
         textViewEmpty = findViewById(R.id.textViewEmpty);
         textViewTitle = findViewById(R.id.textViewTitle);
         buttonAddProduct = findViewById(R.id.buttonAddProduct);
@@ -143,48 +145,7 @@ public class ProductListActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // 列表项点击事件
-        listViewProducts.setOnItemClickListener((parent, view, position, id) -> {
-            if (productList != null && position < productList.size()) {
-                Product product = productList.get(position);
-
-                // 根据角色决定跳转到哪个页面
-                Intent intent;
-
-                if (Constants.ROLE_ADMIN.equals(currentUserRole)) {
-                    // 管理员：跳转到完整编辑页面（待实现）
-                    Toast.makeText(this, "管理员：进入商品编辑", Toast.LENGTH_SHORT).show();
-                    intent = new Intent(ProductListActivity.this, ProductDetailActivity.class);
-                } else if (Constants.ROLE_STOCK.equals(currentUserRole)) {
-                    // 库存管理员：跳转到库存编辑页面（待实现）
-                    Toast.makeText(this, "库存管理员：进入库存管理", Toast.LENGTH_SHORT).show();
-                    intent = new Intent(ProductListActivity.this, ProductDetailActivity.class);
-                } else {
-                    // 其他角色：只能查看
-                    intent = new Intent(ProductListActivity.this, ProductDetailActivity.class);
-                }
-
-                intent.putExtra("product_id", product.getId());
-                startActivity(intent);
-            }
-        });
-
-        // 列表项长按事件（删除功能）
-        listViewProducts.setOnItemLongClickListener((parent, view, position, id) -> {
-            if (productList != null && position < productList.size()) {
-                Product product = productList.get(position);
-
-                // 只有管理员可以删除
-                if (Constants.ROLE_ADMIN.equals(currentUserRole)) {
-                    showDeleteConfirmation(product);
-                    return true;
-                } else {
-                    Toast.makeText(this, getString(R.string.no_permission_delete), Toast.LENGTH_SHORT).show();
-                    return false;
-                }
-            }
-            return false;
-        });
+        // 列表项点击 / 长按通过适配器回调处理（在 loadProducts 中绑定）
     }
 
     private void showDeleteConfirmation(Product product) {
@@ -234,14 +195,9 @@ public class ProductListActivity extends AppCompatActivity {
         // 分页加载：重置偏移并加载第一页
         currentOffset = 0;
         adapterData = new ArrayList<>();
-        if (listViewProducts.getFooterViewsCount() == 0) {
-            footerView = getLayoutInflater().inflate(R.layout.list_footer_load_more, null);
-            btnLoadMore = footerView.findViewById(R.id.btnLoadMore);
-            btnLoadMore.setOnClickListener(v -> {
-                if (!loadingMore) loadNextPage();
-            });
-            listViewProducts.addFooterView(footerView);
-        }
+
+        // 控制加载更多按钮
+        btnLoadMore.setVisibility(View.GONE);
 
         productList = productDAO.getProductsPage(PAGE_SIZE, currentOffset);
 
@@ -269,16 +225,64 @@ public class ProductListActivity extends AppCompatActivity {
                 adapterData.add(map);
             }
 
-            simpleAdapter = new SimpleAdapter(
-                    this,
-                    adapterData,
-                    R.layout.item_product,
-                    new String[]{"name", "price", "stock", "category"},
-                    new int[]{R.id.textViewProductName, R.id.textViewProductPrice,
-                            R.id.textViewProductStock, R.id.textViewProductCategory}
-            );
+            // 使用类型化适配器（根据角色控制操作按钮显示）
+            boolean canModify = Constants.ROLE_ADMIN.equals(currentUserRole) || Constants.ROLE_STOCK.equals(currentUserRole);
+            simpleAdapter = new ProductAdapter(this, productList, canModify);
+            simpleAdapter.setOnItemClickListener(new ProductAdapter.OnItemClickListener() {
+                @Override
+                public void onItemClick(int position, Product product) {
+                    Intent intent = new Intent(ProductListActivity.this, ProductDetailActivity.class);
+                    intent.putExtra("product_id", product.getId());
+                    startActivity(intent);
+                }
+
+                @Override
+                public boolean onItemLongClick(int position, Product product) {
+                    if (Constants.ROLE_ADMIN.equals(currentUserRole)) {
+                        showDeleteConfirmation(product);
+                        return true;
+                    } else {
+                        Toast.makeText(ProductListActivity.this, getString(R.string.no_permission_delete), Toast.LENGTH_SHORT).show();
+                        return false;
+                    }
+                }
+                
+                @Override
+                public void onActionEdit(int position, Product product) {
+                    Intent intent = new Intent(ProductListActivity.this, ProductDetailActivity.class);
+                    intent.putExtra("product_id", product.getId());
+                    startActivity(intent);
+                }
+
+                @Override
+                public void onActionDelete(int position, Product product) {
+                    if (Constants.ROLE_ADMIN.equals(currentUserRole)) {
+                        showDeleteConfirmation(product);
+                    } else {
+                        Toast.makeText(ProductListActivity.this, getString(R.string.no_permission_delete), Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onActionAdjustStock(int position, Product product) {
+                    Intent intent = new Intent(ProductListActivity.this, ProductDetailActivity.class);
+                    intent.putExtra("product_id", product.getId());
+                    intent.putExtra("mode", "adjust_stock");
+                    startActivity(intent);
+                }
+            });
 
             listViewProducts.setAdapter(simpleAdapter);
+
+            // 如果可能还有下一页，显示加载更多按钮
+            if (productList.size() == PAGE_SIZE) {
+                btnLoadMore.setVisibility(View.VISIBLE);
+                btnLoadMore.setOnClickListener(v -> {
+                    if (!loadingMore) loadNextPage();
+                });
+            } else {
+                btnLoadMore.setVisibility(View.GONE);
+            }
 
             // 准备下一页
             currentOffset += productList.size();
@@ -300,9 +304,11 @@ public class ProductListActivity extends AppCompatActivity {
             }
             simpleAdapter.notifyDataSetChanged();
             currentOffset += next.size();
+            // 如果没有更多，隐藏按钮
+            if (next.size() < PAGE_SIZE) btnLoadMore.setVisibility(View.GONE);
         } else {
             // 没有更多，隐藏按钮
-            if (footerView != null) footerView.setVisibility(View.GONE);
+            btnLoadMore.setVisibility(View.GONE);
         }
         btnLoadMore.setEnabled(true);
         loadingMore = false;
@@ -313,31 +319,8 @@ public class ProductListActivity extends AppCompatActivity {
         // 分页搜索：重置偏移并加载第一页
         currentOffset = 0;
         adapterData = new ArrayList<>();
-        if (listViewProducts.getFooterViewsCount() == 0) {
-            final String searchKw = keyword; // lambda 要求捕获的局部变量为 effectively final
-            footerView = getLayoutInflater().inflate(R.layout.list_footer_load_more, null);
-            btnLoadMore = footerView.findViewById(R.id.btnLoadMore);
-            btnLoadMore.setOnClickListener(v -> {
-                if (!loadingMore) {
-                    List<Product> next = productDAO.searchProductsPage(searchKw, PAGE_SIZE, currentOffset);
-                    if (next != null && !next.isEmpty()) {
-                        for (Product p : next) {
-                            Map<String, String> map = new HashMap<>();
-                            map.put("name", p.getName());
-                            map.put("price", String.format("￥%.2f", p.getPrice()));
-                            map.put("stock", String.format("库存: %d", p.getStock()));
-                            map.put("category", getCategoryName(p.getCategory()));
-                            adapterData.add(map);
-                        }
-                        simpleAdapter.notifyDataSetChanged();
-                        currentOffset += next.size();
-                    } else {
-                        if (footerView != null) footerView.setVisibility(View.GONE);
-                    }
-                }
-            });
-            listViewProducts.addFooterView(footerView);
-        }
+        // 搜索时隐藏加载更多按钮，后面根据结果显示
+        btnLoadMore.setVisibility(View.GONE);
 
         List<Product> results = productDAO.searchProductsPage(keyword, PAGE_SIZE, currentOffset);
         productList = results;
@@ -360,18 +343,68 @@ public class ProductListActivity extends AppCompatActivity {
                 adapterData.add(map);
             }
 
-            simpleAdapter = new SimpleAdapter(
-                    this,
-                    adapterData,
-                    R.layout.item_product,
-                    new String[]{"name", "price", "stock", "category"},
-                    new int[]{R.id.textViewProductName, R.id.textViewProductPrice,
-                            R.id.textViewProductStock, R.id.textViewProductCategory}
-            );
+            // 刷新 adapter 数据以适应分页追加
+                if (simpleAdapter == null) {
+                boolean canModify = Constants.ROLE_ADMIN.equals(currentUserRole) || Constants.ROLE_STOCK.equals(currentUserRole);
+                simpleAdapter = new ProductAdapter(this, new java.util.ArrayList<>(), canModify);
+                simpleAdapter.setOnItemClickListener(new ProductAdapter.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(int position, Product product) {
+                        Intent intent = new Intent(ProductListActivity.this, ProductDetailActivity.class);
+                        intent.putExtra("product_id", product.getId());
+                        startActivity(intent);
+                    }
 
-            listViewProducts.setAdapter(simpleAdapter);
+                    @Override
+                    public boolean onItemLongClick(int position, Product product) {
+                        if (Constants.ROLE_ADMIN.equals(currentUserRole)) {
+                            showDeleteConfirmation(product);
+                            return true;
+                        } else {
+                            Toast.makeText(ProductListActivity.this, getString(R.string.no_permission_delete), Toast.LENGTH_SHORT).show();
+                            return false;
+                        }
+                    }
+
+                    @Override
+                    public void onActionEdit(int position, Product product) {
+                        // 编辑
+                        Intent intent = new Intent(ProductListActivity.this, ProductDetailActivity.class);
+                        intent.putExtra("product_id", product.getId());
+                        startActivity(intent);
+                    }
+
+                    @Override
+                    public void onActionDelete(int position, Product product) {
+                        // 删除（仅管理员）
+                        if (Constants.ROLE_ADMIN.equals(currentUserRole)) showDeleteConfirmation(product);
+                        else Toast.makeText(ProductListActivity.this, getString(R.string.no_permission_delete), Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onActionAdjustStock(int position, Product product) {
+                        // 跳转到库存调整页面（复用 ProductDetailActivity，附加模式）
+                        Intent intent = new Intent(ProductListActivity.this, ProductDetailActivity.class);
+                        intent.putExtra("product_id", product.getId());
+                        intent.putExtra("mode", "adjust_stock");
+                        startActivity(intent);
+                    }
+                });
+                listViewProducts.setAdapter(simpleAdapter);
+            }
+
+            // 提交（替换）列表以触发 Diff 更新
+            simpleAdapter.submitList(productList);
 
             currentOffset += productList.size();
+            if (productList.size() == PAGE_SIZE) {
+                btnLoadMore.setVisibility(View.VISIBLE);
+                btnLoadMore.setOnClickListener(v -> {
+                    if (!loadingMore) loadNextPage();
+                });
+            } else {
+                btnLoadMore.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -399,6 +432,10 @@ public class ProductListActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        // Ensure layout manager is set
+        if (listViewProducts.getLayoutManager() == null) {
+            listViewProducts.setLayoutManager(new LinearLayoutManager(this));
+        }
         // 当从详情页面返回时，刷新列表
         loadProducts();
     }

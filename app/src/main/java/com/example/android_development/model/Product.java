@@ -16,6 +16,7 @@ public class Product {
     private String unit;
     private String barcode;
     private String description;
+    private String thumbUrl;
     private String supplierId;
     private long createdAt;
     private long updatedAt;
@@ -99,6 +100,12 @@ public class Product {
         this.updatedAt = System.currentTimeMillis();
     }
 
+    public String getThumbUrl() { return thumbUrl; }
+    public void setThumbUrl(String thumbUrl) {
+        this.thumbUrl = thumbUrl;
+        this.updatedAt = System.currentTimeMillis();
+    }
+
     public String getSupplierId() { return supplierId; }
     public void setSupplierId(String supplierId) {
         this.supplierId = supplierId;
@@ -141,6 +148,7 @@ public class Product {
         idx = c.getColumnIndex(Constants.COLUMN_UNIT); if (idx != -1) p.setUnit(c.getString(idx));
         idx = c.getColumnIndex(Constants.COLUMN_BARCODE); if (idx != -1) p.setBarcode(c.getString(idx));
         idx = c.getColumnIndex(Constants.COLUMN_DESCRIPTION); if (idx != -1) p.setDescription(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_THUMB_URL); if (idx != -1) p.setThumbUrl(c.getString(idx));
         idx = c.getColumnIndex(Constants.COLUMN_SUPPLIER_ID); if (idx != -1) p.setSupplierId(c.getString(idx));
         idx = c.getColumnIndex(Constants.COLUMN_CREATED_AT); if (idx != -1) p.setCreatedAt(c.getLong(idx));
         idx = c.getColumnIndex(Constants.COLUMN_UPDATED_AT); if (idx != -1) p.setUpdatedAt(c.getLong(idx));
@@ -152,6 +160,7 @@ public class Product {
         ContentValues v = new ContentValues();
         if (id != null) v.put(Constants.COLUMN_PRODUCT_ID, id);
         v.put(Constants.COLUMN_PRODUCT_NAME, name);
+        if (thumbUrl != null) v.put(Constants.COLUMN_THUMB_URL, thumbUrl);
         v.put(Constants.COLUMN_CATEGORY, category);
         v.put(Constants.COLUMN_BRAND, brand);
         v.put(Constants.COLUMN_PRICE, price);

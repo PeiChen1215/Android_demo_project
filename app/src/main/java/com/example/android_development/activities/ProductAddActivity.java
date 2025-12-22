@@ -17,7 +17,7 @@ public class ProductAddActivity extends AppCompatActivity {
 
     private EditText etName, etPrice, etStock;
     private Button btnAdd;
-    private EditText etBrand, etCategory, etMinStock, etUnit, etBarcode, etDescription, etSupplier;
+    private EditText etBrand, etCategory, etMinStock, etUnit, etBarcode, etDescription, etSupplier, etThumbUrl;
     private boolean editMode = false;
     private String editingProductId;
     private DatabaseHelper dbHelper;
@@ -38,6 +38,7 @@ public class ProductAddActivity extends AppCompatActivity {
         etBarcode = findViewById(R.id.et_barcode);
         etSupplier = findViewById(R.id.et_supplier);
         etDescription = findViewById(R.id.et_description);
+        etThumbUrl = findViewById(R.id.et_thumb_url);
         btnAdd = findViewById(R.id.btn_add);
         btnCancel = findViewById(R.id.btn_cancel);
 
@@ -157,6 +158,7 @@ public class ProductAddActivity extends AppCompatActivity {
         p.setBarcode(barcode.isEmpty() ? null : barcode);
         p.setSupplierId(supplier.isEmpty() ? null : supplier);
         p.setDescription(description.isEmpty() ? null : description);
+        p.setThumbUrl(etThumbUrl.getText().toString().trim().isEmpty() ? null : etThumbUrl.getText().toString().trim());
 
         // 从 SharedPreferences 或登录状态中获取当前 userId
         String userId = getSharedPreferences(com.example.android_development.util.Constants.PREFS_NAME, MODE_PRIVATE)
@@ -195,5 +197,6 @@ public class ProductAddActivity extends AppCompatActivity {
         etBarcode.setText(p.getBarcode() != null ? p.getBarcode() : "");
         etSupplier.setText(p.getSupplierId() != null ? p.getSupplierId() : "");
         etDescription.setText(p.getDescription() != null ? p.getDescription() : "");
+        etThumbUrl.setText(p.getThumbUrl() != null ? p.getThumbUrl() : "");
     }
 }

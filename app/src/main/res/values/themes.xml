@@ -13,4 +13,14 @@
         <!-- 背景色 -->
         <item name="android:windowBackground">@color/background</item>
     </style>
+    
+    <!-- App-wide button style -->
+    <style name="AppButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:background">@drawable/rounded_button</item>
+        <item name="android:textColor">@color/app_surface</item>
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">16dp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
 </resources>

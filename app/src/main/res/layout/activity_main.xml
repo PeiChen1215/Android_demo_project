@@ -60,14 +60,17 @@
 
         <!-- 商品管理按钮 -->
         <Button
+            style="@style/AppButton"
             android:id="@+id/buttonProductManage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="商品管理"
             android:layout_marginBottom="12dp"/>
 
-        <!-- 其他功能按钮占位 -->
+        <!-- 其他功能按钮 -->
         <Button
+            style="@style/AppButton"
+            android:id="@+id/buttonPOS"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="销售收银（开发中）"
@@ -75,20 +78,23 @@
             android:enabled="false"/>
 
         <Button
+            style="@style/AppButton"
+            android:id="@+id/buttonStockCount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="库存盘点（开发中）"
-            android:layout_marginBottom="12dp"
-            android:enabled="false"/>
+            android:text="库存盘点"
+            android:layout_marginBottom="12dp"/>
 
         <Button
+            style="@style/AppButton"
+            android:id="@+id/buttonPurchase"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="采购管理（开发中）"
-            android:layout_marginBottom="32dp"
-            android:enabled="false"/>
+            android:text="采购管理"
+            android:layout_marginBottom="32dp"/>
 
         <Button
+            style="@style/AppButton"
             android:id="@+id/buttonLogout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

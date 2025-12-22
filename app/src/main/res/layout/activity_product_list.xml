@@ -13,13 +13,14 @@
         android:background="@color/primary"
         android:padding="16dp">
 
-        <Button
+        <ImageButton
             android:id="@+id/buttonBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="返回"
-            android:textColor="@color/white"
-            android:background="@android:color/transparent"/>
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_back"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="返回"
+            android:tint="@color/white" />
 
         <TextView
             android:id="@+id/textViewTitle"
@@ -32,21 +33,23 @@
             android:textStyle="bold"
             android:gravity="center"/>
 
-        <Button
+        <ImageButton
             android:id="@+id/buttonStockHistory"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="历史"
-            android:textColor="@color/white"
-            android:background="@android:color/transparent"/>
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_history"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="历史"
+            android:tint="@color/white" />
 
-        <Button
+        <ImageButton
             android:id="@+id/buttonAddProduct"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="添加"
-            android:textColor="@color/white"
-            android:background="@android:color/transparent"/>
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_add"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="添加"
+            android:tint="@color/white" />
 
     </LinearLayout>
 
@@ -67,12 +70,14 @@
             android:inputType="text" />
 
         <Button
+            style="@style/AppButton"
             android:id="@+id/buttonSearch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="搜索" />
 
         <Button
+            style="@style/AppButton"
             android:id="@+id/buttonClearSearch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -80,12 +85,22 @@
 
     </LinearLayout>
 
-    <ListView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/listViewProducts"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:padding="8dp"/>
+
+    <!-- Load more button retained for pagination -->
+    <Button
+        android:id="@+id/btnLoadMore"
+        style="@style/AppButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="加载更多"
+        android:visibility="gone"
+        android:layout_marginTop="8dp" />
 
     <!-- 空状态提示 -->
     <TextView

@@ -1,8 +1,9 @@
 package com.example.android_development.activities;
 
 import android.os.Bundle;
-import android.widget.ListView;
-import android.widget.SimpleAdapter;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import com.example.android_development.adapters.StockTransactionAdapter;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.android_development.R;
 import com.example.android_development.database.DatabaseHelper;
@@ -17,9 +18,9 @@ import java.util.Map;
 
 public class StockHistoryActivity extends AppCompatActivity {
 
-    private ListView listViewStockHistory;
+    private RecyclerView listViewStockHistory;
     private ProductDAO productDAO;
-    private android.widget.Button buttonHistoryBack;
+    private android.widget.ImageButton buttonHistoryBack;
     private android.widget.LinearLayout layoutHistorySearch;
     private android.widget.EditText etHistorySearch;
     private android.widget.Button buttonSearchHistory;
@@ -31,6 +32,7 @@ public class StockHistoryActivity extends AppCompatActivity {
         setContentView(R.layout.activity_stock_history);
 
         listViewStockHistory = findViewById(R.id.listViewStockHistory);
+        if (listViewStockHistory.getLayoutManager() == null) listViewStockHistory.setLayoutManager(new LinearLayoutManager(this));
         buttonHistoryBack = findViewById(R.id.buttonHistoryBack);
 
         DatabaseHelper dbHelper = new DatabaseHelper(this);
@@ -105,14 +107,18 @@ public class StockHistoryActivity extends AppCompatActivity {
             data.add(map);
         }
 
-        SimpleAdapter adapter = new SimpleAdapter(
-                this,
-                data,
-                R.layout.item_stock_tx,
-                new String[]{"title", "detail", "reason"},
-                new int[]{R.id.textViewTxType, R.id.textViewTxDetail, R.id.textViewTxReason}
-        );
-
+        // 使用类型化 StockTransactionAdapter
+        java.util.List<StockTransaction> txList = new java.util.ArrayList<>();
+        for (Map<String, String> m : data) {
+            // We already have titles/details in map; we'll create dummy StockTransaction to hold displayed strings
+            StockTransaction t = new StockTransaction();
+            t.setType(m.get("title"));
+            t.setReason(m.get("reason"));
+            // reuse detail in user field
+            t.setUserId(m.get("detail"));
+            txList.add(t);
+        }
+        StockTransactionAdapter adapter = new StockTransactionAdapter(this, txList);
         listViewStockHistory.setAdapter(adapter);
     }
 
@@ -177,14 +183,15 @@ public class StockHistoryActivity extends AppCompatActivity {
             data.add(map);
         }
 
-        SimpleAdapter adapter = new SimpleAdapter(
-                this,
-                data,
-                R.layout.item_stock_tx,
-                new String[]{"title", "detail", "reason"},
-                new int[]{R.id.textViewTxType, R.id.textViewTxDetail, R.id.textViewTxReason}
-        );
-
+        java.util.List<StockTransaction> txList = new java.util.ArrayList<>();
+        for (Map<String, String> m : data) {
+            StockTransaction t = new StockTransaction();
+            t.setType(m.get("title"));
+            t.setReason(m.get("reason"));
+            t.setUserId(m.get("detail"));
+            txList.add(t);
+        }
+        StockTransactionAdapter adapter = new StockTransactionAdapter(this, txList);
         listViewStockHistory.setAdapter(adapter);
     }
 }

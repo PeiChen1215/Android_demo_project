@@ -11,11 +11,14 @@
         android:orientation="horizontal"
         android:paddingBottom="8dp">
 
-        <Button
+        <ImageButton
             android:id="@+id/buttonHistoryBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_back" />
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_back"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="返回"
+            android:tint="@color/primary" />
 
         <TextView
             android:id="@+id/textViewHistoryTitle"
@@ -58,7 +61,7 @@
 
     </LinearLayout>
 
-    <ListView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/listViewStockHistory"
         android:layout_width="match_parent"
         android:layout_height="0dp"

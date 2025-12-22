@@ -2,9 +2,11 @@ package com.example.android_development.activities;
 
 import android.os.Bundle;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import com.example.android_development.adapters.ProductAdapter;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.android_development.R;
 import com.example.android_development.database.DatabaseHelper;
@@ -15,13 +17,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import android.widget.SimpleAdapter;
 
 public class ProductQueryActivity extends AppCompatActivity {
 
-    private ListView listViewProducts;
+    private RecyclerView listViewProducts;
     private TextView textViewEmpty;
-    private Button buttonBack;
+    private android.widget.ImageButton buttonBack;
 
     private ProductDAO productDAO;
     private List<Product> productList;
@@ -48,6 +49,7 @@ public class ProductQueryActivity extends AppCompatActivity {
         listViewProducts = findViewById(R.id.listViewProducts);
         textViewEmpty = findViewById(R.id.textViewEmpty);
         buttonBack = findViewById(R.id.buttonBack);
+        if (listViewProducts.getLayoutManager() == null) listViewProducts.setLayoutManager(new LinearLayoutManager(this));
     }
 
     private void initDatabase() {
@@ -58,16 +60,7 @@ public class ProductQueryActivity extends AppCompatActivity {
     private void setupClickListeners() {
         buttonBack.setOnClickListener(v -> finish());
 
-        // 列表项点击事件 - 只能查看详情
-        listViewProducts.setOnItemClickListener((parent, view, position, id) -> {
-            if (productList != null && position < productList.size()) {
-                Product product = productList.get(position);
-
-                // 跳转到商品详情页面（只读）
-                Toast.makeText(ProductQueryActivity.this,
-                        getString(R.string.view_product, product.getName()), Toast.LENGTH_SHORT).show();
-            }
-        });
+        // 点击通过适配器回调处理（在 loadProducts 中绑定）
     }
 
     private void loadProducts() {
@@ -84,28 +77,33 @@ public class ProductQueryActivity extends AppCompatActivity {
             listViewProducts.setVisibility(android.view.View.VISIBLE);
             textViewEmpty.setVisibility(android.view.View.GONE);
 
-            // 创建SimpleAdapter需要的数据
-            List<Map<String, String>> data = new ArrayList<>();
+            // 使用类型化 ProductAdapter（查询界面默认不显示操作按钮）
+            ProductAdapter adapter = new ProductAdapter(this, productList, false);
+            adapter.setOnItemClickListener(new ProductAdapter.OnItemClickListener() {
+                @Override
+                public void onItemClick(int position, Product product) {
+                    Toast.makeText(ProductQueryActivity.this,
+                            getString(R.string.view_product, product.getName()), Toast.LENGTH_SHORT).show();
+                }
 
-            for (Product product : productList) {
-                Map<String, String> map = new HashMap<>();
-                map.put("name", product.getName());
-                map.put("price", String.format("￥%.2f", product.getPrice()));
-                map.put("stock", String.format("库存: %d", product.getStock()));
-                map.put("category", getCategoryName(product.getCategory()));
+                @Override
+                public boolean onItemLongClick(int position, Product product) { return false; }
 
-                data.add(map);
-            }
+                @Override
+                public void onActionEdit(int position, Product product) {
+                    Toast.makeText(ProductQueryActivity.this, "无权限编辑", Toast.LENGTH_SHORT).show();
+                }
 
-            // 创建适配器
-            SimpleAdapter adapter = new SimpleAdapter(
-                    this,
-                    data,
-                    R.layout.item_product,
-                    new String[]{"name", "price", "stock", "category"},
-                    new int[]{R.id.textViewProductName, R.id.textViewProductPrice,
-                            R.id.textViewProductStock, R.id.textViewProductCategory}
-            );
+                @Override
+                public void onActionDelete(int position, Product product) {
+                    Toast.makeText(ProductQueryActivity.this, "无权限删除", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onActionAdjustStock(int position, Product product) {
+                    Toast.makeText(ProductQueryActivity.this, "无权限调整库存", Toast.LENGTH_SHORT).show();
+                }
+            });
 
             listViewProducts.setAdapter(adapter);
         }

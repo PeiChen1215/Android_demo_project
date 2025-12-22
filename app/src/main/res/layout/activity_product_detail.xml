@@ -47,6 +47,34 @@
 
         </LinearLayout>
 
+        <!-- 图片 URL 编辑与实时预览 -->
+        <LinearLayout
+            android:id="@+id/layoutThumbEditor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="8dp"
+            android:visibility="visible">
+
+            <EditText
+                android:id="@+id/editTextThumbUrl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="图片 URL（http(s)://）"
+                android:inputType="textUri"
+                android:singleLine="true"
+                android:layout_marginBottom="8dp" />
+
+            <ImageView
+                android:id="@+id/imageViewThumbPreview"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_gallery"
+                android:contentDescription="图片预览" />
+
+        </LinearLayout>
+
         <!-- 商品信息卡片 -->
         <LinearLayout
             android:layout_width="match_parent"

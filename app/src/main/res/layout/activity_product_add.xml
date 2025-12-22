@@ -69,6 +69,13 @@
         android:layout_height="wrap_content"
         android:hint="描述（可选）" />
 
+    <EditText
+        android:id="@+id/et_thumb_url"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textUri"
+        android:hint="缩略图 URL（可选，例如以 http:// 或 https:// 开头）" />
+
     <Button
         android:id="@+id/btn_cancel"
         android:layout_width="match_parent"
