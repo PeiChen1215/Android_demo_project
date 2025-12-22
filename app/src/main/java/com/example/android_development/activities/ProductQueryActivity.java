@@ -65,7 +65,7 @@ public class ProductQueryActivity extends AppCompatActivity {
 
                 // 跳转到商品详情页面（只读）
                 Toast.makeText(ProductQueryActivity.this,
-                        "查看商品: " + product.getName(), Toast.LENGTH_SHORT).show();
+                        getString(R.string.view_product, product.getName()), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -78,7 +78,7 @@ public class ProductQueryActivity extends AppCompatActivity {
             // 显示空状态提示
             listViewProducts.setVisibility(android.view.View.GONE);
             textViewEmpty.setVisibility(android.view.View.VISIBLE);
-            textViewEmpty.setText("暂无商品数据");
+            textViewEmpty.setText(getString(R.string.no_products));
         } else {
             // 显示商品列表
             listViewProducts.setVisibility(android.view.View.VISIBLE);
@@ -91,7 +91,7 @@ public class ProductQueryActivity extends AppCompatActivity {
                 Map<String, String> map = new HashMap<>();
                 map.put("name", product.getName());
                 map.put("price", String.format("￥%.2f", product.getPrice()));
-                map.put("stock", "库存: " + product.getStock());
+                map.put("stock", String.format("库存: %d", product.getStock()));
                 map.put("category", getCategoryName(product.getCategory()));
 
                 data.add(map);

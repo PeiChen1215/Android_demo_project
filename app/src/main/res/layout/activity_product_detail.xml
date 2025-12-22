@@ -21,7 +21,7 @@
                 android:id="@+id/buttonBack"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="返回"/>
+                android:text="@string/btn_back"/>
 
             <TextView
                 android:layout_width="0dp"
@@ -31,6 +31,13 @@
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:gravity="center"/>
+
+            <Button
+                android:id="@+id/buttonHistory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_history"
+                android:visibility="gone" />
 
             <Button
                 android:id="@+id/buttonEdit"

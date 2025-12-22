@@ -3,7 +3,7 @@ package com.example.android_development.util;
 public class Constants {
     // 数据库常量
     public static final String DATABASE_NAME = "supermarket.db";
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 3;
 
     // 用户表
     public static final String TABLE_USERS = "users";
@@ -52,4 +52,17 @@ public class Constants {
     public static final String CATEGORY_SNACK = "snack";      // 零食
     public static final String CATEGORY_CLEANING = "cleaning"; // 清洁用品
     public static final String CATEGORY_OTHER = "other";      // 其他
+
+    // 库存事务表
+    public static final String TABLE_STOCK_TRANSACTIONS = "stock_transactions";
+    public static final String COLUMN_STOCK_TX_ID = "tx_id";
+    public static final String COLUMN_STOCK_TX_PRODUCT_ID = "product_id";
+    public static final String COLUMN_STOCK_TX_USER_ID = "user_id";
+    public static final String COLUMN_STOCK_TX_USER_ROLE = "user_role";
+    public static final String COLUMN_STOCK_TX_TYPE = "tx_type"; // IN/OUT
+    public static final String COLUMN_STOCK_TX_QUANTITY = "quantity";
+    public static final String COLUMN_STOCK_TX_BEFORE = "stock_before";
+    public static final String COLUMN_STOCK_TX_AFTER = "stock_after";
+    public static final String COLUMN_STOCK_TX_REASON = "reason";
+    public static final String COLUMN_STOCK_TX_TIMESTAMP = "timestamp";
 }

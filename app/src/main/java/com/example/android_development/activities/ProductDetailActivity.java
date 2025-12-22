@@ -26,6 +26,7 @@ public class ProductDetailActivity extends AppCompatActivity {
 
     private Button buttonBack;
     private Button buttonEdit;
+    private Button buttonHistory;
 
     private ProductDAO productDAO;
     private Product currentProduct;
@@ -68,6 +69,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         textViewProductDescription = findViewById(R.id.textViewProductDescription);
 
         buttonBack = findViewById(R.id.buttonBack);
+        buttonHistory = findViewById(R.id.buttonHistory);
         buttonEdit = findViewById(R.id.buttonEdit);
     }
 
@@ -76,10 +78,11 @@ public class ProductDetailActivity extends AppCompatActivity {
         if (Constants.ROLE_ADMIN.equals(currentUserRole) ||
                 Constants.ROLE_STOCK.equals(currentUserRole)) {
             buttonEdit.setVisibility(android.view.View.VISIBLE);
+            buttonHistory.setVisibility(android.view.View.VISIBLE);
             if (Constants.ROLE_ADMIN.equals(currentUserRole)) {
-                buttonEdit.setText("编辑商品");
+                buttonEdit.setText(getString(R.string.edit_product));
             } else if (Constants.ROLE_STOCK.equals(currentUserRole)) {
-                buttonEdit.setText("管理库存");
+                buttonEdit.setText(getString(R.string.manage_stock));
             }
         } else {
             buttonEdit.setVisibility(android.view.View.GONE);
@@ -97,11 +100,23 @@ public class ProductDetailActivity extends AppCompatActivity {
         buttonEdit.setOnClickListener(v -> {
             if (Constants.ROLE_ADMIN.equals(currentUserRole)) {
                 Toast.makeText(this, "管理员：进入商品编辑功能", Toast.LENGTH_SHORT).show();
-                // TODO: 跳转到商品编辑页面
+                // 跳转到商品编辑页面（复用添加页面的编辑模式）
+                Intent intent = new Intent(ProductDetailActivity.this, ProductAddActivity.class);
+                intent.putExtra("product_id", currentProduct.getId());
+                startActivity(intent);
             } else if (Constants.ROLE_STOCK.equals(currentUserRole)) {
                 Toast.makeText(this, "库存管理员：进入库存管理功能", Toast.LENGTH_SHORT).show();
-                // TODO: 跳转到库存管理页面
+                // 跳转到库存调整页面
+                Intent intent = new Intent(ProductDetailActivity.this, StockAdjustActivity.class);
+                intent.putExtra("product_id", currentProduct.getId());
+                startActivity(intent);
             }
+        });
+
+        buttonHistory.setOnClickListener(v -> {
+            Intent intent = new Intent(ProductDetailActivity.this, StockHistoryActivity.class);
+            intent.putExtra("product_id", currentProduct.getId());
+            startActivity(intent);
         });
     }
 
@@ -115,29 +130,29 @@ public class ProductDetailActivity extends AppCompatActivity {
             if (currentProduct != null) {
                 displayProductInfo();
             } else {
-                Toast.makeText(this, "商品不存在", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.product_not_found), Toast.LENGTH_SHORT).show();
                 finish();
             }
         } else {
-            Toast.makeText(this, "商品ID无效", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.invalid_product_id), Toast.LENGTH_SHORT).show();
             finish();
         }
     }
 
     private void displayProductInfo() {
         textViewProductName.setText(currentProduct.getName());
-        textViewProductCategory.setText("分类: " + getCategoryName(currentProduct.getCategory()));
-        textViewProductPrice.setText(String.format("价格: ￥%.2f", currentProduct.getPrice()));
-        textViewProductStock.setText("库存: " + currentProduct.getStock());
-        textViewProductBrand.setText("品牌: " + (currentProduct.getBrand() != null ? currentProduct.getBrand() : "未设置"));
-        textViewProductUnit.setText("单位: " + (currentProduct.getUnit() != null ? currentProduct.getUnit() : "未设置"));
-        textViewProductBarcode.setText("条码: " + (currentProduct.getBarcode() != null ? currentProduct.getBarcode() : "未设置"));
-        textViewProductDescription.setText("描述: " + (currentProduct.getDescription() != null ? currentProduct.getDescription() : "无"));
+        textViewProductCategory.setText(getString(R.string.label_category, getCategoryName(currentProduct.getCategory())));
+        textViewProductPrice.setText(String.format(getString(R.string.label_price), currentProduct.getPrice()));
+        textViewProductStock.setText(getString(R.string.label_stock, currentProduct.getStock()));
+        textViewProductBrand.setText(getString(R.string.label_brand, (currentProduct.getBrand() != null ? currentProduct.getBrand() : "未设置")));
+        textViewProductUnit.setText(getString(R.string.label_unit, (currentProduct.getUnit() != null ? currentProduct.getUnit() : "未设置")));
+        textViewProductBarcode.setText(getString(R.string.label_barcode, (currentProduct.getBarcode() != null ? currentProduct.getBarcode() : "未设置")));
+        textViewProductDescription.setText(getString(R.string.label_description, (currentProduct.getDescription() != null ? currentProduct.getDescription() : "无")));
 
         // 如果库存低于预警值，显示提醒
         if (currentProduct.isLowStock()) {
             textViewProductStock.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
-            textViewProductStock.append(" (库存不足!)");
+            textViewProductStock.append(" " + getString(R.string.low_stock_suffix));
         }
     }
 

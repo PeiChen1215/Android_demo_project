@@ -7,6 +7,8 @@ import com.example.android_development.model.Product;
 import com.example.android_development.util.Constants;
 import java.util.ArrayList;
 import java.util.List;
+import com.example.android_development.model.StockTransaction;
+import java.util.UUID;
 
 public class ProductDAO {
 
@@ -241,6 +243,89 @@ public class ProductDAO {
         if (newStock < 0) newStock = 0;
 
         return updateStock(productId, newStock);
+    }
+
+    // 添加库存事务记录
+    public long addStockTransaction(StockTransaction tx) {
+        if (tx == null) return -1;
+        ContentValues values = new ContentValues();
+        if (tx.getId() == null || tx.getId().isEmpty()) tx.setId(UUID.randomUUID().toString());
+        values.put(Constants.COLUMN_STOCK_TX_ID, tx.getId());
+        values.put(Constants.COLUMN_STOCK_TX_PRODUCT_ID, tx.getProductId());
+        values.put(Constants.COLUMN_STOCK_TX_USER_ID, tx.getUserId());
+        values.put(Constants.COLUMN_STOCK_TX_USER_ROLE, tx.getUserRole());
+        values.put(Constants.COLUMN_STOCK_TX_TYPE, tx.getType());
+        values.put(Constants.COLUMN_STOCK_TX_QUANTITY, tx.getQuantity());
+        values.put(Constants.COLUMN_STOCK_TX_BEFORE, tx.getStockBefore());
+        values.put(Constants.COLUMN_STOCK_TX_AFTER, tx.getStockAfter());
+        values.put(Constants.COLUMN_STOCK_TX_REASON, tx.getReason());
+        values.put(Constants.COLUMN_STOCK_TX_TIMESTAMP, tx.getTimestamp() == 0 ? System.currentTimeMillis() : tx.getTimestamp());
+
+        return db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, values);
+    }
+
+    // 调整库存并写入事务（在事务中执行）
+    public boolean adjustStockWithTransaction(String productId, int quantity, String type, String userId, String userRole, String reason) {
+        if (productId == null || type == null) return false;
+        db.beginTransaction();
+        try {
+            Product product = getProductById(productId);
+            if (product == null) return false;
+
+            int before = product.getStock();
+            int after = before;
+            if ("IN".equalsIgnoreCase(type)) {
+                after = before + quantity;
+            } else if ("OUT".equalsIgnoreCase(type)) {
+                after = before - quantity;
+                if (after < 0) after = 0;
+            } else {
+                return false;
+            }
+
+            int updated = updateStock(productId, after);
+            if (updated <= 0) return false;
+
+            StockTransaction tx = new StockTransaction();
+            tx.setProductId(productId);
+            tx.setUserId(userId);
+            tx.setUserRole(userRole);
+            tx.setType(type.toUpperCase());
+            tx.setQuantity(quantity);
+            tx.setStockBefore(before);
+            tx.setStockAfter(after);
+            tx.setReason(reason);
+            tx.setTimestamp(System.currentTimeMillis());
+
+            addStockTransaction(tx);
+
+            db.setTransactionSuccessful();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    // 获取商品的库存事务历史（按时间倒序）
+    public List<StockTransaction> getStockHistory(String productId) {
+        List<StockTransaction> list = new ArrayList<>();
+        String selection = Constants.COLUMN_STOCK_TX_PRODUCT_ID + " = ?";
+        String[] selectionArgs = new String[]{productId};
+        String orderBy = Constants.COLUMN_STOCK_TX_TIMESTAMP + " DESC";
+
+        Cursor cursor = db.query(Constants.TABLE_STOCK_TRANSACTIONS, null, selection, selectionArgs, null, null, orderBy);
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                StockTransaction tx = StockTransaction.fromCursor(cursor);
+                list.add(tx);
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+
+        return list;
     }
 
     // 获取所有列名

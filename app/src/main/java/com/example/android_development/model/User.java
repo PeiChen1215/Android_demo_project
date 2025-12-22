@@ -1,5 +1,9 @@
 package com.example.android_development.model;
 
+import android.content.ContentValues;
+import android.database.Cursor;
+import com.example.android_development.util.Constants;
+
 public class User {
     private String id;
     private String username;
@@ -46,4 +50,34 @@ public class User {
 
     public long getCreatedAt() { return createdAt; }
     public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
+
+    // 从 Cursor 创建 User
+    public static User fromCursor(Cursor c) {
+        if (c == null) return null;
+        User u = new User();
+        int idx;
+        idx = c.getColumnIndex(Constants.COLUMN_USER_ID); if (idx != -1) u.setId(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_USERNAME); if (idx != -1) u.setUsername(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_PASSWORD); if (idx != -1) u.setPassword(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_ROLE); if (idx != -1) u.setRole(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_FULL_NAME); if (idx != -1) u.setFullName(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_PHONE); if (idx != -1) u.setPhone(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_EMAIL); if (idx != -1) u.setEmail(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_CREATED_AT); if (idx != -1) u.setCreatedAt(c.getLong(idx));
+        return u;
+    }
+
+    // 转换为 ContentValues
+    public ContentValues toContentValues() {
+        ContentValues v = new ContentValues();
+        if (id != null) v.put(Constants.COLUMN_USER_ID, id);
+        v.put(Constants.COLUMN_USERNAME, username);
+        v.put(Constants.COLUMN_PASSWORD, password);
+        v.put(Constants.COLUMN_ROLE, role);
+        v.put(Constants.COLUMN_FULL_NAME, fullName);
+        v.put(Constants.COLUMN_PHONE, phone);
+        v.put(Constants.COLUMN_EMAIL, email);
+        v.put(Constants.COLUMN_CREATED_AT, createdAt);
+        return v;
+    }
 }

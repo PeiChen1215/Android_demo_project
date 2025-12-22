@@ -40,6 +40,18 @@
             android:name=".activities.ProductQueryActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".activities.ProductAddActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.StockAdjustActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.StockHistoryActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>
