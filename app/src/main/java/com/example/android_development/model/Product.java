@@ -11,9 +11,13 @@ public class Product {
     private String brand;
     private double price;
     private double cost;
-    private int stock;
-    private int minStock;
+    private int stock; // Shelf stock
+    private int warehouseStock; // Warehouse stock
+    private int minStock; // Shelf min stock
+    private int minWarehouseStock; // Warehouse min stock
     private String unit;
+    private long productionDate;
+    private long expirationDate;
     private String barcode;
     private String description;
     private String thumbUrl;
@@ -76,15 +80,39 @@ public class Product {
         this.updatedAt = System.currentTimeMillis();
     }
 
+    public int getWarehouseStock() { return warehouseStock; }
+    public void setWarehouseStock(int warehouseStock) {
+        this.warehouseStock = warehouseStock;
+        this.updatedAt = System.currentTimeMillis();
+    }
+
     public int getMinStock() { return minStock; }
     public void setMinStock(int minStock) {
         this.minStock = minStock;
         this.updatedAt = System.currentTimeMillis();
     }
 
+    public int getMinWarehouseStock() { return minWarehouseStock; }
+    public void setMinWarehouseStock(int minWarehouseStock) {
+        this.minWarehouseStock = minWarehouseStock;
+        this.updatedAt = System.currentTimeMillis();
+    }
+
     public String getUnit() { return unit; }
     public void setUnit(String unit) {
         this.unit = unit;
+        this.updatedAt = System.currentTimeMillis();
+    }
+
+    public long getProductionDate() { return productionDate; }
+    public void setProductionDate(long productionDate) {
+        this.productionDate = productionDate;
+        this.updatedAt = System.currentTimeMillis();
+    }
+
+    public long getExpirationDate() { return expirationDate; }
+    public void setExpirationDate(long expirationDate) {
+        this.expirationDate = expirationDate;
         this.updatedAt = System.currentTimeMillis();
     }
 
@@ -144,8 +172,12 @@ public class Product {
         idx = c.getColumnIndex(Constants.COLUMN_PRICE); if (idx != -1) p.setPrice(c.getDouble(idx));
         idx = c.getColumnIndex(Constants.COLUMN_COST); if (idx != -1) p.setCost(c.getDouble(idx));
         idx = c.getColumnIndex(Constants.COLUMN_STOCK); if (idx != -1) p.setStock(c.getInt(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_WAREHOUSE_STOCK); if (idx != -1) p.setWarehouseStock(c.getInt(idx));
         idx = c.getColumnIndex(Constants.COLUMN_MIN_STOCK); if (idx != -1) p.setMinStock(c.getInt(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_MIN_WAREHOUSE_STOCK); if (idx != -1) p.setMinWarehouseStock(c.getInt(idx));
         idx = c.getColumnIndex(Constants.COLUMN_UNIT); if (idx != -1) p.setUnit(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_PRODUCTION_DATE); if (idx != -1) p.setProductionDate(c.getLong(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_EXPIRATION_DATE); if (idx != -1) p.setExpirationDate(c.getLong(idx));
         idx = c.getColumnIndex(Constants.COLUMN_BARCODE); if (idx != -1) p.setBarcode(c.getString(idx));
         idx = c.getColumnIndex(Constants.COLUMN_DESCRIPTION); if (idx != -1) p.setDescription(c.getString(idx));
         idx = c.getColumnIndex(Constants.COLUMN_THUMB_URL); if (idx != -1) p.setThumbUrl(c.getString(idx));
@@ -166,8 +198,12 @@ public class Product {
         v.put(Constants.COLUMN_PRICE, price);
         v.put(Constants.COLUMN_COST, cost);
         v.put(Constants.COLUMN_STOCK, stock);
+        v.put(Constants.COLUMN_WAREHOUSE_STOCK, warehouseStock);
         v.put(Constants.COLUMN_MIN_STOCK, minStock);
+        v.put(Constants.COLUMN_MIN_WAREHOUSE_STOCK, minWarehouseStock);
         v.put(Constants.COLUMN_UNIT, unit);
+        v.put(Constants.COLUMN_PRODUCTION_DATE, productionDate);
+        v.put(Constants.COLUMN_EXPIRATION_DATE, expirationDate);
         v.put(Constants.COLUMN_BARCODE, barcode);
         v.put(Constants.COLUMN_DESCRIPTION, description);
         v.put(Constants.COLUMN_SUPPLIER_ID, supplierId);

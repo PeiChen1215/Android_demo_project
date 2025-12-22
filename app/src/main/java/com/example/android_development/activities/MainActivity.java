@@ -49,44 +49,63 @@ public class MainActivity extends AppCompatActivity {
         textViewUserInfo = findViewById(R.id.textViewUserInfo);
         buttonLogout = findViewById(R.id.buttonLogout);
         textViewRoleDescription = findViewById(R.id.textViewRoleDescription);
+        
+        // 获取当前角色
+        PrefsManager pm = new PrefsManager(this);
+        String role = pm.getUserRole();
+
         // 商品管理按钮 - 对所有角色显示
         Button buttonProductManage = findViewById(R.id.buttonProductManage);
         if (buttonProductManage != null) {
             buttonProductManage.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // 所有角色都跳转到同一个ProductListActivity
-                    // 在ProductListActivity内部根据角色控制权限
                     Intent intent = new Intent(MainActivity.this, ProductListActivity.class);
                     startActivity(intent);
                 }
             });
         }
-            // 库存盘点入口
+            // 库存盘点入口 - 仅库存管理员/盘点员/管理员
             Button buttonStockCount = findViewById(R.id.buttonStockCount);
             if (buttonStockCount != null) {
-                buttonStockCount.setOnClickListener(v -> {
-                    Intent intent = new Intent(MainActivity.this, StockCountActivity.class);
-                    startActivity(intent);
-                });
+                if (Constants.ROLE_ADMIN.equals(role) || Constants.ROLE_STOCK.equals(role) || Constants.ROLE_INVENTORY.equals(role)) {
+                    buttonStockCount.setVisibility(View.VISIBLE);
+                    buttonStockCount.setOnClickListener(v -> {
+                        Intent intent = new Intent(MainActivity.this, StockCountActivity.class);
+                        startActivity(intent);
+                    });
+                } else {
+                    buttonStockCount.setVisibility(View.GONE);
+                }
             }
 
-            // 采购管理入口
+            // 采购管理入口 - 仅采购员/管理员
             Button buttonPurchase = findViewById(R.id.buttonPurchase);
             if (buttonPurchase != null) {
-                buttonPurchase.setOnClickListener(v -> {
-                    Intent intent = new Intent(MainActivity.this, PurchaseListActivity.class);
-                    startActivity(intent);
-                });
+                if (Constants.ROLE_ADMIN.equals(role) || Constants.ROLE_BUYER.equals(role)) {
+                    buttonPurchase.setVisibility(View.VISIBLE);
+                    buttonPurchase.setOnClickListener(v -> {
+                        Intent intent = new Intent(MainActivity.this, PurchaseListActivity.class);
+                        startActivity(intent);
+                    });
+                } else {
+                    buttonPurchase.setVisibility(View.GONE);
+                }
             }
-            // 销售收银入口
+            
+            // 销售收银入口 - 仅收银员/管理员
             Button buttonPOS = findViewById(R.id.buttonPOS);
             if (buttonPOS != null) {
-                buttonPOS.setEnabled(true);
-                buttonPOS.setOnClickListener(v -> {
-                    Intent intent = new Intent(MainActivity.this, com.example.android_development.activities.SaleActivity.class);
-                    startActivity(intent);
-                });
+                if (Constants.ROLE_ADMIN.equals(role) || Constants.ROLE_CASHIER.equals(role)) {
+                    buttonPOS.setVisibility(View.VISIBLE);
+                    buttonPOS.setEnabled(true);
+                    buttonPOS.setOnClickListener(v -> {
+                        Intent intent = new Intent(MainActivity.this, com.example.android_development.activities.SaleActivity.class);
+                        startActivity(intent);
+                    });
+                } else {
+                    buttonPOS.setVisibility(View.GONE);
+                }
             }
     }
 

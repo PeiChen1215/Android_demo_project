@@ -16,6 +16,7 @@ import com.example.android_development.model.Product;
 public class ProductAddActivity extends AppCompatActivity {
 
     private EditText etName, etPrice, etStock;
+    private EditText etWarehouseStock, etMinWarehouseStock, etExpiryDate; // New fields
     private Button btnAdd;
     private EditText etBrand, etCategory, etMinStock, etUnit, etBarcode, etDescription, etSupplier, etThumbUrl;
     private boolean editMode = false;
@@ -33,6 +34,9 @@ public class ProductAddActivity extends AppCompatActivity {
         etCategory = findViewById(R.id.et_category);
         etPrice = findViewById(R.id.et_price);
         etStock = findViewById(R.id.et_stock);
+        etWarehouseStock = findViewById(R.id.et_warehouse_stock); // Need to add to layout
+        etMinWarehouseStock = findViewById(R.id.et_min_warehouse_stock); // Need to add to layout
+        etExpiryDate = findViewById(R.id.et_expiry_date); // Need to add to layout
         etMinStock = findViewById(R.id.et_min_stock);
         etUnit = findViewById(R.id.et_unit);
         etBarcode = findViewById(R.id.et_barcode);
@@ -73,6 +77,9 @@ public class ProductAddActivity extends AppCompatActivity {
         String category = etCategory.getText().toString().trim();
         String priceS = etPrice.getText().toString().trim();
         String stockS = etStock.getText().toString().trim();
+        String warehouseStockS = etWarehouseStock != null ? etWarehouseStock.getText().toString().trim() : "0";
+        String minWarehouseStockS = etMinWarehouseStock != null ? etMinWarehouseStock.getText().toString().trim() : "0";
+        String expiryDateS = etExpiryDate != null ? etExpiryDate.getText().toString().trim() : "";
         String minStockS = etMinStock.getText().toString().trim();
         String unit = etUnit.getText().toString().trim();
         String barcode = etBarcode.getText().toString().trim();
@@ -96,12 +103,23 @@ public class ProductAddActivity extends AppCompatActivity {
 
         double price = 0;
         int stock = 0;
+        int warehouseStock = 0;
+        int minWarehouseStock = 0;
+        long expiryDate = 0;
+
         try {
             price = Double.parseDouble(priceS);
             stock = Integer.parseInt(stockS);
-        } catch (NumberFormatException e) {
-            etPrice.setError(getString(R.string.price_stock_format_invalid));
-            etStock.setError(getString(R.string.price_stock_format_invalid));
+            if (!warehouseStockS.isEmpty()) warehouseStock = Integer.parseInt(warehouseStockS);
+            if (!minWarehouseStockS.isEmpty()) minWarehouseStock = Integer.parseInt(minWarehouseStockS);
+            if (!expiryDateS.isEmpty()) {
+                // Simple parsing for YYYY-MM-DD
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                java.util.Date date = sdf.parse(expiryDateS);
+                if (date != null) expiryDate = date.getTime();
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "输入格式错误 (日期格式: yyyy-MM-dd)", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -151,6 +169,9 @@ public class ProductAddActivity extends AppCompatActivity {
         p.setName(name);
         p.setPrice(price);
         p.setStock(stock);
+        p.setWarehouseStock(warehouseStock);
+        p.setMinWarehouseStock(minWarehouseStock);
+        p.setExpirationDate(expiryDate);
         p.setBrand(brand.isEmpty() ? null : brand);
         p.setCategory(category.isEmpty() ? com.example.android_development.util.Constants.CATEGORY_OTHER : category);
         p.setMinStock(minStock);
@@ -192,6 +213,11 @@ public class ProductAddActivity extends AppCompatActivity {
         etCategory.setText(p.getCategory() != null ? p.getCategory() : "");
         etPrice.setText(String.valueOf(p.getPrice()));
         etStock.setText(String.valueOf(p.getStock()));
+        if (etWarehouseStock != null) etWarehouseStock.setText(String.valueOf(p.getWarehouseStock()));
+        if (etMinWarehouseStock != null) etMinWarehouseStock.setText(String.valueOf(p.getMinWarehouseStock()));
+        if (etExpiryDate != null && p.getExpirationDate() > 0) {
+            etExpiryDate.setText(new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date(p.getExpirationDate())));
+        }
         etMinStock.setText(String.valueOf(p.getMinStock()));
         etUnit.setText(p.getUnit() != null ? p.getUnit() : "");
         etBarcode.setText(p.getBarcode() != null ? p.getBarcode() : "");

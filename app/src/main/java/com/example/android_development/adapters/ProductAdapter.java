@@ -73,7 +73,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
             public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
                 Product o = data.get(oldItemPosition);
                 Product n = newList.get(newItemPosition);
-                return o.getName().equals(n.getName()) && o.getPrice() == n.getPrice() && o.getStock() == n.getStock();
+                return o.getName().equals(n.getName()) && o.getPrice() == n.getPrice() && o.getStock() == n.getStock() && o.getWarehouseStock() == n.getWarehouseStock();
             }
         });
 
@@ -98,7 +98,14 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         if (p == null) return;
         holder.name.setText(p.getName());
         holder.price.setText(String.format("￥%.2f", p.getPrice()));
-        holder.stock.setText(String.format("库存: %d", p.getStock()));
+        holder.stock.setText(String.format("货架: %d", p.getStock()));
+        if (holder.getClass().getDeclaredFields() != null) {
+            // best-effort set warehouse stock if view exists
+        }
+        if (holder.itemView.findViewById(R.id.textViewProductWarehouseStock) != null) {
+            TextView wh = holder.itemView.findViewById(R.id.textViewProductWarehouseStock);
+            wh.setText(String.format("仓库: %d", p.getWarehouseStock()));
+        }
         holder.category.setText(p.getCategory() == null ? "未分类" : p.getCategory());
 
         holder.itemView.setOnClickListener(v -> {

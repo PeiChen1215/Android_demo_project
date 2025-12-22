@@ -17,24 +17,37 @@ public class SaleDAO {
 
     public long addSale(Sale sale) {
         if (sale == null) return -1;
-        if (sale.getId() == null || sale.getId().isEmpty()) sale.setId(UUID.randomUUID().toString());
-        long now = System.currentTimeMillis();
-        sale.setTimestamp(now);
+        db.beginTransaction();
+        try {
+            if (sale.getId() == null || sale.getId().isEmpty()) sale.setId(UUID.randomUUID().toString());
+            long now = System.currentTimeMillis();
+            sale.setTimestamp(now);
 
-        ContentValues v = sale.toContentValues();
-        long res = db.insert(Constants.TABLE_SALES, null, v);
-        if (res == -1) return -1;
+            ContentValues v = sale.toContentValues();
+            long res = db.insert(Constants.TABLE_SALES, null, v);
+            if (res == -1) throw new Exception("Failed to insert sale");
 
-        // insert lines
-        if (sale.getLines() != null) {
-            for (SaleLine l : sale.getLines()) {
-                if (l.getId() == null || l.getId().isEmpty()) l.setId(UUID.randomUUID().toString());
-                l.setSaleId(sale.getId());
-                db.insert(Constants.TABLE_SALE_LINES, null, l.toContentValues());
+            // insert lines
+            if (sale.getLines() != null) {
+                for (SaleLine l : sale.getLines()) {
+                    if (l.getId() == null || l.getId().isEmpty()) l.setId(UUID.randomUUID().toString());
+                    l.setSaleId(sale.getId());
+                    db.insert(Constants.TABLE_SALE_LINES, null, l.toContentValues());
+
+                    // Update Shelf Stock (Real-time deduction)
+                    db.execSQL("UPDATE " + Constants.TABLE_PRODUCTS + 
+                               " SET " + Constants.COLUMN_STOCK + " = " + Constants.COLUMN_STOCK + " - " + l.getQty() + 
+                               " WHERE " + Constants.COLUMN_PRODUCT_ID + " = ?", new Object[]{l.getProductId()});
+                }
             }
+            db.setTransactionSuccessful();
+            return res;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        } finally {
+            db.endTransaction();
         }
-
-        return res;
     }
 
     public Sale getSaleById(String saleId) {

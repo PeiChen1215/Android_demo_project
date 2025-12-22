@@ -114,7 +114,23 @@
                 android:id="@+id/textViewProductStock"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="库存: 0"
+                android:text="货架库存: 0"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/textViewWarehouseStock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="仓库库存: 0"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/textViewProductExpiry"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="过期日期: "
                 android:textSize="16sp"
                 android:layout_marginBottom="8dp"/>
 
