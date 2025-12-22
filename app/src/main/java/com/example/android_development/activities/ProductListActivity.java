@@ -3,6 +3,7 @@ package com.example.android_development.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import com.google.android.material.snackbar.Snackbar;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -26,8 +27,10 @@ public class ProductListActivity extends AppCompatActivity {
     private TextView textViewEmpty;
     private TextView textViewTitle;
     private Button buttonAddProduct;
+    private android.widget.EditText etSearch;
+    private Button buttonSearch;
+    private Button buttonClearSearch;
     private Button buttonBack;
-
     private ProductDAO productDAO;
     private List<Product> productList;
     private PrefsManager prefsManager;
@@ -41,6 +44,16 @@ public class ProductListActivity extends AppCompatActivity {
         // 获取当前用户角色
         prefsManager = new PrefsManager(this);
         currentUserRole = prefsManager.getUserRole();
+
+        // 如果 SharedPreferences 中没有角色信息，尝试通过 userId 从数据库读取角色（适配调试场景）
+        if (currentUserRole == null || currentUserRole.isEmpty()) {
+            String uid = prefsManager.getUserId();
+            if (uid != null && !uid.isEmpty()) {
+                DatabaseHelper dh = new DatabaseHelper(this);
+                com.example.android_development.model.User u = dh.getUserByIdObject(uid);
+                if (u != null) currentUserRole = u.getRole();
+            }
+        }
 
         // 初始化视图
         initViews();
@@ -63,6 +76,9 @@ public class ProductListActivity extends AppCompatActivity {
         textViewEmpty = findViewById(R.id.textViewEmpty);
         textViewTitle = findViewById(R.id.textViewTitle);
         buttonAddProduct = findViewById(R.id.buttonAddProduct);
+        etSearch = findViewById(R.id.et_search);
+        buttonSearch = findViewById(R.id.buttonSearch);
+        buttonClearSearch = findViewById(R.id.buttonClearSearch);
         buttonBack = findViewById(R.id.buttonBack);
     }
 
@@ -70,10 +86,10 @@ public class ProductListActivity extends AppCompatActivity {
         // 根据角色设置标题
         if (Constants.ROLE_ADMIN.equals(currentUserRole) ||
                 Constants.ROLE_STOCK.equals(currentUserRole)) {
-            textViewTitle.setText("商品管理");
+            textViewTitle.setText(getString(R.string.title_product_manage));
             buttonAddProduct.setVisibility(View.VISIBLE);
         } else {
-            textViewTitle.setText("商品查询");
+            textViewTitle.setText(getString(R.string.title_product_query));
             buttonAddProduct.setVisibility(View.GONE);
         }
     }
@@ -86,14 +102,29 @@ public class ProductListActivity extends AppCompatActivity {
     private void setupClickListeners() {
         buttonBack.setOnClickListener(v -> finish());
 
+        buttonSearch.setOnClickListener(v -> {
+            String kw = etSearch.getText().toString().trim();
+            if (kw.isEmpty()) {
+                loadProducts();
+            } else {
+                performSearch(kw);
+            }
+        });
+
+        buttonClearSearch.setOnClickListener(v -> {
+            etSearch.setText("");
+            loadProducts();
+        });
+
         buttonAddProduct.setOnClickListener(v -> {
             // 根据角色判断是否有添加权限
             if (Constants.ROLE_ADMIN.equals(currentUserRole) ||
                     Constants.ROLE_STOCK.equals(currentUserRole)) {
-                // TODO: 跳转到添加商品页面
-                Toast.makeText(ProductListActivity.this, "添加商品功能开发中", Toast.LENGTH_SHORT).show();
+                // 跳转到添加商品页面
+                Intent intent = new Intent(ProductListActivity.this, ProductAddActivity.class);
+                startActivity(intent);
             } else {
-                Toast.makeText(ProductListActivity.this, "权限不足：只有管理员和库存管理员可以添加商品", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ProductListActivity.this, getString(R.string.no_permission_add), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -133,7 +164,7 @@ public class ProductListActivity extends AppCompatActivity {
                     showDeleteConfirmation(product);
                     return true;
                 } else {
-                    Toast.makeText(this, "权限不足：只有管理员可以删除商品", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.no_permission_delete), Toast.LENGTH_SHORT).show();
                     return false;
                 }
             }
@@ -143,23 +174,44 @@ public class ProductListActivity extends AppCompatActivity {
 
     private void showDeleteConfirmation(Product product) {
         new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("确认删除")
-                .setMessage("确定要删除商品：" + product.getName() + "吗？")
-                .setPositiveButton("删除", (dialog, which) -> {
+                .setTitle(getString(R.string.confirm_delete))
+                .setMessage(getString(R.string.confirm_delete_msg, product.getName()))
+                .setPositiveButton(getString(R.string.delete), (dialog, which) -> {
                     deleteProduct(product);
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(getString(R.string.btn_cancel), null)
                 .show();
     }
 
     private void deleteProduct(Product product) {
-        int result = productDAO.deleteProduct(product.getId());
+        // 使用 DatabaseHelper 的基于 userId 的权限校验删除, 并提供撤销
+        DatabaseHelper dbHelper = new DatabaseHelper(this);
+        String userId = prefsManager.getUserId();
+
+        // 先拷贝被删除的商品以便撤销使用
+        final Product deletedProduct = product;
+
+        int result = dbHelper.deleteProductAsUser(userId, product.getId());
 
         if (result > 0) {
-            Toast.makeText(this, "商品删除成功", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.deleted_success), Toast.LENGTH_SHORT).show();
             loadProducts(); // 刷新列表
+
+            // 显示 Snackbar 提供撤销操作
+            View root = findViewById(android.R.id.content);
+            Snackbar.make(root, getString(R.string.deleted_snackbar), Snackbar.LENGTH_LONG)
+                    .setAction(getString(R.string.undo), v -> {
+                        long addRes = dbHelper.addProductAsUser(userId, deletedProduct);
+                        if (addRes == -1) {
+                            Toast.makeText(this, getString(R.string.undo_failed), Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(this, getString(R.string.undo_success), Toast.LENGTH_SHORT).show();
+                            loadProducts();
+                        }
+                    })
+                    .show();
         } else {
-            Toast.makeText(this, "商品删除失败", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.deleted_failed), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -171,10 +223,11 @@ public class ProductListActivity extends AppCompatActivity {
             // 显示空状态提示
             listViewProducts.setVisibility(View.GONE);
             textViewEmpty.setVisibility(View.VISIBLE);
-            textViewEmpty.setText("暂无商品数据\n" +
-                    (Constants.ROLE_ADMIN.equals(currentUserRole) ||
-                            Constants.ROLE_STOCK.equals(currentUserRole)
-                            ? "点击右上角添加按钮添加商品" : ""));
+            String hint = "";
+            if (Constants.ROLE_ADMIN.equals(currentUserRole) || Constants.ROLE_STOCK.equals(currentUserRole)) {
+                hint = getString(R.string.no_products_hint_admin);
+            }
+            textViewEmpty.setText(getString(R.string.no_products_full, hint));
         } else {
             // 显示商品列表
             listViewProducts.setVisibility(View.VISIBLE);
@@ -187,13 +240,50 @@ public class ProductListActivity extends AppCompatActivity {
                 Map<String, String> map = new HashMap<>();
                 map.put("name", product.getName());
                 map.put("price", String.format("￥%.2f", product.getPrice()));
-                map.put("stock", "库存: " + product.getStock());
+                map.put("stock", String.format("库存: %d", product.getStock()));
                 map.put("category", getCategoryName(product.getCategory()));
 
                 data.add(map);
             }
 
             // 创建适配器
+            SimpleAdapter adapter = new SimpleAdapter(
+                    this,
+                    data,
+                    R.layout.item_product,
+                    new String[]{"name", "price", "stock", "category"},
+                    new int[]{R.id.textViewProductName, R.id.textViewProductPrice,
+                            R.id.textViewProductStock, R.id.textViewProductCategory}
+            );
+
+            listViewProducts.setAdapter(adapter);
+        }
+    }
+
+    private void performSearch(String keyword) {
+        if (keyword == null) keyword = "";
+        List<Product> results = productDAO.searchProducts(keyword);
+
+        productList = results;
+
+        if (productList == null || productList.isEmpty()) {
+            listViewProducts.setVisibility(View.GONE);
+            textViewEmpty.setVisibility(View.VISIBLE);
+            textViewEmpty.setText(getString(R.string.no_search_results));
+        } else {
+            listViewProducts.setVisibility(View.VISIBLE);
+            textViewEmpty.setVisibility(View.GONE);
+
+            List<java.util.Map<String, String>> data = new java.util.ArrayList<>();
+            for (Product product : productList) {
+                java.util.Map<String, String> map = new java.util.HashMap<>();
+                map.put("name", product.getName());
+                map.put("price", String.format("￥%.2f", product.getPrice()));
+                map.put("stock", String.format("库存: %d", product.getStock()));
+                map.put("category", getCategoryName(product.getCategory()));
+                data.add(map);
+            }
+
             SimpleAdapter adapter = new SimpleAdapter(
                     this,
                     data,

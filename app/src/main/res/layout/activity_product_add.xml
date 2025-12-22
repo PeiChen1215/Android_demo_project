@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/et_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="商品名称" />
+
+    <EditText
+        android:id="@+id/et_brand"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="品牌（可选）" />
+
+    <EditText
+        android:id="@+id/et_category"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="分类（如：food/drink/daily，可选）" />
+
+    <EditText
+        android:id="@+id/et_price"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal"
+        android:hint="价格" />
+
+    <EditText
+        android:id="@+id/et_stock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:hint="库存" />
+
+    <EditText
+        android:id="@+id/et_min_stock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:hint="最低库存（可选）" />
+
+    <EditText
+        android:id="@+id/et_unit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="单位（如：瓶/袋/个，可选）" />
+
+    <EditText
+        android:id="@+id/et_barcode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"
+        android:hint="条形码（可选）" />
+
+    <EditText
+        android:id="@+id/et_supplier"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="供应商ID（可选）" />
+
+    <EditText
+        android:id="@+id/et_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="描述（可选）" />
+
+    <Button
+        android:id="@+id/btn_cancel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="返回"
+        android:layout_marginTop="8dp" />
+
+    <Button
+        android:id="@+id/btn_add"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="添加商品"
+        android:layout_marginTop="8dp" />
+
+</LinearLayout>

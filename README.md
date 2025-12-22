@@ -113,3 +113,50 @@ git commit -m "optimize：简化网络请求工具类"
    - 检查`res/`目录下的资源文件是否有命名错误（如含中文/特殊字符）；
    - 点击AS顶部「Build → Rebuild Project」重新构建项目。
 
+   ## 开发测试：如何手动将 admin 用户写入 SharedPreferences
+
+   在开发调试时，你可能希望快速将一个管理员用户的信息写入 `SharedPreferences`（以便访问需管理员权限的页面）。项目已移除自动在启动时插入固定 admin 的行为；请按下面任一方法手动设置（仅用于开发）：
+
+   - 方法 A（临时代码，开发时使用）：在 `SplashActivity.onCreate()` 或 `MainActivity.onCreate()` 中临时加入以下调试代码，运行后可移除：
+
+   ```java
+   // 临时在应用启动时设置开发用 admin（仅开发时使用，勿提交）
+   PrefsManager prefs = new PrefsManager(this);
+   prefs.saveUserId("admin-fixed-id");
+   prefs.saveUserRole("admin");
+   prefs.saveLoginStatus(true); // 若需要直接跳过登录
+   ```
+
+   - 方法 B（通过调试/控制台执行）：在 Android Studio 的 Debug Console/`Evaluate Expression` 中执行相同的 `PrefsManager` 调用，或在需要的位置使用 `new PrefsManager(context).saveUserId(...)`。
+
+   - 方法 C（从数据库读取并保存）：`DatabaseHelper.onCreate()` 会插入示例用户（包含 username=`admin`），但这些用户的 `id` 可能为随机值。你可以通过代码查询数据库并把其 `id` 写入 `SharedPreferences`：
+
+   ```java
+   DatabaseHelper db = new DatabaseHelper(context);
+   List<com.example.android_development.model.User> users = db.getAllUsersList();
+   for (User u : users) {
+      if ("admin".equals(u.getUsername())) {
+         new PrefsManager(context).saveUserId(u.getId());
+         new PrefsManager(context).saveUserRole(u.getRole());
+         break;
+      }
+   }
+   ```
+
+   注意：以上均为开发调试快捷方式。请在提交或发布前移除任何用于自动登录或固定账号的调试代码，以免泄露测试账号或影响生产安全。
+
+   ## 演示步骤（快速验证商品模块）
+   下面是一个在模拟器上快速演示商品管理模块的步骤（包含截图参考）：
+
+   1. 安装并启动应用（或在 Android Studio 中运行 `app` 模块）。
+   2. 登录或手动设置 `admin` 到 `SharedPreferences`（参见上节）。
+   3. 进入「商品管理」页面，点击右上角的「添加」按钮进入新增商品页面。
+   4. 在新增商品表单填写：名称、价格、库存，其他字段可选。条码需为 6-32 位字母或数字，且不得与已有商品重复。
+   5. 点击「保存」，若字段不正确，表单会在对应输入框显示错误提示；正确提交后会看到成功提示并返回列表。
+   6. 在商品详情页点击「管理库存」进行入库/出库操作，返回后在「记录」中查看库存变更历史。
+
+   截图：
+   - 新增商品表单： `docs/screenshots/product_add.png`
+
+   如果你需要我把这些步骤写成更正式的 PPT/演示文档或录一段 30 秒的操作视频，我也可以继续制作。
+

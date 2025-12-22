@@ -1,5 +1,9 @@
 package com.example.android_development.model;
 
+import android.content.ContentValues;
+import android.database.Cursor;
+import com.example.android_development.util.Constants;
+
 public class Product {
     private String id;
     private String name;
@@ -119,5 +123,47 @@ public class Product {
     public double getProfitMargin() {
         if (cost == 0) return 0;
         return ((price - cost) / cost) * 100;
+    }
+
+    // 转换：从 Cursor 创建对象
+    public static Product fromCursor(Cursor c) {
+        if (c == null) return null;
+        Product p = new Product();
+        int idx;
+        idx = c.getColumnIndex(Constants.COLUMN_PRODUCT_ID); if (idx != -1) p.setId(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_PRODUCT_NAME); if (idx != -1) p.setName(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_CATEGORY); if (idx != -1) p.setCategory(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_BRAND); if (idx != -1) p.setBrand(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_PRICE); if (idx != -1) p.setPrice(c.getDouble(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_COST); if (idx != -1) p.setCost(c.getDouble(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_STOCK); if (idx != -1) p.setStock(c.getInt(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_MIN_STOCK); if (idx != -1) p.setMinStock(c.getInt(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_UNIT); if (idx != -1) p.setUnit(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_BARCODE); if (idx != -1) p.setBarcode(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_DESCRIPTION); if (idx != -1) p.setDescription(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_SUPPLIER_ID); if (idx != -1) p.setSupplierId(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_CREATED_AT); if (idx != -1) p.setCreatedAt(c.getLong(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_UPDATED_AT); if (idx != -1) p.setUpdatedAt(c.getLong(idx));
+        return p;
+    }
+
+    // 转换：对象 -> ContentValues
+    public ContentValues toContentValues() {
+        ContentValues v = new ContentValues();
+        if (id != null) v.put(Constants.COLUMN_PRODUCT_ID, id);
+        v.put(Constants.COLUMN_PRODUCT_NAME, name);
+        v.put(Constants.COLUMN_CATEGORY, category);
+        v.put(Constants.COLUMN_BRAND, brand);
+        v.put(Constants.COLUMN_PRICE, price);
+        v.put(Constants.COLUMN_COST, cost);
+        v.put(Constants.COLUMN_STOCK, stock);
+        v.put(Constants.COLUMN_MIN_STOCK, minStock);
+        v.put(Constants.COLUMN_UNIT, unit);
+        v.put(Constants.COLUMN_BARCODE, barcode);
+        v.put(Constants.COLUMN_DESCRIPTION, description);
+        v.put(Constants.COLUMN_SUPPLIER_ID, supplierId);
+        v.put(Constants.COLUMN_CREATED_AT, createdAt);
+        v.put(Constants.COLUMN_UPDATED_AT, updatedAt);
+        return v;
     }
 }
