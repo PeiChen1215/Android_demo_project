@@ -44,11 +44,22 @@ public class DbContract {
     public static final String SQL_DROP_TABLE_PRODUCTS =
             "DROP TABLE IF EXISTS " + Constants.TABLE_PRODUCTS;
 
+    // 商品表索引（提升按名称/条码/分类的查询性能）
+    public static final String SQL_CREATE_INDEX_PRODUCTS_NAME =
+            "CREATE INDEX IF NOT EXISTS idx_products_name ON " + Constants.TABLE_PRODUCTS + "(" + Constants.COLUMN_PRODUCT_NAME + ")";
+
+    public static final String SQL_CREATE_INDEX_PRODUCTS_BARCODE =
+            "CREATE INDEX IF NOT EXISTS idx_products_barcode ON " + Constants.TABLE_PRODUCTS + "(" + Constants.COLUMN_BARCODE + ")";
+
+    public static final String SQL_CREATE_INDEX_PRODUCTS_CATEGORY =
+            "CREATE INDEX IF NOT EXISTS idx_products_category ON " + Constants.TABLE_PRODUCTS + "(" + Constants.COLUMN_CATEGORY + ")";
+
     // 库存事务表创建SQL
     public static final String SQL_CREATE_TABLE_STOCK_TRANSACTIONS =
             "CREATE TABLE " + Constants.TABLE_STOCK_TRANSACTIONS + " (" +
                     Constants.COLUMN_STOCK_TX_ID + " TEXT PRIMARY KEY," +
                     Constants.COLUMN_STOCK_TX_PRODUCT_ID + " TEXT NOT NULL," +
+                    Constants.COLUMN_STOCK_TX_PRODUCT_NAME + " TEXT," +
                     Constants.COLUMN_STOCK_TX_USER_ID + " TEXT," +
                     Constants.COLUMN_STOCK_TX_USER_ROLE + " TEXT," +
                     Constants.COLUMN_STOCK_TX_TYPE + " TEXT NOT NULL," +

@@ -183,6 +183,69 @@ public class ProductDAO {
         return products;
     }
 
+    // 分页获取商品（limit, offset）
+    public List<Product> getProductsPage(int limit, int offset) {
+        List<Product> products = new ArrayList<>();
+
+        String[] columns = getAllColumns();
+        String orderBy = Constants.COLUMN_PRODUCT_NAME + " ASC";
+        // SQLite 的 limit 参数可使用 "offset,limit" 格式
+        String limitStr = offset + "," + limit;
+
+        Cursor cursor = db.query(
+                Constants.TABLE_PRODUCTS,
+                columns,
+                null,
+                null,
+                null,
+                null,
+                orderBy,
+                limitStr
+        );
+
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                Product product = cursorToProduct(cursor);
+                products.add(product);
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+
+        return products;
+    }
+
+    // 分页搜索（按名称或条码）
+    public List<Product> searchProductsPage(String keyword, int limit, int offset) {
+        List<Product> products = new ArrayList<>();
+        String[] columns = getAllColumns();
+        String selection = Constants.COLUMN_PRODUCT_NAME + " LIKE ? OR " +
+                Constants.COLUMN_BARCODE + " LIKE ?";
+        String[] selectionArgs = {"%" + keyword + "%", "%" + keyword + "%"};
+        String orderBy = Constants.COLUMN_PRODUCT_NAME + " ASC";
+        String limitStr = offset + "," + limit;
+
+        Cursor cursor = db.query(
+                Constants.TABLE_PRODUCTS,
+                columns,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                orderBy,
+                limitStr
+        );
+
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                Product product = cursorToProduct(cursor);
+                products.add(product);
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+
+        return products;
+    }
+
     // 获取低库存商品
     public List<Product> getLowStockProducts() {
         List<Product> products = new ArrayList<>();
@@ -252,6 +315,7 @@ public class ProductDAO {
         if (tx.getId() == null || tx.getId().isEmpty()) tx.setId(UUID.randomUUID().toString());
         values.put(Constants.COLUMN_STOCK_TX_ID, tx.getId());
         values.put(Constants.COLUMN_STOCK_TX_PRODUCT_ID, tx.getProductId());
+        values.put(Constants.COLUMN_STOCK_TX_PRODUCT_NAME, tx.getProductName());
         values.put(Constants.COLUMN_STOCK_TX_USER_ID, tx.getUserId());
         values.put(Constants.COLUMN_STOCK_TX_USER_ROLE, tx.getUserRole());
         values.put(Constants.COLUMN_STOCK_TX_TYPE, tx.getType());
@@ -261,7 +325,29 @@ public class ProductDAO {
         values.put(Constants.COLUMN_STOCK_TX_REASON, tx.getReason());
         values.put(Constants.COLUMN_STOCK_TX_TIMESTAMP, tx.getTimestamp() == 0 ? System.currentTimeMillis() : tx.getTimestamp());
 
-        return db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, values);
+        try {
+            return db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, values);
+        } catch (android.database.sqlite.SQLiteException e) {
+            // 可能缺少 product_name 列或其它列，尝试添加列后重试
+            try {
+                android.database.Cursor c = db.rawQuery("PRAGMA table_info(" + Constants.TABLE_STOCK_TRANSACTIONS + ")", null);
+                boolean has = false;
+                if (c != null) {
+                    while (c.moveToNext()) {
+                        String name = c.getString(c.getColumnIndexOrThrow("name"));
+                        if (Constants.COLUMN_STOCK_TX_PRODUCT_NAME.equals(name)) { has = true; break; }
+                    }
+                    c.close();
+                }
+                if (!has) {
+                    try { db.execSQL("ALTER TABLE " + Constants.TABLE_STOCK_TRANSACTIONS + " ADD COLUMN " + Constants.COLUMN_STOCK_TX_PRODUCT_NAME + " TEXT"); } catch (Exception ignored) {}
+                }
+                return db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, values);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                return -1;
+            }
+        }
     }
 
     // 调整库存并写入事务（在事务中执行）
@@ -288,6 +374,8 @@ public class ProductDAO {
 
             StockTransaction tx = new StockTransaction();
             tx.setProductId(productId);
+            // 尝试设置产品名称，便于删除商品后仍保留可读历史
+            tx.setProductName(product.getName());
             tx.setUserId(userId);
             tx.setUserRole(userRole);
             tx.setType(type.toUpperCase());
@@ -323,6 +411,101 @@ public class ProductDAO {
                 list.add(tx);
             } while (cursor.moveToNext());
             cursor.close();
+        }
+
+        return list;
+    }
+
+    // 获取所有库存事务（全局历史）
+    public List<StockTransaction> getAllStockHistory() {
+        List<StockTransaction> list = new ArrayList<>();
+        String orderBy = Constants.COLUMN_STOCK_TX_TIMESTAMP + " DESC";
+        try {
+            Cursor cursor = db.query(Constants.TABLE_STOCK_TRANSACTIONS, null, null, null, null, null, orderBy);
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    StockTransaction tx = StockTransaction.fromCursor(cursor);
+                    list.add(tx);
+                } while (cursor.moveToNext());
+                cursor.close();
+            }
+        } catch (android.database.sqlite.SQLiteException e) {
+            // 可能是旧 schema 缺少某列，尝试使用安全的原生查询（只选择存在的列）或返回空列表
+            try {
+                String sql = "SELECT * FROM " + Constants.TABLE_STOCK_TRANSACTIONS + " ORDER BY " + Constants.COLUMN_STOCK_TX_TIMESTAMP + " DESC";
+                Cursor cursor = db.rawQuery(sql, null);
+                if (cursor != null && cursor.moveToFirst()) {
+                    do {
+                        StockTransaction tx = StockTransaction.fromCursor(cursor);
+                        list.add(tx);
+                    } while (cursor.moveToNext());
+                    cursor.close();
+                }
+            } catch (Exception ex) {
+                // 最后兜底，不抛出异常，返回空列表
+                ex.printStackTrace();
+            }
+        }
+
+        return list;
+    }
+
+    // 回填历史表中的 product_name 字段（从 products 表拷贝），用于修复老数据
+    public void backfillStockTransactionProductNames() {
+        try {
+            String sql = "UPDATE " + Constants.TABLE_STOCK_TRANSACTIONS + " SET " + Constants.COLUMN_STOCK_TX_PRODUCT_NAME + " = (SELECT " + Constants.COLUMN_PRODUCT_NAME + " FROM " + Constants.TABLE_PRODUCTS + " p WHERE p." + Constants.COLUMN_PRODUCT_ID + " = " + Constants.TABLE_STOCK_TRANSACTIONS + "." + Constants.COLUMN_STOCK_TX_PRODUCT_ID + ") WHERE " + Constants.COLUMN_STOCK_TX_PRODUCT_NAME + " IS NULL";
+            db.execSQL(sql);
+        } catch (Exception e) {
+            // 忽略任何错误，回填为最佳努力
+            e.printStackTrace();
+        }
+    }
+
+    // 按产品名称搜索库存事务（支持模糊匹配）
+    public List<StockTransaction> searchStockHistoryByProductName(String productName) {
+        List<StockTransaction> list = new ArrayList<>();
+        String orderBy = Constants.COLUMN_STOCK_TX_TIMESTAMP + " DESC";
+        try {
+            // 先尝试直接在事务表上按 product_name 搜索（如果列存在）
+            Cursor check = db.rawQuery("PRAGMA table_info(" + Constants.TABLE_STOCK_TRANSACTIONS + ")", null);
+            boolean hasProductNameCol = false;
+            if (check != null && check.moveToFirst()) {
+                do {
+                    String colName = check.getString(check.getColumnIndexOrThrow("name"));
+                    if (Constants.COLUMN_STOCK_TX_PRODUCT_NAME.equals(colName)) {
+                        hasProductNameCol = true;
+                        break;
+                    }
+                } while (check.moveToNext());
+                check.close();
+            }
+
+            if (hasProductNameCol) {
+                String selection = Constants.COLUMN_STOCK_TX_PRODUCT_NAME + " LIKE ?";
+                String[] selectionArgs = new String[]{"%" + productName + "%"};
+                Cursor cursor = db.query(Constants.TABLE_STOCK_TRANSACTIONS, null, selection, selectionArgs, null, null, orderBy);
+                if (cursor != null && cursor.moveToFirst()) {
+                    do {
+                        StockTransaction tx = StockTransaction.fromCursor(cursor);
+                        list.add(tx);
+                    } while (cursor.moveToNext());
+                    cursor.close();
+                }
+            } else {
+                // 如果事务表没有 product_name 列，尝试通过关联 products 表来按名称搜索
+                String sql = "SELECT st.* FROM " + Constants.TABLE_STOCK_TRANSACTIONS + " st JOIN " + Constants.TABLE_PRODUCTS + " p ON st." + Constants.COLUMN_STOCK_TX_PRODUCT_ID + " = p." + Constants.COLUMN_PRODUCT_ID + " WHERE p." + Constants.COLUMN_PRODUCT_NAME + " LIKE ? ORDER BY st." + Constants.COLUMN_STOCK_TX_TIMESTAMP + " DESC";
+                Cursor cursor = db.rawQuery(sql, new String[]{"%" + productName + "%"});
+                if (cursor != null && cursor.moveToFirst()) {
+                    do {
+                        StockTransaction tx = StockTransaction.fromCursor(cursor);
+                        list.add(tx);
+                    } while (cursor.moveToNext());
+                    cursor.close();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            // 返回空列表，不抛出，避免 UI 闪退
         }
 
         return list;

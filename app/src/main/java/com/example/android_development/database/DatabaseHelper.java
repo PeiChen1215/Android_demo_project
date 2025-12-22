@@ -20,6 +20,28 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 this.context = context;
     }
 
+    // Ensure a column exists on a table; if missing, attempt ALTER TABLE ADD COLUMN
+    private void ensureColumnExists(SQLiteDatabase db, String tableName, String columnName, String columnDef) {
+            try {
+                    android.database.Cursor c = db.rawQuery("PRAGMA table_info(" + tableName + ")", null);
+                    boolean found = false;
+                    if (c != null) {
+                            while (c.moveToNext()) {
+                                    String name = c.getString(c.getColumnIndexOrThrow("name"));
+                                    if (columnName.equals(name)) { found = true; break; }
+                            }
+                            c.close();
+                    }
+                    if (!found) {
+                            try {
+                                    db.execSQL("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + columnDef);
+                            } catch (Exception ignored) {
+                                    // some SQLite versions may not allow ALTER ADD in certain contexts — ignore
+                            }
+                    }
+            } catch (Exception ignored) {}
+    }
+
         private Context context;
 
     @Override
@@ -31,6 +53,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         // 创建库存事务表
         db.execSQL(DbContract.SQL_CREATE_TABLE_STOCK_TRANSACTIONS);
+
+                // 创建商品相关索引以提高查询性能
+                try {
+                        db.execSQL(DbContract.SQL_CREATE_INDEX_PRODUCTS_NAME);
+                        db.execSQL(DbContract.SQL_CREATE_INDEX_PRODUCTS_BARCODE);
+                        db.execSQL(DbContract.SQL_CREATE_INDEX_PRODUCTS_CATEGORY);
+                } catch (Exception e) {
+                        e.printStackTrace();
+                }
 
         // 插入不同角色的测试用户
         insertTestUsers(db);
@@ -354,7 +385,35 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         // 基于 userId 的受限封装：add/update/delete
         public long addProductAsUser(String userId, Product product) {
                 if (!isUserAdminById(userId)) return -1;
-                return addProduct(product);
+                // 执行插入并在成功后写入历史记录（类型为 ADD）
+                long res = addProduct(product);
+                try {
+                        if (res > 0) {
+                                SQLiteDatabase db = getWritableDatabase();
+                                // ensure product_name column exists before inserting
+                                ensureColumnExists(db, Constants.TABLE_STOCK_TRANSACTIONS, Constants.COLUMN_STOCK_TX_PRODUCT_NAME, "TEXT");
+                                ContentValues tx = new ContentValues();
+                                tx.put(Constants.COLUMN_STOCK_TX_ID, java.util.UUID.randomUUID().toString());
+                                tx.put(Constants.COLUMN_STOCK_TX_PRODUCT_ID, product.getId());
+                                tx.put(Constants.COLUMN_STOCK_TX_PRODUCT_NAME, product.getName());
+                                tx.put(Constants.COLUMN_STOCK_TX_USER_ID, userId);
+                                String role = null;
+                                if (userId != null) {
+                                        User uobj = getUserByIdObject(userId);
+                                        if (uobj != null) role = uobj.getRole();
+                                }
+                                tx.put(Constants.COLUMN_STOCK_TX_USER_ROLE, role);
+                                tx.put(Constants.COLUMN_STOCK_TX_TYPE, "ADD");
+                                tx.put(Constants.COLUMN_STOCK_TX_QUANTITY, product != null ? product.getStock() : 0);
+                                tx.put(Constants.COLUMN_STOCK_TX_BEFORE, 0);
+                                tx.put(Constants.COLUMN_STOCK_TX_AFTER, product != null ? product.getStock() : 0);
+                                tx.put(Constants.COLUMN_STOCK_TX_REASON, "添加商品");
+                                tx.put(Constants.COLUMN_STOCK_TX_TIMESTAMP, System.currentTimeMillis());
+                                try { db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, tx); } catch (Exception ignored) {}
+                        }
+                } catch (Exception ignored) {}
+
+                return res;
         }
 
         public int updateProductAsUser(String userId, Product product) {
@@ -379,8 +438,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         int afterStock = product.getStock();
                         if (rows > 0 && beforeStock != afterStock) {
                                 ContentValues tx = new ContentValues();
+                                // ensure product_name column exists before inserting
+                                ensureColumnExists(db, Constants.TABLE_STOCK_TRANSACTIONS, Constants.COLUMN_STOCK_TX_PRODUCT_NAME, "TEXT");
                                 tx.put(Constants.COLUMN_STOCK_TX_ID, java.util.UUID.randomUUID().toString());
                                 tx.put(Constants.COLUMN_STOCK_TX_PRODUCT_ID, product.getId());
+                                tx.put(Constants.COLUMN_STOCK_TX_PRODUCT_NAME, product.getName());
                                 tx.put(Constants.COLUMN_STOCK_TX_USER_ID, userId);
                                 // 查询用户角色并写入
                                 String role = null;
@@ -396,7 +458,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                                 tx.put(Constants.COLUMN_STOCK_TX_AFTER, afterStock);
                                 tx.put(Constants.COLUMN_STOCK_TX_REASON, "管理员修改库存");
                                 tx.put(Constants.COLUMN_STOCK_TX_TIMESTAMP, System.currentTimeMillis());
-                                db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, tx);
+                                try { db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, tx); } catch (Exception ignored) {}
                         }
 
                         db.setTransactionSuccessful();
@@ -411,7 +473,37 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         public int deleteProductAsUser(String userId, String productId) {
                 if (!isUserAdminById(userId)) return 0;
-                return deleteProduct(productId);
+                // 先读取商品信息以便记录名称/库存
+                Product p = getProductByIdObject(productId);
+                int rows = deleteProduct(productId);
+                try {
+                        if (rows > 0) {
+                                SQLiteDatabase db = getWritableDatabase();
+                                // ensure product_name column exists before inserting
+                                ensureColumnExists(db, Constants.TABLE_STOCK_TRANSACTIONS, Constants.COLUMN_STOCK_TX_PRODUCT_NAME, "TEXT");
+                                ContentValues tx = new ContentValues();
+                                tx.put(Constants.COLUMN_STOCK_TX_ID, java.util.UUID.randomUUID().toString());
+                                tx.put(Constants.COLUMN_STOCK_TX_PRODUCT_ID, productId);
+                                tx.put(Constants.COLUMN_STOCK_TX_PRODUCT_NAME, p != null ? p.getName() : null);
+                                tx.put(Constants.COLUMN_STOCK_TX_USER_ID, userId);
+                                String role = null;
+                                if (userId != null) {
+                                        User uobj = getUserByIdObject(userId);
+                                        if (uobj != null) role = uobj.getRole();
+                                }
+                                tx.put(Constants.COLUMN_STOCK_TX_USER_ROLE, role);
+                                tx.put(Constants.COLUMN_STOCK_TX_TYPE, "DELETE");
+                                int beforeStock = p != null ? p.getStock() : 0;
+                                tx.put(Constants.COLUMN_STOCK_TX_QUANTITY, beforeStock);
+                                tx.put(Constants.COLUMN_STOCK_TX_BEFORE, beforeStock);
+                                tx.put(Constants.COLUMN_STOCK_TX_AFTER, 0);
+                                tx.put(Constants.COLUMN_STOCK_TX_REASON, "删除商品");
+                                tx.put(Constants.COLUMN_STOCK_TX_TIMESTAMP, System.currentTimeMillis());
+                                try { db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, tx); } catch (Exception ignored) {}
+                        }
+                } catch (Exception ignored) {}
+
+                return rows;
         }
 
         /**
@@ -532,6 +624,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                                         String createNew = "CREATE TABLE " + newTable + " (" +
                                                 Constants.COLUMN_STOCK_TX_ID + " TEXT PRIMARY KEY," +
                                                 Constants.COLUMN_STOCK_TX_PRODUCT_ID + " TEXT NOT NULL," +
+                                                Constants.COLUMN_STOCK_TX_PRODUCT_NAME + " TEXT," +
                                                 Constants.COLUMN_STOCK_TX_USER_ID + " TEXT," +
                                                 Constants.COLUMN_STOCK_TX_USER_ROLE + " TEXT," +
                                                 Constants.COLUMN_STOCK_TX_TYPE + " TEXT NOT NULL," +
@@ -548,6 +641,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                                         String insertSQL = "INSERT INTO " + newTable + " (" +
                                                 Constants.COLUMN_STOCK_TX_ID + "," +
                                                 Constants.COLUMN_STOCK_TX_PRODUCT_ID + "," +
+                                                Constants.COLUMN_STOCK_TX_PRODUCT_NAME + "," +
                                                 Constants.COLUMN_STOCK_TX_USER_ID + "," +
                                                 Constants.COLUMN_STOCK_TX_USER_ROLE + "," +
                                                 Constants.COLUMN_STOCK_TX_TYPE + "," +
@@ -559,6 +653,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                                                 ") SELECT " +
                                                 Constants.COLUMN_STOCK_TX_ID + "," +
                                                 Constants.COLUMN_STOCK_TX_PRODUCT_ID + "," +
+                                                "(SELECT " + Constants.COLUMN_PRODUCT_NAME + " FROM " + Constants.TABLE_PRODUCTS + " p WHERE p." + Constants.COLUMN_PRODUCT_ID + " = " + Constants.TABLE_STOCK_TRANSACTIONS + "." + Constants.COLUMN_STOCK_TX_PRODUCT_ID + ") as " + Constants.COLUMN_STOCK_TX_PRODUCT_NAME + "," +
                                                 Constants.COLUMN_STOCK_TX_USER_ID + "," +
                                                 "(SELECT " + Constants.COLUMN_ROLE + " FROM " + Constants.TABLE_USERS + " u WHERE u." + Constants.COLUMN_USER_ID + " = " + Constants.TABLE_STOCK_TRANSACTIONS + "." + Constants.COLUMN_STOCK_TX_USER_ID + ") as " + Constants.COLUMN_STOCK_TX_USER_ROLE + "," +
                                                 Constants.COLUMN_STOCK_TX_TYPE + "," +
@@ -589,7 +684,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                                 } finally {
                                         db.endTransaction();
                                 }
-                        }
+                }
+
+                // 确保在任何升级路径完成后，索引存在以提升查询性能
+                try {
+                        db.execSQL(DbContract.SQL_CREATE_INDEX_PRODUCTS_NAME);
+                        db.execSQL(DbContract.SQL_CREATE_INDEX_PRODUCTS_BARCODE);
+                        db.execSQL(DbContract.SQL_CREATE_INDEX_PRODUCTS_CATEGORY);
+                } catch (Exception e) {
+                        e.printStackTrace();
+                }
                 }
     }
 

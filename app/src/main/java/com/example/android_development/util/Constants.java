@@ -57,6 +57,7 @@ public class Constants {
     public static final String TABLE_STOCK_TRANSACTIONS = "stock_transactions";
     public static final String COLUMN_STOCK_TX_ID = "tx_id";
     public static final String COLUMN_STOCK_TX_PRODUCT_ID = "product_id";
+    public static final String COLUMN_STOCK_TX_PRODUCT_NAME = "product_name";
     public static final String COLUMN_STOCK_TX_USER_ID = "user_id";
     public static final String COLUMN_STOCK_TX_USER_ROLE = "user_role";
     public static final String COLUMN_STOCK_TX_TYPE = "tx_type"; // IN/OUT

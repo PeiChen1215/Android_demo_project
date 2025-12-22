@@ -28,9 +28,40 @@
 
     </LinearLayout>
 
+    <!-- 全局历史时可搜索产品名称 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        android:id="@+id/layoutHistorySearch"
+        android:paddingBottom="8dp">
+
+        <EditText
+            android:id="@+id/etHistorySearch"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="按产品名搜索历史" />
+
+        <Button
+            android:id="@+id/buttonSearchHistory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="搜索" />
+
+        <Button
+            android:id="@+id/buttonClearHistorySearch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="清除" />
+
+    </LinearLayout>
+
     <ListView
         android:id="@+id/listViewStockHistory"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
 </LinearLayout>

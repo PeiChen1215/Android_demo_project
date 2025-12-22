@@ -27,12 +27,20 @@ public class ProductListActivity extends AppCompatActivity {
     private TextView textViewEmpty;
     private TextView textViewTitle;
     private Button buttonAddProduct;
+    private Button buttonStockHistory;
     private android.widget.EditText etSearch;
     private Button buttonSearch;
     private Button buttonClearSearch;
     private Button buttonBack;
     private ProductDAO productDAO;
     private List<Product> productList;
+    private SimpleAdapter simpleAdapter;
+    private List<Map<String, String>> adapterData;
+    private android.view.View footerView;
+    private Button btnLoadMore;
+    private static final int PAGE_SIZE = 20;
+    private int currentOffset = 0;
+    private boolean loadingMore = false;
     private PrefsManager prefsManager;
     private String currentUserRole;
 
@@ -76,6 +84,7 @@ public class ProductListActivity extends AppCompatActivity {
         textViewEmpty = findViewById(R.id.textViewEmpty);
         textViewTitle = findViewById(R.id.textViewTitle);
         buttonAddProduct = findViewById(R.id.buttonAddProduct);
+        buttonStockHistory = findViewById(R.id.buttonStockHistory);
         etSearch = findViewById(R.id.et_search);
         buttonSearch = findViewById(R.id.buttonSearch);
         buttonClearSearch = findViewById(R.id.buttonClearSearch);
@@ -126,6 +135,12 @@ public class ProductListActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(ProductListActivity.this, getString(R.string.no_permission_add), Toast.LENGTH_SHORT).show();
             }
+        });
+
+        buttonStockHistory.setOnClickListener(v -> {
+            Intent intent = new Intent(ProductListActivity.this, StockHistoryActivity.class);
+            // 不传 product_id 表示全局历史
+            startActivity(intent);
         });
 
         // 列表项点击事件
@@ -216,8 +231,19 @@ public class ProductListActivity extends AppCompatActivity {
     }
 
     private void loadProducts() {
-        // 从数据库获取所有商品
-        productList = productDAO.getAllProducts();
+        // 分页加载：重置偏移并加载第一页
+        currentOffset = 0;
+        adapterData = new ArrayList<>();
+        if (listViewProducts.getFooterViewsCount() == 0) {
+            footerView = getLayoutInflater().inflate(R.layout.list_footer_load_more, null);
+            btnLoadMore = footerView.findViewById(R.id.btnLoadMore);
+            btnLoadMore.setOnClickListener(v -> {
+                if (!loadingMore) loadNextPage();
+            });
+            listViewProducts.addFooterView(footerView);
+        }
+
+        productList = productDAO.getProductsPage(PAGE_SIZE, currentOffset);
 
         if (productList == null || productList.isEmpty()) {
             // 显示空状态提示
@@ -232,38 +258,88 @@ public class ProductListActivity extends AppCompatActivity {
             // 显示商品列表
             listViewProducts.setVisibility(View.VISIBLE);
             textViewEmpty.setVisibility(View.GONE);
-
-            // 创建SimpleAdapter需要的数据
-            List<Map<String, String>> data = new ArrayList<>();
-
+            // 填充数据并设置适配器
+            adapterData.clear();
             for (Product product : productList) {
                 Map<String, String> map = new HashMap<>();
                 map.put("name", product.getName());
                 map.put("price", String.format("￥%.2f", product.getPrice()));
                 map.put("stock", String.format("库存: %d", product.getStock()));
                 map.put("category", getCategoryName(product.getCategory()));
-
-                data.add(map);
+                adapterData.add(map);
             }
 
-            // 创建适配器
-            SimpleAdapter adapter = new SimpleAdapter(
+            simpleAdapter = new SimpleAdapter(
                     this,
-                    data,
+                    adapterData,
                     R.layout.item_product,
                     new String[]{"name", "price", "stock", "category"},
                     new int[]{R.id.textViewProductName, R.id.textViewProductPrice,
                             R.id.textViewProductStock, R.id.textViewProductCategory}
             );
 
-            listViewProducts.setAdapter(adapter);
+            listViewProducts.setAdapter(simpleAdapter);
+
+            // 准备下一页
+            currentOffset += productList.size();
         }
+    }
+
+    private void loadNextPage() {
+        loadingMore = true;
+        btnLoadMore.setEnabled(false);
+        List<Product> next = productDAO.getProductsPage(PAGE_SIZE, currentOffset);
+        if (next != null && !next.isEmpty()) {
+            for (Product product : next) {
+                Map<String, String> map = new HashMap<>();
+                map.put("name", product.getName());
+                map.put("price", String.format("￥%.2f", product.getPrice()));
+                map.put("stock", String.format("库存: %d", product.getStock()));
+                map.put("category", getCategoryName(product.getCategory()));
+                adapterData.add(map);
+            }
+            simpleAdapter.notifyDataSetChanged();
+            currentOffset += next.size();
+        } else {
+            // 没有更多，隐藏按钮
+            if (footerView != null) footerView.setVisibility(View.GONE);
+        }
+        btnLoadMore.setEnabled(true);
+        loadingMore = false;
     }
 
     private void performSearch(String keyword) {
         if (keyword == null) keyword = "";
-        List<Product> results = productDAO.searchProducts(keyword);
+        // 分页搜索：重置偏移并加载第一页
+        currentOffset = 0;
+        adapterData = new ArrayList<>();
+        if (listViewProducts.getFooterViewsCount() == 0) {
+            final String searchKw = keyword; // lambda 要求捕获的局部变量为 effectively final
+            footerView = getLayoutInflater().inflate(R.layout.list_footer_load_more, null);
+            btnLoadMore = footerView.findViewById(R.id.btnLoadMore);
+            btnLoadMore.setOnClickListener(v -> {
+                if (!loadingMore) {
+                    List<Product> next = productDAO.searchProductsPage(searchKw, PAGE_SIZE, currentOffset);
+                    if (next != null && !next.isEmpty()) {
+                        for (Product p : next) {
+                            Map<String, String> map = new HashMap<>();
+                            map.put("name", p.getName());
+                            map.put("price", String.format("￥%.2f", p.getPrice()));
+                            map.put("stock", String.format("库存: %d", p.getStock()));
+                            map.put("category", getCategoryName(p.getCategory()));
+                            adapterData.add(map);
+                        }
+                        simpleAdapter.notifyDataSetChanged();
+                        currentOffset += next.size();
+                    } else {
+                        if (footerView != null) footerView.setVisibility(View.GONE);
+                    }
+                }
+            });
+            listViewProducts.addFooterView(footerView);
+        }
 
+        List<Product> results = productDAO.searchProductsPage(keyword, PAGE_SIZE, currentOffset);
         productList = results;
 
         if (productList == null || productList.isEmpty()) {
@@ -274,26 +350,28 @@ public class ProductListActivity extends AppCompatActivity {
             listViewProducts.setVisibility(View.VISIBLE);
             textViewEmpty.setVisibility(View.GONE);
 
-            List<java.util.Map<String, String>> data = new java.util.ArrayList<>();
+            adapterData.clear();
             for (Product product : productList) {
                 java.util.Map<String, String> map = new java.util.HashMap<>();
                 map.put("name", product.getName());
                 map.put("price", String.format("￥%.2f", product.getPrice()));
                 map.put("stock", String.format("库存: %d", product.getStock()));
                 map.put("category", getCategoryName(product.getCategory()));
-                data.add(map);
+                adapterData.add(map);
             }
 
-            SimpleAdapter adapter = new SimpleAdapter(
+            simpleAdapter = new SimpleAdapter(
                     this,
-                    data,
+                    adapterData,
                     R.layout.item_product,
                     new String[]{"name", "price", "stock", "category"},
                     new int[]{R.id.textViewProductName, R.id.textViewProductPrice,
                             R.id.textViewProductStock, R.id.textViewProductCategory}
             );
 
-            listViewProducts.setAdapter(adapter);
+            listViewProducts.setAdapter(simpleAdapter);
+
+            currentOffset += productList.size();
         }
     }
 

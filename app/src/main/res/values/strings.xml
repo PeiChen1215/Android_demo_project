@@ -28,6 +28,8 @@
     <string name="stock_history_title">库存记录</string>
     <string name="stock_tx_type_in">入库 %1$s</string>
     <string name="stock_tx_type_out">出库 %1$s</string>
+    <string name="stock_tx_type_add">新增 %1$s</string>
+    <string name="stock_tx_type_delete">删除 %1$s</string>
     <string name="stock_tx_detail">库存: %1$d → %2$d | 操作人: %3$s</string>
     <string name="stock_tx_detail_with_role">库存: %1$d → %2$d | 操作人: %3$s (%4$s)</string>
     <string name="btn_history">记录</string>
