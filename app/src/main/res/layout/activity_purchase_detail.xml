@@ -5,6 +5,56 @@
     android:layout_height="match_parent"
     android:padding="12dp">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:background="?android:attr/selectableItemBackground">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+            <EditText
+                android:id="@+id/et_po_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="采购单名称 (可编辑)"
+                android:imeOptions="actionDone"
+                android:textSize="16sp"
+                android:inputType="textCapWords" />
+
+            <TextView
+                android:id="@+id/tv_po_id"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="PO: -"
+                android:textStyle="bold"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/tv_supplier_small"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="供应商: -"
+                android:textSize="12sp"
+                android:paddingTop="2dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_po_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:padding="6dp"
+            android:text="STATUS"
+            android:textAllCaps="true"
+            android:textSize="12sp"
+            android:background="@android:color/darker_gray"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
     <Spinner
         android:id="@+id/sp_supplier"
         android:layout_width="match_parent"
@@ -22,8 +72,40 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:gravity="end"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
 
+        <TextView
+            android:id="@+id/tv_total_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="总计："
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:layout_marginEnd="4dp" />
+
+        <TextView
+            android:id="@+id/tv_total"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0.00"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
         <Button
             android:id="@+id/btn_add_line"
             android:layout_width="wrap_content"
@@ -42,10 +124,30 @@
             android:text="保存" />
 
         <Button
+            android:id="@+id/btn_submit_po"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="提交"
+            android:layout_marginStart="8dp" />
+
+        <Button
             android:id="@+id/btn_approve_po"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="批准"
+            android:layout_marginStart="8dp" />
+
+        <Button
+            android:id="@+id/btn_reject_po"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="拒绝"
+            android:layout_marginStart="8dp" />
+        <Button
+            android:id="@+id/btn_history_po"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="审批历史"
             android:layout_marginStart="8dp" />
 
         <Button
@@ -55,6 +157,8 @@
             android:text="收货"
             android:layout_marginStart="8dp" />
 
-    </LinearLayout>
+        </LinearLayout>
+
+    </HorizontalScrollView>
 
 </LinearLayout>

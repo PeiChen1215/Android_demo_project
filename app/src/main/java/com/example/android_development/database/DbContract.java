@@ -97,6 +97,7 @@ public class DbContract {
             "CREATE TABLE " + Constants.TABLE_PURCHASE_ORDERS + " (" +
                     Constants.COLUMN_PO_ID + " TEXT PRIMARY KEY," +
                     Constants.COLUMN_PO_SUPPLIER_ID + " TEXT," +
+                    Constants.COLUMN_PO_NAME + " TEXT," +
                     Constants.COLUMN_PO_STATUS + " TEXT," +
                     Constants.COLUMN_PO_CREATED_AT + " INTEGER," +
                     Constants.COLUMN_PO_EXPECTED_AT + " INTEGER," +
@@ -119,6 +120,37 @@ public class DbContract {
 
     public static final String SQL_DROP_TABLE_PURCHASE_LINES =
             "DROP TABLE IF EXISTS " + Constants.TABLE_PURCHASE_LINES;
+
+    // 采购审批表
+    public static final String SQL_CREATE_TABLE_PO_APPROVALS =
+            "CREATE TABLE " + Constants.TABLE_PO_APPROVALS + " (" +
+                    Constants.COLUMN_PO_APPROVAL_ID + " TEXT PRIMARY KEY," +
+                    Constants.COLUMN_PO_APPROVAL_PO_ID + " TEXT NOT NULL," +
+                    Constants.COLUMN_PO_APPROVAL_APPROVER_ID + " TEXT," +
+                    Constants.COLUMN_PO_APPROVAL_APPROVER_ROLE + " TEXT," +
+                    Constants.COLUMN_PO_APPROVAL_DECISION + " TEXT," +
+                    Constants.COLUMN_PO_APPROVAL_COMMENT + " TEXT," +
+                    Constants.COLUMN_PO_APPROVAL_TIMESTAMP + " INTEGER" +
+                    ")";
+
+    public static final String SQL_DROP_TABLE_PO_APPROVALS =
+            "DROP TABLE IF EXISTS " + Constants.TABLE_PO_APPROVALS;
+
+    // 通用系统审计表
+    public static final String SQL_CREATE_TABLE_SYSTEM_AUDIT =
+            "CREATE TABLE " + Constants.TABLE_SYSTEM_AUDIT + " (" +
+                    Constants.COLUMN_SYSTEM_AUDIT_ID + " TEXT PRIMARY KEY," +
+                    Constants.COLUMN_SYSTEM_AUDIT_ENTITY + " TEXT," +
+                    Constants.COLUMN_SYSTEM_AUDIT_ENTITY_ID + " TEXT," +
+                    Constants.COLUMN_SYSTEM_AUDIT_ACTION + " TEXT," +
+                    Constants.COLUMN_SYSTEM_AUDIT_USER_ID + " TEXT," +
+                    Constants.COLUMN_SYSTEM_AUDIT_USER_ROLE + " TEXT," +
+                    Constants.COLUMN_SYSTEM_AUDIT_DETAIL + " TEXT," +
+                    Constants.COLUMN_SYSTEM_AUDIT_TIMESTAMP + " INTEGER" +
+                    ")";
+
+    public static final String SQL_DROP_TABLE_SYSTEM_AUDIT =
+            "DROP TABLE IF EXISTS " + Constants.TABLE_SYSTEM_AUDIT;
 
     // 盘点表
     public static final String SQL_CREATE_TABLE_STOCK_COUNTS =

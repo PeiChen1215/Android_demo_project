@@ -5,20 +5,51 @@
     android:orientation="vertical"
     android:padding="8dp">
 
-    <LinearLayout
+    <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="8dp">
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="8dp">
 
         <TextView
             android:id="@+id/textViewPurchaseTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/label_purchase_list"
+            android:textSize="18sp" />
+
+        <EditText
+            android:id="@+id/etSearch"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/label_purchase_list"
-            android:textSize="18sp" />
+            android:hint="搜索名称/ID"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:layout_marginStart="8dp" />
+
+        <Spinner
+            android:id="@+id/spStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp" />
+
+        <ImageButton
+            android:id="@+id/buttonMore"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_more"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="更多筛选"
+            android:tint="@color/primary"
+            android:layout_marginStart="8dp" />
 
         <ImageButton
             android:id="@+id/buttonNewPurchase"
@@ -29,7 +60,8 @@
             android:contentDescription="新建采购"
             android:tint="@color/primary" />
 
-    </LinearLayout>
+        </LinearLayout>
+    </HorizontalScrollView>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/listViewPurchases"
@@ -37,6 +69,14 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:dividerHeight="1dp" />
+
+    <Button
+        android:id="@+id/buttonLoadMore"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="加载更多"
+        android:visibility="gone"
+        android:layout_marginTop="8dp" />
 
     <TextView
         android:id="@+id/textViewNoPO"

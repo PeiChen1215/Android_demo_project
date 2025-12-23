@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import com.example.android_development.util.PrefsManager;
+import com.example.android_development.util.Audit;
 import com.example.android_development.model.StockCount;
 import com.example.android_development.util.Constants;
 import java.util.ArrayList;
@@ -13,12 +14,76 @@ import java.util.List;
 public class InventoryDAO {
     private SQLiteDatabase db;
     private PrefsManager prefsManager;
+    private android.content.Context ctx;
 
     public InventoryDAO(SQLiteDatabase db) { this.db = db; }
 
     public InventoryDAO(SQLiteDatabase db, Context ctx) {
         this.db = db;
+        this.ctx = ctx;
         if (ctx != null) this.prefsManager = new PrefsManager(ctx);
+    }
+
+    // 并发保护的货架库存调整（可用于销售等场景）
+    public static boolean adjustShelfStock(SQLiteDatabase db, PrefsManager prefsManager, String productId, int delta, String reason, String type) {
+        if (productId == null) return false;
+        if (delta == 0) return true;
+
+        boolean localTxStarted = false;
+        Cursor c = null;
+        try {
+            if (!db.inTransaction()) { db.beginTransaction(); localTxStarted = true; }
+
+            c = db.rawQuery("SELECT " + Constants.COLUMN_STOCK + " FROM " + Constants.TABLE_PRODUCTS + " WHERE " + Constants.COLUMN_PRODUCT_ID + " = ?", new String[]{productId});
+            if (c == null) return false;
+            if (!c.moveToFirst()) return false;
+            int before = c.getInt(0);
+            c.close();
+            c = null;
+
+            int after = before + delta;
+            if (after < 0) after = 0;
+
+            android.content.ContentValues pv = new android.content.ContentValues();
+            pv.put(Constants.COLUMN_STOCK, after);
+            int rows = db.update(Constants.TABLE_PRODUCTS, pv, Constants.COLUMN_PRODUCT_ID + " = ? AND " + Constants.COLUMN_STOCK + " = ?", new String[]{productId, String.valueOf(before)});
+            if (rows == 0) return false;
+
+            // 写审计记录
+            try {
+                ContentValues tx = new ContentValues();
+                tx.put(Constants.COLUMN_STOCK_TX_ID, java.util.UUID.randomUUID().toString());
+                tx.put(Constants.COLUMN_STOCK_TX_PRODUCT_ID, productId);
+                tx.put(Constants.COLUMN_STOCK_TX_PRODUCT_NAME, (String) null);
+                String uid = null;
+                String urole = null;
+                if (prefsManager != null) {
+                    try { uid = prefsManager.getUserId(); } catch (Exception ignored) {}
+                    try { urole = prefsManager.getUserRole(); } catch (Exception ignored) {}
+                }
+                tx.put(Constants.COLUMN_STOCK_TX_USER_ID, uid);
+                tx.put(Constants.COLUMN_STOCK_TX_USER_ROLE, urole);
+                tx.put(Constants.COLUMN_STOCK_TX_TYPE, type);
+                tx.put(Constants.COLUMN_STOCK_TX_QUANTITY, Math.abs(delta));
+                tx.put(Constants.COLUMN_STOCK_TX_BEFORE, before);
+                tx.put(Constants.COLUMN_STOCK_TX_AFTER, after);
+                tx.put(Constants.COLUMN_STOCK_TX_REASON, reason);
+                tx.put(Constants.COLUMN_STOCK_TX_TIMESTAMP, System.currentTimeMillis());
+                    try { db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, tx); } catch (Exception ignored) {}
+                    try { Audit.writeSystemAudit(db, uid, urole, "product:" + productId, type.toLowerCase(), reason); } catch (Exception ignored) {}
+            } catch (Exception ignored) {}
+
+            if (localTxStarted) db.setTransactionSuccessful();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            if (c != null) try { c.close(); } catch (Exception ignored) {}
+            if (localTxStarted) {
+                try { db.endTransaction(); } catch (Exception ignored) {}
+            }
+        }
     }
 
     public long createStockCount(StockCount sc) {
@@ -50,38 +115,82 @@ public class InventoryDAO {
         return list;
     }
 
-    // 内部补货：仓库 -> 货架
+    // 内部补货：仓库 -> 货架（read→update，带并发保护与审计）
     public boolean restockShelf(String productId, int qty) {
-        db.beginTransaction();
+        if (productId == null) return false;
+        if (qty <= 0) return false;
+
+        // 权限检查：调整库存需要 ADJUST_STOCK
+        if (ctx != null && !com.example.android_development.security.Auth.hasPermission(ctx, com.example.android_development.util.Constants.PERM_ADJUST_STOCK)) {
+            com.example.android_development.util.DaoResult.setError(com.example.android_development.util.DaoResult.ERR_PERMISSION, "no permission to adjust stock");
+            return false;
+        }
+
+        boolean localTxStarted = false;
+        Cursor c = null;
         try {
-            // 1. 检查仓库库存是否足够
-            Cursor c = db.rawQuery("SELECT " + Constants.COLUMN_WAREHOUSE_STOCK + " FROM " + Constants.TABLE_PRODUCTS + " WHERE " + Constants.COLUMN_PRODUCT_ID + " = ?", new String[]{productId});
-            if (c != null && c.moveToFirst()) {
-                int currentWarehouse = c.getInt(0);
-                c.close();
-                if (currentWarehouse < qty) return false; // 库存不足
-            } else {
-                if (c != null) c.close();
-                return false;
-            }
+            if (!db.inTransaction()) { db.beginTransaction(); localTxStarted = true; }
 
-            // 2. 扣减仓库库存
-            db.execSQL("UPDATE " + Constants.TABLE_PRODUCTS + 
-                       " SET " + Constants.COLUMN_WAREHOUSE_STOCK + " = " + Constants.COLUMN_WAREHOUSE_STOCK + " - " + qty + 
-                       " WHERE " + Constants.COLUMN_PRODUCT_ID + " = ?", new Object[]{productId});
+            // 1. 读取当前仓库和货架库存
+            c = db.rawQuery("SELECT " + Constants.COLUMN_WAREHOUSE_STOCK + ", " + Constants.COLUMN_STOCK + " FROM " + Constants.TABLE_PRODUCTS + " WHERE " + Constants.COLUMN_PRODUCT_ID + " = ?", new String[]{productId});
+            if (c == null) return false;
+            if (!c.moveToFirst()) return false;
+            int currentWarehouse = c.getInt(0);
+            int currentShelf = c.getInt(1);
+            c.close();
+            c = null;
 
-            // 3. 增加货架库存
-            db.execSQL("UPDATE " + Constants.TABLE_PRODUCTS + 
-                       " SET " + Constants.COLUMN_STOCK + " = " + Constants.COLUMN_STOCK + " + " + qty + 
-                       " WHERE " + Constants.COLUMN_PRODUCT_ID + " = ?", new Object[]{productId});
+            if (currentWarehouse < qty) return false; // 仓库库存不足
 
-            db.setTransactionSuccessful();
+            int newWarehouse = currentWarehouse - qty;
+            int newShelf = currentShelf + qty;
+
+            // 2. 条件更新仓库库存（以当前值做并发保护）
+            android.content.ContentValues v1 = new android.content.ContentValues();
+            v1.put(Constants.COLUMN_WAREHOUSE_STOCK, newWarehouse);
+            int rows1 = db.update(Constants.TABLE_PRODUCTS, v1, Constants.COLUMN_PRODUCT_ID + " = ? AND " + Constants.COLUMN_WAREHOUSE_STOCK + " = ?", new String[]{productId, String.valueOf(currentWarehouse)});
+            if (rows1 == 0) return false; // 并发冲突或商品被删除
+
+            // 3. 条件更新货架库存（以当前值做并发保护）
+            android.content.ContentValues v2 = new android.content.ContentValues();
+            v2.put(Constants.COLUMN_STOCK, newShelf);
+            int rows2 = db.update(Constants.TABLE_PRODUCTS, v2, Constants.COLUMN_PRODUCT_ID + " = ? AND " + Constants.COLUMN_STOCK + " = ?", new String[]{productId, String.valueOf(currentShelf)});
+            if (rows2 == 0) return false; // 并发冲突
+
+            // 4. 写入审计记录（补货）
+            try {
+                ContentValues tx = new ContentValues();
+                tx.put(Constants.COLUMN_STOCK_TX_ID, java.util.UUID.randomUUID().toString());
+                tx.put(Constants.COLUMN_STOCK_TX_PRODUCT_ID, productId);
+                tx.put(Constants.COLUMN_STOCK_TX_PRODUCT_NAME, (String) null);
+                String uid = null;
+                String urole = null;
+                if (prefsManager != null) {
+                    try { uid = prefsManager.getUserId(); } catch (Exception ignored) {}
+                    try { urole = prefsManager.getUserRole(); } catch (Exception ignored) {}
+                }
+                tx.put(Constants.COLUMN_STOCK_TX_USER_ID, uid);
+                tx.put(Constants.COLUMN_STOCK_TX_USER_ROLE, urole);
+                tx.put(Constants.COLUMN_STOCK_TX_TYPE, "IN");
+                tx.put(Constants.COLUMN_STOCK_TX_QUANTITY, qty);
+                tx.put(Constants.COLUMN_STOCK_TX_BEFORE, currentWarehouse);
+                tx.put(Constants.COLUMN_STOCK_TX_AFTER, newWarehouse);
+                tx.put(Constants.COLUMN_STOCK_TX_REASON, "补货");
+                tx.put(Constants.COLUMN_STOCK_TX_TIMESTAMP, System.currentTimeMillis());
+                try { db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, tx); } catch (Exception ignored) {}
+                try { Audit.writeSystemAudit(db, uid, urole, "product:" + productId, "restock", "补货"); } catch (Exception ignored) {}
+            } catch (Exception ignored) {}
+
+            if (localTxStarted) db.setTransactionSuccessful();
             return true;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         } finally {
-            db.endTransaction();
+            if (c != null) try { c.close(); } catch (Exception ignored) {}
+            if (localTxStarted) {
+                try { db.endTransaction(); } catch (Exception ignored) {}
+            }
         }
     }
 
@@ -89,6 +198,12 @@ public class InventoryDAO {
     public boolean receivePurchase(String productId, int qty) {
         if (productId == null) return false;
         if (qty <= 0) return false; // 不接受 0 或负数入库
+
+        // 权限检查：接收 PO 需要 RECEIVE_PO
+        if (ctx != null && !com.example.android_development.security.Auth.hasPermission(ctx, com.example.android_development.util.Constants.PERM_RECEIVE_PO)) {
+            com.example.android_development.util.DaoResult.setError(com.example.android_development.util.DaoResult.ERR_PERMISSION, "no permission to receive purchase");
+            return false;
+        }
 
         boolean localTxStarted = false;
         try {
@@ -125,7 +240,8 @@ public class InventoryDAO {
                         tx.put(Constants.COLUMN_STOCK_TX_AFTER, updated);
                         tx.put(Constants.COLUMN_STOCK_TX_REASON, "采购入库");
                         tx.put(Constants.COLUMN_STOCK_TX_TIMESTAMP, System.currentTimeMillis());
-                        try { db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, tx); } catch (Exception ignored) {}
+                            try { db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, tx); } catch (Exception ignored) {}
+                            try { Audit.writeSystemAudit(db, uid, urole, "product:" + productId, "in", "采购入库"); } catch (Exception ignored) {}
                     } catch (Exception ignored) {}
 
                     if (localTxStarted) db.setTransactionSuccessful();

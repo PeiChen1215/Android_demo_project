@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 import com.example.android_development.model.Product;
 import com.example.android_development.model.User;
+import com.example.android_development.util.Audit;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -69,6 +70,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 } catch (Exception ignored) {}
                 try {
                         db.execSQL(DbContract.SQL_CREATE_TABLE_PURCHASE_LINES);
+                                try { db.execSQL(DbContract.SQL_CREATE_TABLE_PO_APPROVALS); } catch (Exception ignored) {}
                 } catch (Exception ignored) {}
                 try {
                         db.execSQL(DbContract.SQL_CREATE_TABLE_STOCK_COUNTS);
@@ -433,6 +435,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                                 tx.put(Constants.COLUMN_STOCK_TX_REASON, "添加商品");
                                 tx.put(Constants.COLUMN_STOCK_TX_TIMESTAMP, System.currentTimeMillis());
                                 try { db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, tx); } catch (Exception ignored) {}
+                                try { Audit.writeSystemAudit(db, userId, role, "product:" + product.getId(), "add", "添加商品"); } catch (Exception ignored) {}
                         }
                 } catch (Exception ignored) {}
 
@@ -482,6 +485,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                                 tx.put(Constants.COLUMN_STOCK_TX_REASON, "管理员修改库存");
                                 tx.put(Constants.COLUMN_STOCK_TX_TIMESTAMP, System.currentTimeMillis());
                                 try { db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, tx); } catch (Exception ignored) {}
+                                try { Audit.writeSystemAudit(db, userId, role, "product:" + product.getId(), type.toLowerCase(), "管理员修改库存"); } catch (Exception ignored) {}
                         }
 
                         db.setTransactionSuccessful();
@@ -523,6 +527,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                                 tx.put(Constants.COLUMN_STOCK_TX_REASON, "删除商品");
                                 tx.put(Constants.COLUMN_STOCK_TX_TIMESTAMP, System.currentTimeMillis());
                                 try { db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, tx); } catch (Exception ignored) {}
+                                try { Audit.writeSystemAudit(db, userId, role, "product:" + productId, "delete", "删除商品"); } catch (Exception ignored) {}
                         }
                 } catch (Exception ignored) {}
 
@@ -577,6 +582,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                                         tx.put(Constants.COLUMN_STOCK_TX_REASON, "通过角色修改库存");
                                         tx.put(Constants.COLUMN_STOCK_TX_TIMESTAMP, System.currentTimeMillis());
                                         db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, tx);
+                                        try { Audit.writeSystemAudit(db, roleUserId, userRole, "product:" + product.getId(), type.toLowerCase(), "通过角色修改库存"); } catch (Exception ignored) {}
                         }
 
                         db.setTransactionSuccessful();
@@ -614,6 +620,21 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     ensureColumnExists(db, Constants.TABLE_PRODUCTS, Constants.COLUMN_PRODUCTION_DATE, "INTEGER");
                     ensureColumnExists(db, Constants.TABLE_PRODUCTS, Constants.COLUMN_EXPIRATION_DATE, "INTEGER");
                 }
+
+                                if (oldVersion < 6) {
+                                                // Ensure purchase_orders has status column and create approvals table
+                                                ensureColumnExists(db, Constants.TABLE_PURCHASE_ORDERS, Constants.COLUMN_PO_STATUS, "TEXT DEFAULT '" + Constants.PO_STATUS_CREATED + "'");
+                                                try { db.execSQL(DbContract.SQL_CREATE_TABLE_PO_APPROVALS); } catch (Exception ignored) {}
+                                }
+
+                                if (oldVersion < 7) {
+                                        // Add PO name column
+                                        ensureColumnExists(db, Constants.TABLE_PURCHASE_ORDERS, Constants.COLUMN_PO_NAME, "TEXT");
+                                        // For existing rows, populate a default name if empty: use PO-<first8 of id>
+                                        try {
+                                                db.execSQL("UPDATE " + Constants.TABLE_PURCHASE_ORDERS + " SET " + Constants.COLUMN_PO_NAME + " = ('PO-' || substr(" + Constants.COLUMN_PO_ID + ",1,8)) WHERE " + Constants.COLUMN_PO_NAME + " IS NULL OR trim(" + Constants.COLUMN_PO_NAME + ") = ''");
+                                        } catch (Exception ignored) {}
+                                }
 
                 // 保障 users 和 products 表存在（如果是非常旧的版本）
                 if (oldVersion < 2) {
@@ -734,7 +755,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 // 兜底：确保采购/盘点/销售等脚手架表在任何升级路径后都存在，防止旧数据库缺失表导致运行时异常
                 try { db.execSQL(DbContract.SQL_CREATE_TABLE_SUPPLIERS); } catch (Exception ignored) {}
                 try { db.execSQL(DbContract.SQL_CREATE_TABLE_PURCHASE_ORDERS); } catch (Exception ignored) {}
+                try { db.execSQL(DbContract.SQL_CREATE_TABLE_PO_APPROVALS); } catch (Exception ignored) {}
+                try { db.execSQL(DbContract.SQL_CREATE_TABLE_SYSTEM_AUDIT); } catch (Exception ignored) {}
                 try { db.execSQL(DbContract.SQL_CREATE_TABLE_PURCHASE_LINES); } catch (Exception ignored) {}
+                try { db.execSQL(DbContract.SQL_CREATE_TABLE_SYSTEM_AUDIT); } catch (Exception ignored) {}
                 try { db.execSQL(DbContract.SQL_CREATE_TABLE_STOCK_COUNTS); } catch (Exception ignored) {}
                 try { db.execSQL(DbContract.SQL_CREATE_TABLE_STOCK_COUNT_LINES); } catch (Exception ignored) {}
                 try { db.execSQL(DbContract.SQL_CREATE_TABLE_SALES); } catch (Exception ignored) {}
@@ -747,6 +771,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 // 在打开数据库时保障产品表包含 thumb_url 列（兼容老版本）
                 try {
                         ensureColumnExists(db, Constants.TABLE_PRODUCTS, Constants.COLUMN_THUMB_URL, "TEXT");
+                } catch (Exception ignored) {}
+                try {
+                        ensureColumnExists(db, Constants.TABLE_PURCHASE_ORDERS, Constants.COLUMN_PO_NAME, "TEXT");
                 } catch (Exception ignored) {}
         }
 
