@@ -21,9 +21,14 @@ public class PoLineAdapter extends BaseAdapter {
     private List<PurchaseLine> lines;
     private List<Product> products; // parallel list to show names
     private android.database.sqlite.SQLiteDatabase db;
+    private boolean editable = true;
 
     public PoLineAdapter(Context ctx, List<PurchaseLine> lines, List<Product> products) {
-        this.ctx = ctx; this.lines = lines; this.products = products;
+        this(ctx, lines, products, true);
+    }
+
+    public PoLineAdapter(Context ctx, List<PurchaseLine> lines, List<Product> products, boolean editable) {
+        this.ctx = ctx; this.lines = lines; this.products = products; this.editable = editable;
         try {
             DatabaseHelper dh = new DatabaseHelper(ctx);
             db = dh.getWritableDatabase();
@@ -47,53 +52,68 @@ public class PoLineAdapter extends BaseAdapter {
         tvName.setText((p != null && p.getName() != null) ? p.getName() : (line.getProductId() == null ? "(未选择)" : line.getProductId()));
         etQty.setText(String.valueOf(line.getQty()));
 
-        etQty.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus) {
-                String s = etQty.getText().toString();
-                if (!TextUtils.isEmpty(s)) {
-                    try {
-                        int val = Integer.parseInt(s);
-                        if (val < 0) val = 0;
-                        lines.get(position).setQty(val);
-                        etQty.setText(String.valueOf(val));
-                    } catch (Exception ignored) { etQty.setText("0"); lines.get(position).setQty(0); }
-                } else {
-                    etQty.setText("0"); lines.get(position).setQty(0);
+        if (editable) {
+            etQty.setOnFocusChangeListener((v, hasFocus) -> {
+                if (!hasFocus) {
+                    String s = etQty.getText().toString();
+                    if (!TextUtils.isEmpty(s)) {
+                        try {
+                            int val = Integer.parseInt(s);
+                            if (val < 0) val = 0;
+                            lines.get(position).setQty(val);
+                            etQty.setText(String.valueOf(val));
+                        } catch (Exception ignored) { etQty.setText("0"); lines.get(position).setQty(0); }
+                    } else {
+                        etQty.setText("0"); lines.get(position).setQty(0);
+                    }
                 }
-            }
-        });
-
-        // 点击商品名选择商品
-        tvName.setOnClickListener(v -> {
-            if (db == null) return;
-            ProductDAO productDAO = new ProductDAO(db);
-            List<Product> all = productDAO.getAllProducts();
-            if (all == null || all.isEmpty()) {
-                android.widget.Toast.makeText(ctx, "没有可选商品", android.widget.Toast.LENGTH_SHORT).show();
-                return;
-            }
-            final List<String> names = new java.util.ArrayList<>();
-            for (Product prod : all) names.add(prod.getName() == null ? prod.getId() : prod.getName());
-            android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(ctx);
-            b.setTitle("选择商品");
-            b.setItems(names.toArray(new String[0]), (dialog, which) -> {
-                Product sel = all.get(which);
-                lines.get(position).setProductId(sel.getId());
-                if (products != null) {
-                    if (position < products.size()) products.set(position, sel);
-                    else products.add(sel);
-                }
-                tvName.setText(sel.getName());
             });
-            b.setNegativeButton("取消", null);
-            b.show();
-        });
+        } else {
+            etQty.setEnabled(false);
+        }
 
-        btnRemove.setOnClickListener(v -> {
-            lines.remove(position);
-            if (products != null && position < products.size()) products.remove(position);
-            notifyDataSetChanged();
-        });
+        // 点击商品名选择商品（仅在可编辑时可用）
+        if (editable) {
+            tvName.setOnClickListener(v -> {
+                if (db == null) return;
+                ProductDAO productDAO = new ProductDAO(db);
+                List<Product> all = productDAO.getAllProducts();
+                if (all == null || all.isEmpty()) {
+                    android.widget.Toast.makeText(ctx, ctx.getString(R.string.no_products_available), android.widget.Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                final List<String> names = new java.util.ArrayList<>();
+                for (Product prod : all) names.add(prod.getName() == null ? prod.getId() : prod.getName());
+                android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(ctx);
+                b.setTitle(ctx.getString(R.string.select_product));
+                b.setItems(names.toArray(new String[0]), (dialog, which) -> {
+                    Product sel = all.get(which);
+                    lines.get(position).setProductId(sel.getId());
+                    if (products != null) {
+                        if (position < products.size()) products.set(position, sel);
+                        else products.add(sel);
+                    }
+                    tvName.setText(sel.getName());
+                });
+                b.setNegativeButton(ctx.getString(R.string.btn_cancel), null);
+                b.show();
+            });
+        } else {
+            tvName.setEnabled(false);
+        }
+
+        if (editable) {
+            btnRemove.setOnClickListener(v -> {
+                lines.remove(position);
+                if (products != null && position < products.size()) products.remove(position);
+                notifyDataSetChanged();
+            });
+        } else {
+            btnRemove.setText("已完成");
+            btnRemove.setEnabled(false);
+            btnRemove.setClickable(false);
+            btnRemove.setAlpha(0.6f);
+        }
 
         return convertView;
     }

@@ -19,6 +19,11 @@ public class PurchaseDAO {
         this.inventoryDAO = new InventoryDAO(db);
     }
 
+    public PurchaseDAO(SQLiteDatabase db, android.content.Context ctx) {
+        this.db = db;
+        this.inventoryDAO = new InventoryDAO(db, ctx);
+    }
+
     public long addPurchaseOrder(PurchaseOrder po) {
         if (po == null) return -1;
         if (po.getId() == null) po.setId(UUID.randomUUID().toString());
@@ -28,6 +33,23 @@ public class PurchaseDAO {
 
     public long addPurchaseLine(PurchaseLine line) {
         if (line == null) return -1;
+        // Prevent adding lines to a received purchase order
+        if (line.getPoId() != null) {
+            Cursor c = db.query(Constants.TABLE_PURCHASE_ORDERS, new String[]{Constants.COLUMN_PO_STATUS}, Constants.COLUMN_PO_ID + " = ?", new String[]{line.getPoId()}, null, null, null);
+            if (c != null) {
+                if (c.moveToFirst()) {
+                    int idx = c.getColumnIndex(Constants.COLUMN_PO_STATUS);
+                    if (idx != -1) {
+                        String st = c.getString(idx);
+                        if ("received".equalsIgnoreCase(st)) {
+                            c.close();
+                            return -1;
+                        }
+                    }
+                }
+                c.close();
+            }
+        }
         if (line.getId() == null) line.setId(UUID.randomUUID().toString());
         ContentValues v = line.toContentValues();
         long r = db.insert(Constants.TABLE_PURCHASE_LINES, null, v);
@@ -74,6 +96,20 @@ public class PurchaseDAO {
 
     public int updatePurchaseLine(PurchaseLine line) {
         if (line == null || line.getId() == null) return 0;
+        // Prevent updating lines if parent PO is already received
+        if (line.getPoId() != null) {
+            Cursor c = db.query(Constants.TABLE_PURCHASE_ORDERS, new String[]{Constants.COLUMN_PO_STATUS}, Constants.COLUMN_PO_ID + " = ?", new String[]{line.getPoId()}, null, null, null);
+            if (c != null) {
+                if (c.moveToFirst()) {
+                    int idx = c.getColumnIndex(Constants.COLUMN_PO_STATUS);
+                    if (idx != -1) {
+                        String st = c.getString(idx);
+                        if ("received".equalsIgnoreCase(st)) { c.close(); return 0; }
+                    }
+                }
+                c.close();
+            }
+        }
         ContentValues v = line.toContentValues();
         v.remove(Constants.COLUMN_PO_LINE_ID);
         return db.update(Constants.TABLE_PURCHASE_LINES, v, Constants.COLUMN_PO_LINE_ID + " = ?", new String[]{line.getId()});
@@ -81,11 +117,46 @@ public class PurchaseDAO {
 
     public int deletePurchaseLine(String lineId) {
         if (lineId == null) return 0;
+        // find parent PO and check status
+        Cursor c = db.query(Constants.TABLE_PURCHASE_LINES, new String[]{Constants.COLUMN_PO_LINE_PO_ID}, Constants.COLUMN_PO_LINE_ID + " = ?", new String[]{lineId}, null, null, null);
+        String poId = null;
+        if (c != null) {
+            if (c.moveToFirst()) {
+                int idx = c.getColumnIndex(Constants.COLUMN_PO_LINE_PO_ID);
+                if (idx != -1) poId = c.getString(idx);
+            }
+            c.close();
+        }
+        if (poId != null) {
+            Cursor pc = db.query(Constants.TABLE_PURCHASE_ORDERS, new String[]{Constants.COLUMN_PO_STATUS}, Constants.COLUMN_PO_ID + " = ?", new String[]{poId}, null, null, null);
+            if (pc != null) {
+                if (pc.moveToFirst()) {
+                    int idx = pc.getColumnIndex(Constants.COLUMN_PO_STATUS);
+                    if (idx != -1) {
+                        String st = pc.getString(idx);
+                        if ("received".equalsIgnoreCase(st)) { pc.close(); return 0; }
+                    }
+                }
+                pc.close();
+            }
+        }
         return db.delete(Constants.TABLE_PURCHASE_LINES, Constants.COLUMN_PO_LINE_ID + " = ?", new String[]{lineId});
     }
 
     public int updatePurchaseOrder(PurchaseOrder po) {
         if (po == null || po.getId() == null) return 0;
+        // prevent updating a received purchase order
+        Cursor c = db.query(Constants.TABLE_PURCHASE_ORDERS, new String[]{Constants.COLUMN_PO_STATUS}, Constants.COLUMN_PO_ID + " = ?", new String[]{po.getId()}, null, null, null);
+        if (c != null) {
+            if (c.moveToFirst()) {
+                int idx = c.getColumnIndex(Constants.COLUMN_PO_STATUS);
+                if (idx != -1) {
+                    String st = c.getString(idx);
+                    if ("received".equalsIgnoreCase(st)) { c.close(); return 0; }
+                }
+            }
+            c.close();
+        }
         ContentValues v = po.toContentValues();
         v.remove(Constants.COLUMN_PO_ID);
         return db.update(Constants.TABLE_PURCHASE_ORDERS, v, Constants.COLUMN_PO_ID + " = ?", new String[]{po.getId()});
@@ -95,17 +166,26 @@ public class PurchaseDAO {
     public boolean receiveAndMatchPo(String poId) {
         if (poId == null) return false;
         db.beginTransaction();
+        boolean allOk = true;
         try {
             List<PurchaseLine> lines = getLinesForPo(poId);
             for (PurchaseLine l : lines) {
                 boolean ok = inventoryDAO.receivePurchase(l.getProductId(), l.getQty());
-                if (!ok) { db.endTransaction(); return false; }
+                if (!ok) { allOk = false; break; }
+            }
+            if (!allOk) {
+                return false;
             }
             ContentValues v = new ContentValues();
             v.put(Constants.COLUMN_PO_STATUS, "received");
             db.update(Constants.TABLE_PURCHASE_ORDERS, v, Constants.COLUMN_PO_ID + " = ?", new String[]{poId});
             db.setTransactionSuccessful();
             return true;
-        } catch (Exception e) { e.printStackTrace(); return false; } finally { try { db.endTransaction(); } catch (Exception ignored) {} }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            try { db.endTransaction(); } catch (Exception ignored) {}
+        }
     }
 }

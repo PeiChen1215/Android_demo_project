@@ -93,4 +93,19 @@
     <string name="manage_stock">管理库存</string>
     <string name="product_not_found">商品不存在</string>
     <string name="invalid_product_id">商品ID无效</string>
+    <!-- Added localized UI strings -->
+    <string name="receipt_saved">收据已保存</string>
+    <string name="enter_valid_quantity">请输入有效数量</string>
+    <string name="restock_success">补货成功</string>
+    <string name="restock_failed">补货失败（仓库库存不足或异常）</string>
+    <string name="po_completed_cannot_edit_long">该采购单已完成（已入库），不能修改。</string>
+    <string name="po_completed_cannot_edit">已完成的采购单不可修改</string>
+    <string name="po_line_missing_product">第 %1$d 行未选择商品</string>
+    <string name="saved">已保存</string>
+    <string name="receive_failed">入库失败</string>
+    <string name="purchase_receive_success">入库成功</string>
+    <string name="purchase_receive_failed">入库失败（异常）</string>
+    <string name="no_products_available">没有可选商品</string>
+    <string name="select_product">选择商品</string>
+    <string name="completed">已完成</string>
 </resources>

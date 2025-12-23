@@ -1,8 +1,10 @@
 package com.example.android_development.database;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import com.example.android_development.util.PrefsManager;
 import com.example.android_development.model.StockCount;
 import com.example.android_development.util.Constants;
 import java.util.ArrayList;
@@ -10,7 +12,14 @@ import java.util.List;
 
 public class InventoryDAO {
     private SQLiteDatabase db;
+    private PrefsManager prefsManager;
+
     public InventoryDAO(SQLiteDatabase db) { this.db = db; }
+
+    public InventoryDAO(SQLiteDatabase db, Context ctx) {
+        this.db = db;
+        if (ctx != null) this.prefsManager = new PrefsManager(ctx);
+    }
 
     public long createStockCount(StockCount sc) {
         if (sc == null) return -1;
@@ -79,7 +88,12 @@ public class InventoryDAO {
     // 外部采购入库：供应商 -> 仓库
     public boolean receivePurchase(String productId, int qty) {
         if (productId == null) return false;
+        if (qty <= 0) return false; // 不接受 0 或负数入库
+
+        boolean localTxStarted = false;
         try {
+            if (!db.inTransaction()) { db.beginTransaction(); localTxStarted = true; }
+
             // 1. 查询当前仓库库存
             Cursor c = db.rawQuery("SELECT " + Constants.COLUMN_WAREHOUSE_STOCK + " FROM " + Constants.TABLE_PRODUCTS + " WHERE " + Constants.COLUMN_PRODUCT_ID + " = ?", new String[]{productId});
             if (c == null) return false;
@@ -90,13 +104,44 @@ public class InventoryDAO {
                 android.content.ContentValues v = new android.content.ContentValues();
                 v.put(Constants.COLUMN_WAREHOUSE_STOCK, updated);
                 int rows = db.update(Constants.TABLE_PRODUCTS, v, Constants.COLUMN_PRODUCT_ID + " = ?", new String[]{productId});
-                return rows > 0;
+                if (rows > 0) {
+                    // 写审计记录（尽量不影响主流程）
+                    try {
+                        ContentValues tx = new ContentValues();
+                        tx.put(Constants.COLUMN_STOCK_TX_ID, java.util.UUID.randomUUID().toString());
+                        tx.put(Constants.COLUMN_STOCK_TX_PRODUCT_ID, productId);
+                        tx.put(Constants.COLUMN_STOCK_TX_PRODUCT_NAME, (String) null);
+                        String uid = null;
+                        String urole = null;
+                        if (prefsManager != null) {
+                            try { uid = prefsManager.getUserId(); } catch (Exception ignored) {}
+                            try { urole = prefsManager.getUserRole(); } catch (Exception ignored) {}
+                        }
+                        tx.put(Constants.COLUMN_STOCK_TX_USER_ID, uid);
+                        tx.put(Constants.COLUMN_STOCK_TX_USER_ROLE, urole);
+                        tx.put(Constants.COLUMN_STOCK_TX_TYPE, "IN");
+                        tx.put(Constants.COLUMN_STOCK_TX_QUANTITY, qty);
+                        tx.put(Constants.COLUMN_STOCK_TX_BEFORE, current);
+                        tx.put(Constants.COLUMN_STOCK_TX_AFTER, updated);
+                        tx.put(Constants.COLUMN_STOCK_TX_REASON, "采购入库");
+                        tx.put(Constants.COLUMN_STOCK_TX_TIMESTAMP, System.currentTimeMillis());
+                        try { db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, tx); } catch (Exception ignored) {}
+                    } catch (Exception ignored) {}
+
+                    if (localTxStarted) db.setTransactionSuccessful();
+                    return true;
+                }
+                return false;
             } finally {
-                c.close();
+                if (c != null) c.close();
             }
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        } finally {
+            if (localTxStarted) {
+                try { db.endTransaction(); } catch (Exception ignored) {}
+            }
         }
     }
 }

@@ -1,0 +1,85 @@
+12_22 更新摘要
+
+生成时间: 2025-12-23
+合并提交: ee859c513b8cc0c47c0db971402cec16ff06462b (Merge branch 'main' into release/sales-pos-thumb)
+带入提交（来自 main）:
+ - 3808be4  Hongyou Li  Merge pull request #1 from PeiChen1215/feature/完善库存系统
+ - 9de1ff1  Yiqiao Xiang  fix：完善库存系统和完善部分对应Activity
+
+总体统计：
+ - 受影响文件数：30
+ - 行数变化：约 1306 insertions(+), 85 deletions(-)
+
+按类别的主要变动：
+
+1) 采购/补货相关（功能新增/完善）
+ - 新增 Activity:
+   - app/src/main/java/com/example/android_development/activities/PurchaseActivity.java
+   - app/src/main/java/com/example/android_development/activities/PurchaseDetailActivity.java
+   - app/src/main/java/com/example/android_development/activities/RestockActivity.java
+ - 新增布局：
+   - app/src/main/res/layout/activity_purchase.xml
+   - app/src/main/res/layout/activity_purchase_detail.xml
+   - app/src/main/res/layout/activity_restock.xml
+   - app/src/main/res/layout/dialog_restock.xml
+ - 新增列表项布局：app/src/main/res/layout/item_po_line.xml
+ - 新增适配器：app/src/main/java/com/example/android_development/activities/adapter/PoLineAdapter.java
+
+2) 数据库与模型
+ - 新增 DAO：app/src/main/java/com/example/android_development/database/SupplierDAO.java
+ - 主要更新：
+   - InventoryDAO.java (入库/库存处理逻辑改进)
+   - ProductDAO.java (查询低库存等)
+   - PurchaseDAO.java、SaleDAO.java (相关数据操作完善)
+ - 新增模型：app/src/main/java/com/example/android_development/model/PurchaseLine.java
+ - 更新：DatabaseHelper.java、DbContract.java（数据库字段/表定义相关调整）
+
+3) 界面与适配器调整
+ - 修改/完善：MainActivity.java、ProductAddActivity.java、ProductDetailActivity.java
+ - 修改适配器：ProductAdapter.java（少量调整）
+ - 布局调整：activity_product_add.xml、activity_product_detail.xml、item_product.xml 等
+
+4) 其它
+ - 新增：IMPLEMENTATION_SUMMARY.txt（实现说明）
+ - README.md 有小幅删改
+ - 更新常量：util/Constants.java
+
+变更文件及状态（A=新增 M=修改）：
+A       IMPLEMENTATION_SUMMARY.txt
+M       README.md
+M       app/src/main/AndroidManifest.xml
+M       app/src/main/java/com/example/android_development/activities/MainActivity.java
+M       app/src/main/java/com/example/android_development/activities/ProductAddActivity.java
+M       app/src/main/java/com/example/android_development/activities/ProductDetailActivity.java
+A       app/src/main/java/com/example/android_development/activities/PurchaseActivity.java
+A       app/src/main/java/com/example/android_development/activities/PurchaseDetailActivity.java
+M       app/src/main/java/com/example/android_development/activities/PurchaseListActivity.java
+A       app/src/main/java/com/example/android_development/activities/RestockActivity.java
+A       app/src/main/java/com/example/android_development/activities/adapter/PoLineAdapter.java
+M       app/src/main/java/com/example/android_development/adapters/ProductAdapter.java
+M       app/src/main/java/com/example/android_development/database/DatabaseHelper.java
+M       app/src/main/java/com/example/android_development/database/DbContract.java
+M       app/src/main/java/com/example/android_development/database/InventoryDAO.java
+M       app/src/main/java/com/example/android_development/database/ProductDAO.java
+M       app/src/main/java/com/example/android_development/database/PurchaseDAO.java
+M       app/src/main/java/com/example/android_development/database/SaleDAO.java
+A       app/src/main/java/com/example/android_development/database/SupplierDAO.java
+M       app/src/main/java/com/example/android_development/model/Product.java
+A       app/src/main/java/com/example/android_development/model/PurchaseLine.java
+M       app/src/main/java/com/example/android_development/util/Constants.java
+M       app/src/main/res/layout/activity_product_add.xml
+M       app/src/main/res/layout/activity_product_detail.xml
+A       app/src/main/res/layout/activity_purchase.xml
+A       app/src/main/res/layout/activity_purchase_detail.xml
+A       app/src/main/res/layout/activity_restock.xml
+A       app/src/main/res/layout/dialog_restock.xml
+A       app/src/main/res/layout/item_po_line.xml
+M       app/src/main/res/layout/item_product.xml
+
+重要检查建议（你可以直接查看这些文件）：
+ - `InventoryDAO.java`：确认 receivePurchase/入库逻辑（事务、并发、库存校验、回滚）
+ - `ProductDAO.getLowWarehouseStockProducts()`：确认阈值与筛选逻辑
+ - `PurchaseActivity` / `PurchaseDetailActivity`：采购流程的 UI 校验、异常提示与边界条件
+ - `SupplierDAO`：供应商数据接口与使用处是否正确
+
+如需，我可以把上述要点生成 README 风格的 Markdown 或把 `InventoryDAO.java`、`SupplierDAO.java`、`PurchaseDetailActivity.java` 的关键实现摘录并注释说明。

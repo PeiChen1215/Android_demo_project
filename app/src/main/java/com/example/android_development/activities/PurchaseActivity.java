@@ -35,7 +35,7 @@ public class PurchaseActivity extends AppCompatActivity {
 
         DatabaseHelper db = new DatabaseHelper(this);
         productDAO = new ProductDAO(db.getReadableDatabase());
-        inventoryDAO = new InventoryDAO(db.getWritableDatabase());
+        inventoryDAO = new InventoryDAO(db.getWritableDatabase(), this);
 
         loadLowWarehouseProducts();
     }
@@ -79,16 +79,16 @@ public class PurchaseActivity extends AppCompatActivity {
                     String s = etQty.getText().toString().trim();
                     int qty = 0;
                     try { qty = Integer.parseInt(s); } catch (Exception ex) { qty = 0; }
-                    if (qty <= 0) { Toast.makeText(PurchaseActivity.this, "请输入有效数量", Toast.LENGTH_SHORT).show(); return; }
+                    if (qty <= 0) { Toast.makeText(PurchaseActivity.this, getString(R.string.enter_valid_quantity), Toast.LENGTH_SHORT).show(); return; }
                     boolean ok = inventoryDAO.receivePurchase(p.getId(), qty);
                     if (ok) {
-                        Toast.makeText(PurchaseActivity.this, "入库成功", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(PurchaseActivity.this, getString(R.string.purchase_receive_success), Toast.LENGTH_SHORT).show();
                         loadLowWarehouseProducts();
                     } else {
-                        Toast.makeText(PurchaseActivity.this, "入库失败（异常）", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(PurchaseActivity.this, getString(R.string.purchase_receive_failed), Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(getString(R.string.btn_cancel), null)
                 .create();
         dlg.show();
     }

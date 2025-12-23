@@ -1,6 +1,8 @@
 package com.example.android_development.database;
 
 import android.content.ContentValues;
+import android.content.Context;
+import com.example.android_development.util.PrefsManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import com.example.android_development.model.Sale;
@@ -12,8 +14,14 @@ import java.util.UUID;
 
 public class SaleDAO {
     private SQLiteDatabase db;
+    private PrefsManager prefsManager;
 
     public SaleDAO(SQLiteDatabase db) { this.db = db; }
+
+    public SaleDAO(SQLiteDatabase db, Context ctx) {
+        this.db = db;
+        if (ctx != null) this.prefsManager = new PrefsManager(ctx);
+    }
 
     public long addSale(Sale sale) {
         if (sale == null) return -1;
@@ -34,10 +42,43 @@ public class SaleDAO {
                     l.setSaleId(sale.getId());
                     db.insert(Constants.TABLE_SALE_LINES, null, l.toContentValues());
 
-                    // Update Shelf Stock (Real-time deduction)
-                    db.execSQL("UPDATE " + Constants.TABLE_PRODUCTS + 
-                               " SET " + Constants.COLUMN_STOCK + " = " + Constants.COLUMN_STOCK + " - " + l.getQty() + 
-                               " WHERE " + Constants.COLUMN_PRODUCT_ID + " = ?", new Object[]{l.getProductId()});
+                    // Update Shelf Stock (Real-time deduction) and write stock transaction (use before/after)
+                    int beforeStock = 0;
+                    Cursor pc = db.rawQuery("SELECT " + Constants.COLUMN_STOCK + " FROM " + Constants.TABLE_PRODUCTS + " WHERE " + Constants.COLUMN_PRODUCT_ID + " = ?", new String[]{l.getProductId()});
+                    if (pc != null) {
+                        if (pc.moveToFirst()) {
+                            beforeStock = pc.getInt(0);
+                        }
+                        pc.close();
+                    }
+                    int afterStock = beforeStock - l.getQty();
+                    if (afterStock < 0) afterStock = 0;
+                    ContentValues pv = new ContentValues();
+                    pv.put(Constants.COLUMN_STOCK, afterStock);
+                    db.update(Constants.TABLE_PRODUCTS, pv, Constants.COLUMN_PRODUCT_ID + " = ?", new String[]{l.getProductId()});
+
+                    // insert stock transaction audit
+                    try {
+                        ContentValues tx = new ContentValues();
+                        tx.put(Constants.COLUMN_STOCK_TX_ID, UUID.randomUUID().toString());
+                        tx.put(Constants.COLUMN_STOCK_TX_PRODUCT_ID, l.getProductId());
+                        tx.put(Constants.COLUMN_STOCK_TX_PRODUCT_NAME, (String) null);
+                        String uid = null;
+                        String urole = null;
+                        if (prefsManager != null) {
+                            try { uid = prefsManager.getUserId(); } catch (Exception ignored) {}
+                            try { urole = prefsManager.getUserRole(); } catch (Exception ignored) {}
+                        }
+                        tx.put(Constants.COLUMN_STOCK_TX_USER_ID, uid);
+                        tx.put(Constants.COLUMN_STOCK_TX_USER_ROLE, urole);
+                        tx.put(Constants.COLUMN_STOCK_TX_TYPE, "OUT");
+                        tx.put(Constants.COLUMN_STOCK_TX_QUANTITY, l.getQty());
+                        tx.put(Constants.COLUMN_STOCK_TX_BEFORE, beforeStock);
+                        tx.put(Constants.COLUMN_STOCK_TX_AFTER, afterStock);
+                        tx.put(Constants.COLUMN_STOCK_TX_REASON, "sale");
+                        tx.put(Constants.COLUMN_STOCK_TX_TIMESTAMP, System.currentTimeMillis());
+                        try { db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, tx); } catch (Exception ignored) {}
+                    } catch (Exception ignored) {}
                 }
             }
             db.setTransactionSuccessful();
