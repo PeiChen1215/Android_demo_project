@@ -31,8 +31,12 @@ public class DbContract {
                     Constants.COLUMN_PRICE + " REAL NOT NULL," +
                     Constants.COLUMN_COST + " REAL," +
                     Constants.COLUMN_STOCK + " INTEGER DEFAULT 0," +
+                    Constants.COLUMN_WAREHOUSE_STOCK + " INTEGER DEFAULT 0," +
                     Constants.COLUMN_MIN_STOCK + " INTEGER DEFAULT 0," +
+                    Constants.COLUMN_MIN_WAREHOUSE_STOCK + " INTEGER DEFAULT 0," +
                     Constants.COLUMN_UNIT + " TEXT," +
+                    Constants.COLUMN_PRODUCTION_DATE + " INTEGER," +
+                    Constants.COLUMN_EXPIRATION_DATE + " INTEGER," +
                     Constants.COLUMN_BARCODE + " TEXT UNIQUE," +
                     Constants.COLUMN_DESCRIPTION + " TEXT," +
                     Constants.COLUMN_THUMB_URL + " TEXT," +

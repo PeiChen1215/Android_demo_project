@@ -35,14 +35,34 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="number"
-        android:hint="库存" />
+        android:hint="货架库存" />
+
+    <EditText
+        android:id="@+id/et_warehouse_stock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:hint="仓库库存" />
 
     <EditText
         android:id="@+id/et_min_stock"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="number"
-        android:hint="最低库存（可选）" />
+        android:hint="货架最低库存（可选）" />
+
+    <EditText
+        android:id="@+id/et_min_warehouse_stock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:hint="仓库最低库存（可选）" />
+
+    <EditText
+        android:id="@+id/et_expiry_date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="过期日期 (yyyy-MM-dd)" />
 
     <EditText
         android:id="@+id/et_unit"

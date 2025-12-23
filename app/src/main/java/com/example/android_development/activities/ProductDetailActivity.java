@@ -30,10 +30,12 @@ public class ProductDetailActivity extends AppCompatActivity {
     private TextView textViewProductCategory;
     private TextView textViewProductPrice;
     private TextView textViewProductStock;
+    private TextView textViewWarehouseStock; // New
     private TextView textViewProductBrand;
     private TextView textViewProductUnit;
     private TextView textViewProductBarcode;
     private TextView textViewProductDescription;
+    private TextView textViewProductExpiry; // New
 
     private EditText editTextThumbUrl;
     private ImageView imageViewThumbPreview;
@@ -81,10 +83,12 @@ public class ProductDetailActivity extends AppCompatActivity {
         textViewProductCategory = findViewById(R.id.textViewProductCategory);
         textViewProductPrice = findViewById(R.id.textViewProductPrice);
         textViewProductStock = findViewById(R.id.textViewProductStock);
+        textViewWarehouseStock = findViewById(R.id.textViewWarehouseStock); // New
         textViewProductBrand = findViewById(R.id.textViewProductBrand);
         textViewProductUnit = findViewById(R.id.textViewProductUnit);
         textViewProductBarcode = findViewById(R.id.textViewProductBarcode);
         textViewProductDescription = findViewById(R.id.textViewProductDescription);
+        textViewProductExpiry = findViewById(R.id.textViewProductExpiry); // New
 
         buttonBack = findViewById(R.id.buttonBack);
         buttonHistory = findViewById(R.id.buttonHistory);
@@ -205,10 +209,19 @@ public class ProductDetailActivity extends AppCompatActivity {
         textViewProductCategory.setText(getString(R.string.label_category, getCategoryName(currentProduct.getCategory())));
         textViewProductPrice.setText(String.format(getString(R.string.label_price), currentProduct.getPrice()));
         textViewProductStock.setText(getString(R.string.label_stock, currentProduct.getStock()));
+        if (textViewWarehouseStock != null) {
+            textViewWarehouseStock.setText("仓库库存: " + currentProduct.getWarehouseStock());
+        }
         textViewProductBrand.setText(getString(R.string.label_brand, (currentProduct.getBrand() != null ? currentProduct.getBrand() : "未设置")));
         textViewProductUnit.setText(getString(R.string.label_unit, (currentProduct.getUnit() != null ? currentProduct.getUnit() : "未设置")));
         textViewProductBarcode.setText(getString(R.string.label_barcode, (currentProduct.getBarcode() != null ? currentProduct.getBarcode() : "未设置")));
         textViewProductDescription.setText(getString(R.string.label_description, (currentProduct.getDescription() != null ? currentProduct.getDescription() : "无")));
+        
+        if (textViewProductExpiry != null) {
+            String expiry = currentProduct.getExpirationDate() > 0 ? 
+                new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date(currentProduct.getExpirationDate())) : "未设置";
+            textViewProductExpiry.setText("过期日期: " + expiry);
+        }
 
         // 如果库存低于预警值，显示提醒
         if (currentProduct.isLowStock()) {

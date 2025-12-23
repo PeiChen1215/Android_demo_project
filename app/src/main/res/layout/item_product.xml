@@ -65,13 +65,21 @@
                         android:textSize="16sp"
                         android:textColor="@color/primary"/>
 
-                    <TextView
-                        android:id="@+id/textViewProductStock"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text=""
-                        android:textSize="12sp"
-                        android:textColor="@color/gray"/>
+                        <TextView
+                            android:id="@+id/textViewProductStock"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text=""
+                            android:textSize="12sp"
+                            android:textColor="@color/gray"/>
+
+                        <TextView
+                            android:id="@+id/textViewProductWarehouseStock"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text=""
+                            android:textSize="12sp"
+                            android:textColor="@color/gray"/>
 
                 </LinearLayout>
 

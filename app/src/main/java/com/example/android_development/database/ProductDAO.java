@@ -29,8 +29,12 @@ public class ProductDAO {
         values.put(Constants.COLUMN_PRICE, product.getPrice());
         values.put(Constants.COLUMN_COST, product.getCost());
         values.put(Constants.COLUMN_STOCK, product.getStock());
+        values.put(Constants.COLUMN_WAREHOUSE_STOCK, product.getWarehouseStock());
         values.put(Constants.COLUMN_MIN_STOCK, product.getMinStock());
+        values.put(Constants.COLUMN_MIN_WAREHOUSE_STOCK, product.getMinWarehouseStock());
         values.put(Constants.COLUMN_UNIT, product.getUnit());
+        values.put(Constants.COLUMN_PRODUCTION_DATE, product.getProductionDate());
+        values.put(Constants.COLUMN_EXPIRATION_DATE, product.getExpirationDate());
         values.put(Constants.COLUMN_BARCODE, product.getBarcode());
         values.put(Constants.COLUMN_DESCRIPTION, product.getDescription());
         values.put(Constants.COLUMN_SUPPLIER_ID, product.getSupplierId());
@@ -50,8 +54,12 @@ public class ProductDAO {
         values.put(Constants.COLUMN_PRICE, product.getPrice());
         values.put(Constants.COLUMN_COST, product.getCost());
         values.put(Constants.COLUMN_STOCK, product.getStock());
+        values.put(Constants.COLUMN_WAREHOUSE_STOCK, product.getWarehouseStock());
         values.put(Constants.COLUMN_MIN_STOCK, product.getMinStock());
+        values.put(Constants.COLUMN_MIN_WAREHOUSE_STOCK, product.getMinWarehouseStock());
         values.put(Constants.COLUMN_UNIT, product.getUnit());
+        values.put(Constants.COLUMN_PRODUCTION_DATE, product.getProductionDate());
+        values.put(Constants.COLUMN_EXPIRATION_DATE, product.getExpirationDate());
         values.put(Constants.COLUMN_BARCODE, product.getBarcode());
         values.put(Constants.COLUMN_DESCRIPTION, product.getDescription());
         values.put(Constants.COLUMN_SUPPLIER_ID, product.getSupplierId());
@@ -248,7 +256,7 @@ public class ProductDAO {
         return products;
     }
 
-    // 获取低库存商品
+    // 获取低库存商品 (货架库存 < 货架预警)
     public List<Product> getLowStockProducts() {
         List<Product> products = new ArrayList<>();
 
@@ -256,6 +264,36 @@ public class ProductDAO {
         String selection = Constants.COLUMN_STOCK + " <= " + Constants.COLUMN_MIN_STOCK +
                 " AND " + Constants.COLUMN_MIN_STOCK + " > 0";
         String orderBy = Constants.COLUMN_STOCK + " ASC";
+
+        Cursor cursor = db.query(
+                Constants.TABLE_PRODUCTS,
+                columns,
+                selection,
+                null,
+                null,
+                null,
+                orderBy
+        );
+
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                Product product = cursorToProduct(cursor);
+                products.add(product);
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+
+        return products;
+    }
+
+    // 获取低仓库库存商品 (仓库库存 < 仓库预警)
+    public List<Product> getLowWarehouseStockProducts() {
+        List<Product> products = new ArrayList<>();
+
+        String[] columns = getAllColumns();
+        String selection = Constants.COLUMN_WAREHOUSE_STOCK + " <= " + Constants.COLUMN_MIN_WAREHOUSE_STOCK +
+                " AND " + Constants.COLUMN_MIN_WAREHOUSE_STOCK + " > 0";
+        String orderBy = Constants.COLUMN_WAREHOUSE_STOCK + " ASC";
 
         Cursor cursor = db.query(
                 Constants.TABLE_PRODUCTS,
@@ -524,8 +562,12 @@ public class ProductDAO {
                 Constants.COLUMN_PRICE,
                 Constants.COLUMN_COST,
                 Constants.COLUMN_STOCK,
+                Constants.COLUMN_WAREHOUSE_STOCK,
                 Constants.COLUMN_MIN_STOCK,
+                Constants.COLUMN_MIN_WAREHOUSE_STOCK,
                 Constants.COLUMN_UNIT,
+                Constants.COLUMN_PRODUCTION_DATE,
+                Constants.COLUMN_EXPIRATION_DATE,
                 Constants.COLUMN_BARCODE,
                 Constants.COLUMN_DESCRIPTION,
                 Constants.COLUMN_SUPPLIER_ID,

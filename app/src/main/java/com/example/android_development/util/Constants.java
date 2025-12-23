@@ -3,7 +3,7 @@ package com.example.android_development.util;
 public class Constants {
     // 数据库常量
     public static final String DATABASE_NAME = "supermarket.db";
-    public static final int DATABASE_VERSION = 3;
+    public static final int DATABASE_VERSION = 5;
 
     // 用户表
     public static final String TABLE_USERS = "users";
@@ -37,9 +37,13 @@ public class Constants {
     public static final String COLUMN_BRAND = "brand";
     public static final String COLUMN_PRICE = "price";
     public static final String COLUMN_COST = "cost";  // 成本价
-    public static final String COLUMN_STOCK = "stock";
-    public static final String COLUMN_MIN_STOCK = "min_stock";  // 最低库存预警
+    public static final String COLUMN_STOCK = "stock"; // 默认为货架库存
+    public static final String COLUMN_WAREHOUSE_STOCK = "warehouse_stock"; // 仓库库存
+    public static final String COLUMN_MIN_STOCK = "min_stock";  // 货架最低库存预警
+    public static final String COLUMN_MIN_WAREHOUSE_STOCK = "min_warehouse_stock"; // 仓库最低库存预警
     public static final String COLUMN_UNIT = "unit";  // 单位（如：瓶、袋、个）
+    public static final String COLUMN_PRODUCTION_DATE = "production_date"; // 生产日期
+    public static final String COLUMN_EXPIRATION_DATE = "expiration_date"; // 过期日期
     public static final String COLUMN_BARCODE = "barcode";  // 条码
     public static final String COLUMN_DESCRIPTION = "description";
     public static final String COLUMN_THUMB_URL = "thumb_url";
