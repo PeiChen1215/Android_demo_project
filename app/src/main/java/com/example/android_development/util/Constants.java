@@ -3,7 +3,7 @@ package com.example.android_development.util;
 public class Constants {
     // 数据库常量
     public static final String DATABASE_NAME = "supermarket.db";
-    public static final int DATABASE_VERSION = 5;
+    public static final int DATABASE_VERSION = 7;
 
     // 用户表
     public static final String TABLE_USERS = "users";
@@ -28,6 +28,10 @@ public class Constants {
     public static final String ROLE_STOCK = "stock";
     public static final String ROLE_BUYER = "buyer";          // 采购员（采购子系统）
     public static final String ROLE_INVENTORY = "inventory";  // 盘点员（盘点子系统）
+
+    // 标准化角色（别名）
+    public static final String ROLE_PURCHASER = "purchaser"; // 采购员别名
+    public static final String ROLE_WAREHOUSE = "warehouse"; // 仓库操作员
 
     // 商品表
     public static final String TABLE_PRODUCTS = "products";
@@ -71,6 +75,17 @@ public class Constants {
     public static final String COLUMN_STOCK_TX_REASON = "reason";
     public static final String COLUMN_STOCK_TX_TIMESTAMP = "timestamp";
 
+    // 权限项（用于权限检查）
+    public static final String PERM_CREATE_PO = "CREATE_PO";
+    public static final String PERM_SUBMIT_PO = "SUBMIT_PO";
+    public static final String PERM_APPROVE_PO = "APPROVE_PO";
+    public static final String PERM_RECEIVE_PO = "RECEIVE_PO";
+    public static final String PERM_ADJUST_STOCK = "ADJUST_STOCK";
+    public static final String PERM_CREATE_RETURN = "CREATE_RETURN";
+    public static final String PERM_APPROVE_RETURN = "APPROVE_RETURN";
+    public static final String PERM_VIEW_AUDIT = "VIEW_AUDIT";
+    public static final String PERM_RUN_INVENTORY = "RUN_INVENTORY";
+
     // 供应商表
     public static final String TABLE_SUPPLIERS = "suppliers";
     public static final String COLUMN_SUPPLIER_ID = "supplier_id";
@@ -83,10 +98,44 @@ public class Constants {
     public static final String TABLE_PURCHASE_ORDERS = "purchase_orders";
     public static final String COLUMN_PO_ID = "po_id";
     public static final String COLUMN_PO_SUPPLIER_ID = "supplier_id";
+    public static final String COLUMN_PO_NAME = "po_name";
     public static final String COLUMN_PO_STATUS = "status";
     public static final String COLUMN_PO_CREATED_AT = "created_at";
     public static final String COLUMN_PO_EXPECTED_AT = "expected_at";
     public static final String COLUMN_PO_TOTAL = "total";
+
+    // 采购单状态
+    public static final String PO_STATUS_CREATED = "created";
+    public static final String PO_STATUS_SUBMITTED = "submitted";
+    public static final String PO_STATUS_PENDING = "pending";
+    public static final String PO_STATUS_APPROVED = "approved";
+    public static final String PO_STATUS_REJECTED = "rejected";
+    public static final String PO_STATUS_RECEIVED = "received";
+
+    // PO 名称规则（可配置）
+    public static final boolean PO_NAME_REQUIRED = true; // set true to require name before save/submit
+    public static final int PO_NAME_MAX_LENGTH = 120;
+
+    // 采购审批表
+    public static final String TABLE_PO_APPROVALS = "po_approvals";
+    public static final String COLUMN_PO_APPROVAL_ID = "approval_id";
+    public static final String COLUMN_PO_APPROVAL_PO_ID = "po_id";
+    public static final String COLUMN_PO_APPROVAL_APPROVER_ID = "approver_id";
+    public static final String COLUMN_PO_APPROVAL_APPROVER_ROLE = "approver_role";
+    public static final String COLUMN_PO_APPROVAL_DECISION = "decision"; // approved/rejected
+    public static final String COLUMN_PO_APPROVAL_COMMENT = "comment";
+    public static final String COLUMN_PO_APPROVAL_TIMESTAMP = "timestamp";
+
+    // 系统审计表（通用的操作审计）
+    public static final String TABLE_SYSTEM_AUDIT = "system_audit";
+    public static final String COLUMN_SYSTEM_AUDIT_ID = "audit_id";
+    public static final String COLUMN_SYSTEM_AUDIT_ENTITY = "entity"; // e.g., purchase_order
+    public static final String COLUMN_SYSTEM_AUDIT_ENTITY_ID = "entity_id";
+    public static final String COLUMN_SYSTEM_AUDIT_ACTION = "action"; // submit/approve/reject
+    public static final String COLUMN_SYSTEM_AUDIT_USER_ID = "user_id";
+    public static final String COLUMN_SYSTEM_AUDIT_USER_ROLE = "user_role";
+    public static final String COLUMN_SYSTEM_AUDIT_DETAIL = "detail";
+    public static final String COLUMN_SYSTEM_AUDIT_TIMESTAMP = "timestamp";
 
     // 采购订单行
     public static final String TABLE_PURCHASE_LINES = "purchase_lines";

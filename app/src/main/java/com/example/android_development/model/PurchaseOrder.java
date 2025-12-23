@@ -7,6 +7,7 @@ import com.example.android_development.util.Constants;
 public class PurchaseOrder {
     private String id;
     private String supplierId;
+    private String name;
     private String status;
     private long createdAt;
     private long expectedAt;
@@ -18,6 +19,8 @@ public class PurchaseOrder {
     public void setId(String id) { this.id = id; }
     public String getSupplierId() { return supplierId; }
     public void setSupplierId(String supplierId) { this.supplierId = supplierId; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public long getCreatedAt() { return createdAt; }
@@ -32,6 +35,7 @@ public class PurchaseOrder {
         if (id == null) id = java.util.UUID.randomUUID().toString();
         v.put(Constants.COLUMN_PO_ID, id);
         v.put(Constants.COLUMN_PO_SUPPLIER_ID, supplierId);
+        v.put(Constants.COLUMN_PO_NAME, name);
         v.put(Constants.COLUMN_PO_STATUS, status);
         v.put(Constants.COLUMN_PO_CREATED_AT, createdAt == 0 ? System.currentTimeMillis() : createdAt);
         v.put(Constants.COLUMN_PO_EXPECTED_AT, expectedAt);
@@ -47,6 +51,8 @@ public class PurchaseOrder {
         if (idx != -1) p.setId(c.getString(idx));
         idx = c.getColumnIndex(Constants.COLUMN_PO_SUPPLIER_ID);
         if (idx != -1) p.setSupplierId(c.getString(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_PO_NAME);
+        if (idx != -1) p.setName(c.getString(idx));
         idx = c.getColumnIndex(Constants.COLUMN_PO_STATUS);
         if (idx != -1) p.setStatus(c.getString(idx));
         idx = c.getColumnIndex(Constants.COLUMN_PO_CREATED_AT);

@@ -10,8 +10,11 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Toast;
+import android.widget.EditText;
 import com.example.android_development.R;
 import com.example.android_development.util.PrefsManager;
+import com.example.android_development.security.Auth;
+import com.example.android_development.util.Constants;
 import com.example.android_development.activities.adapter.PoLineAdapter;
 import com.example.android_development.database.DatabaseHelper;
 import com.example.android_development.database.ProductDAO;
@@ -36,8 +39,14 @@ public class PurchaseDetailActivity extends AppCompatActivity {
     private Spinner spSupplier;
     private ListView lvLines;
     private Button btnSave, btnApprove, btnReceive, btnAddLine;
+    private Button btnSubmit, btnHistory;
+    private Button btnReject;
 
     private PurchaseOrder po;
+    private android.widget.TextView tvPoId;
+    private android.widget.EditText etPoName;
+    private android.widget.TextView tvPoStatus;
+    private android.widget.TextView tvTotal;
     private List<PurchaseLine> lines = new ArrayList<>();
     private List<Product> products = new ArrayList<>();
     private PoLineAdapter adapter;
@@ -60,7 +69,10 @@ public class PurchaseDetailActivity extends AppCompatActivity {
         btnSave = findViewById(R.id.btn_save_po);
         btnApprove = findViewById(R.id.btn_approve_po);
         btnReceive = findViewById(R.id.btn_receive_po);
+        btnReject = findViewById(R.id.btn_reject_po);
         btnAddLine = findViewById(R.id.btn_add_line);
+        btnSubmit = findViewById(R.id.btn_submit_po);
+        btnHistory = findViewById(R.id.btn_history_po);
 
         po = purchaseDAO.getPurchaseOrderById(poId);
         if (po == null) { Toast.makeText(this, "采购单不存在", Toast.LENGTH_SHORT).show(); finish(); return; }
@@ -71,6 +83,20 @@ public class PurchaseDetailActivity extends AppCompatActivity {
         for (int i=0;i<supList.size();i++) { names.add(supList.get(i).getName()); if (supList.get(i).getId().equals(po.getSupplierId())) sel = i; }
         spSupplier.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, names));
         if (sel != -1) spSupplier.setSelection(sel);
+
+        tvPoId = findViewById(R.id.tv_po_id);
+        etPoName = findViewById(R.id.et_po_name);
+        tvPoStatus = findViewById(R.id.tv_po_status);
+        tvTotal = findViewById(R.id.tv_total);
+
+        // populate header
+        tvPoId.setText("PO: " + (po.getId() == null ? "-" : po.getId()));
+        etPoName.setText(po.getName() == null ? "" : po.getName());
+        tvPoStatus.setText(po.getStatus() == null ? "" : po.getStatus().toUpperCase());
+        tvTotal.setText(String.format("%.2f", po.getTotal()));
+
+        // apply status badge color
+        try { applyStatusBadge(tvPoStatus, po.getStatus()); } catch (Exception ignored) {}
 
         // load lines
         lines = purchaseDAO.getLinesForPo(po.getId());
@@ -86,22 +112,58 @@ public class PurchaseDetailActivity extends AppCompatActivity {
         adapter = new PoLineAdapter(this, lines, products, editableLines);
         lvLines.setAdapter(adapter);
 
-        // 角色权限控制
+        // 角色权限控制（使用 Auth）
         PrefsManager prefs = new PrefsManager(this);
-        String role = prefs.getUserRole();
-        boolean canApprove = false;
-        boolean canReceive = false;
-        boolean canSave = false;
-        if (role != null) {
-            String r = role.trim().toLowerCase();
-            if (r.equals("admin") || r.equals("系统管理员")) { canApprove = canReceive = canSave = true; }
-            if (r.equals("purchaser") || r.equals("采购员")) { canApprove = false; canReceive = true; canSave = true; }
-            if (r.equals("stock_manager") || r.equals("库存管理员")) { canApprove = true; canReceive = true; canSave = true; }
-            if (r.equals("seller") || r.equals("售货员")) { canApprove = false; canReceive = false; canSave = true; }
-        }
+        android.util.Log.d("PurchaseDetail", "current userId=" + prefs.getUserId() + " role=" + prefs.getUserRole() + " po.status=" + po.getStatus());
+        boolean canApprove = Auth.hasPermission(this, Constants.PERM_APPROVE_PO);
+        boolean canReceive = Auth.hasPermission(this, Constants.PERM_RECEIVE_PO);
+        boolean canSave = Auth.hasPermission(this, Constants.PERM_CREATE_PO);
+        boolean canSubmit = Auth.hasPermission(this, Constants.PERM_SUBMIT_PO);
+        boolean canViewHistory = Auth.hasPermission(this, Constants.PERM_VIEW_AUDIT);
         btnApprove.setEnabled(canApprove);
+        btnReject.setEnabled(canApprove);
         btnReceive.setEnabled(canReceive);
         btnSave.setEnabled(canSave);
+        btnSubmit.setEnabled(canSubmit);
+        btnHistory.setEnabled(canViewHistory);
+
+        // 动态显示/隐藏按钮，基于采购单状态和权限
+        String status = po.getStatus() == null ? "" : po.getStatus().toLowerCase();
+        // default hide all action buttons, then enable relevant ones
+        btnSave.setVisibility(View.GONE);
+        btnSubmit.setVisibility(View.GONE);
+        btnApprove.setVisibility(View.GONE);
+        btnReject.setVisibility(View.GONE);
+        btnReceive.setVisibility(View.GONE);
+        btnAddLine.setVisibility(View.GONE);
+
+        if ("".equals(status) || "created".equalsIgnoreCase(status) || "draft".equalsIgnoreCase(status) || "open".equalsIgnoreCase(status) || "rejected".equalsIgnoreCase(status)) {
+            // 新建/草稿：可保存、添加行、可提交
+            if (canSave) btnSave.setVisibility(View.VISIBLE);
+            btnAddLine.setVisibility(View.VISIBLE);
+            if (canSubmit) btnSubmit.setVisibility(View.VISIBLE);
+        } else if ("submitted".equalsIgnoreCase(status)) {
+            // 已提交：审批角色可批准/拒绝
+            if (canApprove) {
+                btnApprove.setVisibility(View.VISIBLE);
+                btnReject.setVisibility(View.VISIBLE);
+            }
+            // 提交后不允许编辑行
+        } else if ("approved".equalsIgnoreCase(status)) {
+            // 批准后可收货
+            if (canReceive) btnReceive.setVisibility(View.VISIBLE);
+        } else if ("received".equalsIgnoreCase(status)) {
+            // 已入库，不显示操作按钮
+            // keep everything hidden
+        } else {
+            // 其它状态，允许查看历史
+        }
+
+        // 如果为 open 状态且当前用户有批准权限，则同时展示批准/拒绝（在某些流程中 admin 可直接批准 open PO）
+        if ("open".equalsIgnoreCase(status) && canApprove) {
+            btnApprove.setVisibility(View.VISIBLE);
+            btnReject.setVisibility(View.VISIBLE);
+        }
 
         // 如果采购单已完成（received），禁用所有编辑操作以防止被修改
         if (po.getStatus() != null && po.getStatus().equalsIgnoreCase("received")) {
@@ -119,6 +181,8 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             }
             int idx = spSupplier.getSelectedItemPosition();
             if (idx >= 0 && idx < supList.size()) po.setSupplierId(supList.get(idx).getId());
+            // save PO name from input
+            if (etPoName != null) po.setName(etPoName.getText() == null ? null : etPoName.getText().toString().trim());
 
             // Validation
             for (int i = 0; i < lines.size(); i++) {
@@ -136,6 +200,16 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             // Persist lines (add/update) inside a DB transaction
             db.beginTransaction();
             try {
+                // validate PO name if required
+                String nameInput = etPoName.getText() == null ? "" : etPoName.getText().toString().trim();
+                if (com.example.android_development.util.Constants.PO_NAME_REQUIRED && (nameInput.isEmpty())) {
+                    Toast.makeText(this, "采购单名称为必填项", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (nameInput.length() > com.example.android_development.util.Constants.PO_NAME_MAX_LENGTH) {
+                    Toast.makeText(this, "采购单名称过长（最大 " + com.example.android_development.util.Constants.PO_NAME_MAX_LENGTH + " 字符）", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 double total = 0;
                 Set<String> currentIds = new HashSet<>();
                 for (PurchaseLine l : lines) {
@@ -154,6 +228,7 @@ public class PurchaseDetailActivity extends AppCompatActivity {
                 }
 
                 po.setTotal(total);
+                po.setName(etPoName.getText() == null ? null : etPoName.getText().toString().trim());
                 purchaseDAO.updatePurchaseOrder(po);
 
                 db.setTransactionSuccessful();
@@ -162,6 +237,8 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             } finally {
                 db.endTransaction();
             }
+            // refresh total in UI
+            tvTotal.setText(String.format("%.2f", po.getTotal()));
             // refresh original ids
             originalLineIds.clear();
             for (PurchaseLine l : purchaseDAO.getLinesForPo(po.getId())) if (l.getId() != null) originalLineIds.add(l.getId());
@@ -170,17 +247,73 @@ public class PurchaseDetailActivity extends AppCompatActivity {
         });
 
         btnApprove.setOnClickListener(v -> {
-            po.setStatus("approved");
-            db.beginTransaction();
-            try {
-                purchaseDAO.updatePurchaseOrder(po);
-                db.setTransactionSuccessful();
-            } catch (Exception e) {
-                android.util.Log.e("PurchaseDetail", "批准采购单失败", e);
-            } finally {
-                db.endTransaction();
+            String uid = prefs.getUserId();
+            showCommentDialog("批准采购单", comment -> {
+                boolean ok = purchaseDAO.approvePo(po.getId(), uid, comment == null ? "" : comment);
+                if (ok) {
+                    Toast.makeText(this, "已批准", Toast.LENGTH_SHORT).show();
+                } else {
+                    String msg = com.example.android_development.util.DaoResult.getMessage();
+                    if (msg == null || msg.isEmpty()) msg = "批准失败";
+                    Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+
+        btnReject.setOnClickListener(v -> {
+            String uid = prefs.getUserId();
+            showCommentDialog("拒绝并备注", comment -> {
+                boolean ok = purchaseDAO.rejectPo(po.getId(), uid, comment == null ? "" : comment);
+                if (ok) {
+                    Toast.makeText(this, "已拒绝", Toast.LENGTH_SHORT).show();
+                } else {
+                    String msg = com.example.android_development.util.DaoResult.getMessage();
+                    if (msg == null || msg.isEmpty()) msg = "拒绝失败";
+                    Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+
+        btnSubmit.setOnClickListener(v -> {
+            // prevent submitting an empty PO in the UI
+            if (lines == null || lines.isEmpty()) {
+                Toast.makeText(this, "空的采购单不能提交", Toast.LENGTH_SHORT).show();
+                return;
             }
-            Toast.makeText(this, "已批准", Toast.LENGTH_SHORT).show();
+            // validate PO name before submit
+            String nameInput = etPoName.getText() == null ? "" : etPoName.getText().toString().trim();
+            if (com.example.android_development.util.Constants.PO_NAME_REQUIRED && (nameInput.isEmpty())) {
+                Toast.makeText(this, "采购单名称为必填项", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (nameInput.length() > com.example.android_development.util.Constants.PO_NAME_MAX_LENGTH) {
+                Toast.makeText(this, "采购单名称过长（最大 " + com.example.android_development.util.Constants.PO_NAME_MAX_LENGTH + " 字符）", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            boolean ok = purchaseDAO.submitPo(po.getId());
+            android.util.Log.d("PurchaseDetail", "submitPo returned=" + ok + " for po=" + po.getId());
+            PurchaseOrder updated = purchaseDAO.getPurchaseOrderById(po.getId());
+            android.util.Log.d("PurchaseDetail", "after submit, po.status=" + (updated == null ? "<null>" : updated.getStatus()));
+            if (ok) {
+                Toast.makeText(this, "已提交", Toast.LENGTH_SHORT).show();
+            } else {
+                String msg = com.example.android_development.util.DaoResult.getMessage();
+                if (msg == null || msg.isEmpty()) msg = "提交失败";
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        btnHistory.setOnClickListener(v -> {
+            List<android.content.ContentValues> history = purchaseDAO.getApprovalHistory(po.getId());
+            android.view.View dlgView = getLayoutInflater().inflate(R.layout.dialog_approval_history, null);
+            android.widget.ListView lv = dlgView.findViewById(R.id.lv_approval_history);
+            com.example.android_development.activities.adapter.PoApprovalAdapter adapter = new com.example.android_development.activities.adapter.PoApprovalAdapter(this, history);
+            lv.setAdapter(adapter);
+            android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this);
+            b.setTitle("审批历史");
+            b.setView(dlgView);
+            b.setPositiveButton("关闭", null);
+            b.show();
         });
 
         btnReceive.setOnClickListener(v -> {
@@ -210,5 +343,43 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             products.add(new Product());
             adapter.notifyDataSetChanged();
         });
+    }
+
+    private interface ApprovalCallback {
+        void onSubmit(String comment);
+    }
+
+    private void showCommentDialog(String title, ApprovalCallback cb) {
+        final EditText input = new EditText(this);
+        input.setSingleLine(false);
+        input.setLines(3);
+        android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this);
+        b.setTitle(title);
+        b.setView(input);
+        b.setPositiveButton("确定", (dialog, which) -> {
+            String comment = input.getText() == null ? "" : input.getText().toString();
+            try { cb.onSubmit(comment); } catch (Exception ignored) {}
+        });
+        b.setNegativeButton("取消", null);
+        b.show();
+    }
+
+    private void applyStatusBadge(android.widget.TextView v, String status) {
+        if (v == null) return;
+        if (status == null) status = "";
+        status = status.toLowerCase();
+        int bg = android.graphics.Color.DKGRAY;
+        int fg = android.graphics.Color.WHITE;
+        switch (status) {
+            case "approved": bg = android.graphics.Color.parseColor("#C8E6C9"); fg = android.graphics.Color.parseColor("#1B5E20"); break;
+            case "received": bg = android.graphics.Color.parseColor("#BBDEFB"); fg = android.graphics.Color.parseColor("#0D47A1"); break;
+            case "rejected": bg = android.graphics.Color.parseColor("#FFCDD2"); fg = android.graphics.Color.parseColor("#B71C1C"); break;
+            case "submitted": bg = android.graphics.Color.parseColor("#FFE0B2"); fg = android.graphics.Color.parseColor("#E65100"); break;
+            default: bg = android.graphics.Color.LTGRAY; fg = android.graphics.Color.DKGRAY; break;
+        }
+        try {
+            v.setBackgroundColor(bg);
+            v.setTextColor(fg);
+        } catch (Exception ignored) {}
     }
 }

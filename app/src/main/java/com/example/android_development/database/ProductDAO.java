@@ -8,6 +8,7 @@ import com.example.android_development.util.Constants;
 import java.util.ArrayList;
 import java.util.List;
 import com.example.android_development.model.StockTransaction;
+import com.example.android_development.util.Audit;
 import java.util.UUID;
 
 public class ProductDAO {
@@ -366,7 +367,11 @@ public class ProductDAO {
         values.put(Constants.COLUMN_STOCK_TX_TIMESTAMP, tx.getTimestamp() == 0 ? System.currentTimeMillis() : tx.getTimestamp());
 
         try {
-            return db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, values);
+            long res = db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, values);
+            if (res > 0) {
+                try { Audit.writeSystemAudit(db, tx.getUserId(), tx.getUserRole(), "product:" + tx.getProductId(), tx.getType() != null ? tx.getType().toLowerCase() : "tx", tx.getReason()); } catch (Exception ignored) {}
+            }
+            return res;
         } catch (android.database.sqlite.SQLiteException e) {
             // 可能缺少 product_name 列或其它列，尝试添加列后重试
             try {
@@ -382,7 +387,11 @@ public class ProductDAO {
                 if (!has) {
                     try { db.execSQL("ALTER TABLE " + Constants.TABLE_STOCK_TRANSACTIONS + " ADD COLUMN " + Constants.COLUMN_STOCK_TX_PRODUCT_NAME + " TEXT"); } catch (Exception ignored) {}
                 }
-                return db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, values);
+                long res = db.insert(Constants.TABLE_STOCK_TRANSACTIONS, null, values);
+                if (res > 0) {
+                    try { Audit.writeSystemAudit(db, tx.getUserId(), tx.getUserRole(), "product:" + tx.getProductId(), tx.getType() != null ? tx.getType().toLowerCase() : "tx", tx.getReason()); } catch (Exception ignored) {}
+                }
+                return res;
             } catch (Exception ex) {
                 ex.printStackTrace();
                 return -1;
