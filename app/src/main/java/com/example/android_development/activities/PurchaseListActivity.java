@@ -4,6 +4,7 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import android.content.Intent;
 import com.example.android_development.adapters.PurchaseAdapter;
 import com.example.android_development.R;
 import com.example.android_development.database.DatabaseHelper;
@@ -62,7 +63,11 @@ public class PurchaseListActivity extends AppCompatActivity {
 
         PurchaseAdapter adapter = new PurchaseAdapter(this, list);
         adapter.setOnItemClickListener((position, po) -> {
-            // TODO: open PO detail
+            if (po != null && po.getId() != null) {
+                Intent it = new Intent(PurchaseListActivity.this, PurchaseDetailActivity.class);
+                it.putExtra("po_id", po.getId());
+                startActivity(it);
+            }
         });
         listViewPurchases.setAdapter(adapter);
     }

@@ -603,6 +603,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 // 使用增量迁移策略，尽量保留数据。仅在必要时添加新列或创建缺失表。
                 android.util.Log.d("DEBUG", "数据库从版本 " + oldVersion + " 升级到 " + newVersion);
 
+                if (oldVersion < 4) {
+                    // Add new columns for warehouse stock
+                    ensureColumnExists(db, Constants.TABLE_PRODUCTS, Constants.COLUMN_WAREHOUSE_STOCK, "INTEGER DEFAULT 0");
+                    ensureColumnExists(db, Constants.TABLE_PRODUCTS, Constants.COLUMN_MIN_WAREHOUSE_STOCK, "INTEGER DEFAULT 0");
+                }
+
+                if (oldVersion < 5) {
+                    // Add new columns for production and expiration dates
+                    ensureColumnExists(db, Constants.TABLE_PRODUCTS, Constants.COLUMN_PRODUCTION_DATE, "INTEGER");
+                    ensureColumnExists(db, Constants.TABLE_PRODUCTS, Constants.COLUMN_EXPIRATION_DATE, "INTEGER");
+                }
+
                 // 保障 users 和 products 表存在（如果是非常旧的版本）
                 if (oldVersion < 2) {
                         try {
@@ -718,6 +730,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         e.printStackTrace();
                 }
                 }
+
+                // 兜底：确保采购/盘点/销售等脚手架表在任何升级路径后都存在，防止旧数据库缺失表导致运行时异常
+                try { db.execSQL(DbContract.SQL_CREATE_TABLE_SUPPLIERS); } catch (Exception ignored) {}
+                try { db.execSQL(DbContract.SQL_CREATE_TABLE_PURCHASE_ORDERS); } catch (Exception ignored) {}
+                try { db.execSQL(DbContract.SQL_CREATE_TABLE_PURCHASE_LINES); } catch (Exception ignored) {}
+                try { db.execSQL(DbContract.SQL_CREATE_TABLE_STOCK_COUNTS); } catch (Exception ignored) {}
+                try { db.execSQL(DbContract.SQL_CREATE_TABLE_STOCK_COUNT_LINES); } catch (Exception ignored) {}
+                try { db.execSQL(DbContract.SQL_CREATE_TABLE_SALES); } catch (Exception ignored) {}
+                try { db.execSQL(DbContract.SQL_CREATE_TABLE_SALE_LINES); } catch (Exception ignored) {}
     }
 
         @Override
