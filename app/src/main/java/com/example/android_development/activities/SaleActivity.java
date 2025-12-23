@@ -46,7 +46,7 @@ public class SaleActivity extends AppCompatActivity {
         listViewLines = findViewById(R.id.list_lines);
 
         dbHelper = new DatabaseHelper(this);
-        saleDAO = new SaleDAO(dbHelper.getWritableDatabase());
+        saleDAO = new SaleDAO(dbHelper.getWritableDatabase(), this);
         productDAO = new ProductDAO(dbHelper.getReadableDatabase());
 
         currentSale = new Sale();
@@ -109,7 +109,7 @@ public class SaleActivity extends AppCompatActivity {
         if (res == -1) {
             Toast.makeText(this, "结账失败", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "收据已保存", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.receipt_saved), Toast.LENGTH_SHORT).show();
             finish();
         }
     }

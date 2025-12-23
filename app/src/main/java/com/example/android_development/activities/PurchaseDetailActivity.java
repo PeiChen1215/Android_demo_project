@@ -51,7 +51,7 @@ public class PurchaseDetailActivity extends AppCompatActivity {
 
         dbh = new DatabaseHelper(this);
         db = dbh.getWritableDatabase();
-        purchaseDAO = new PurchaseDAO(db);
+        purchaseDAO = new PurchaseDAO(db, this);
         productDAO = new ProductDAO(db);
         supplierDAO = new SupplierDAO(db);
 
@@ -82,7 +82,8 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             products.add(p == null ? new Product() : p);
         }
 
-        adapter = new PoLineAdapter(this, lines, products);
+        boolean editableLines = !(po.getStatus() != null && po.getStatus().equalsIgnoreCase("received"));
+        adapter = new PoLineAdapter(this, lines, products, editableLines);
         lvLines.setAdapter(adapter);
 
         // 角色权限控制
@@ -102,7 +103,20 @@ public class PurchaseDetailActivity extends AppCompatActivity {
         btnReceive.setEnabled(canReceive);
         btnSave.setEnabled(canSave);
 
+        // 如果采购单已完成（received），禁用所有编辑操作以防止被修改
+        if (po.getStatus() != null && po.getStatus().equalsIgnoreCase("received")) {
+            btnSave.setEnabled(false);
+            btnApprove.setEnabled(false);
+            btnReceive.setEnabled(false);
+            btnAddLine.setEnabled(false);
+            Toast.makeText(this, getString(R.string.po_completed_cannot_edit_long), Toast.LENGTH_LONG).show();
+        }
+
         btnSave.setOnClickListener(v -> {
+            if (po.getStatus() != null && po.getStatus().equalsIgnoreCase("received")) {
+                Toast.makeText(this, getString(R.string.po_completed_cannot_edit), Toast.LENGTH_SHORT).show();
+                return;
+            }
             int idx = spSupplier.getSelectedItemPosition();
             if (idx >= 0 && idx < supList.size()) po.setSupplierId(supList.get(idx).getId());
 
@@ -110,7 +124,7 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             for (int i = 0; i < lines.size(); i++) {
                 PurchaseLine l = lines.get(i);
                 if (l.getProductId() == null || l.getProductId().trim().isEmpty()) {
-                    Toast.makeText(this, "第 " + (i+1) + " 行未选择商品", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.po_line_missing_product, i+1), Toast.LENGTH_SHORT).show();
                     return;
                 }
                 if (l.getQty() <= 0) {
@@ -152,7 +166,7 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             originalLineIds.clear();
             for (PurchaseLine l : purchaseDAO.getLinesForPo(po.getId())) if (l.getId() != null) originalLineIds.add(l.getId());
 
-            Toast.makeText(this, "已保存", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.saved), Toast.LENGTH_SHORT).show();
         });
 
         btnApprove.setOnClickListener(v -> {
@@ -181,8 +195,8 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             } finally {
                 db.endTransaction();
             }
-            if (ok) Toast.makeText(this, "入库并匹配成功", Toast.LENGTH_SHORT).show();
-            else Toast.makeText(this, "入库失败", Toast.LENGTH_SHORT).show();
+            if (ok) Toast.makeText(this, getString(R.string.purchase_receive_success), Toast.LENGTH_SHORT).show();
+            else Toast.makeText(this, getString(R.string.receive_failed), Toast.LENGTH_SHORT).show();
             finish();
         });
 

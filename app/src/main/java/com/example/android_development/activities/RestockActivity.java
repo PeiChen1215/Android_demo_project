@@ -35,7 +35,7 @@ public class RestockActivity extends AppCompatActivity {
 
         DatabaseHelper db = new DatabaseHelper(this);
         productDAO = new ProductDAO(db.getReadableDatabase());
-        inventoryDAO = new InventoryDAO(db.getWritableDatabase());
+        inventoryDAO = new InventoryDAO(db.getWritableDatabase(), this);
 
         loadLowStockProducts();
     }
@@ -79,16 +79,16 @@ public class RestockActivity extends AppCompatActivity {
                     String s = etQty.getText().toString().trim();
                     int qty = 0;
                     try { qty = Integer.parseInt(s); } catch (Exception ex) { qty = 0; }
-                    if (qty <= 0) { Toast.makeText(RestockActivity.this, "请输入有效数量", Toast.LENGTH_SHORT).show(); return; }
+                    if (qty <= 0) { Toast.makeText(RestockActivity.this, getString(R.string.enter_valid_quantity), Toast.LENGTH_SHORT).show(); return; }
                     boolean ok = inventoryDAO.restockShelf(p.getId(), qty);
                     if (ok) {
-                        Toast.makeText(RestockActivity.this, "补货成功", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(RestockActivity.this, getString(R.string.restock_success), Toast.LENGTH_SHORT).show();
                         loadLowStockProducts();
                     } else {
-                        Toast.makeText(RestockActivity.this, "补货失败（仓库库存不足或异常）", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(RestockActivity.this, getString(R.string.restock_failed), Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(getString(R.string.btn_cancel), null)
                 .create();
         dlg.show();
     }
