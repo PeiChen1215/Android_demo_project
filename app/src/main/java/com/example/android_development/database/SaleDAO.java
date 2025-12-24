@@ -12,6 +12,9 @@ import com.example.android_development.util.Audit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import com.example.android_development.model.SalesSummary;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SaleDAO {
     private SQLiteDatabase db;
@@ -112,6 +115,175 @@ public class SaleDAO {
                 Sale s = Sale.fromCursor(c);
                 s.setLines(getLinesForSale(s.getId()));
                 list.add(s);
+            } while (c.moveToNext());
+            c.close();
+        }
+        return list;
+    }
+
+    // 返回指定时间段内的明细条目：包含销售、退款（作为负数）和采购（作为负数）
+    public List<android.content.ContentValues> getDetailedEntriesForPeriod(long startMillis, long endMillis) {
+        List<android.content.ContentValues> list = new ArrayList<>();
+        // Sales
+        Cursor sc = db.query(Constants.TABLE_SALES, null, Constants.COLUMN_SALE_TIMESTAMP + " BETWEEN ? AND ?", new String[]{String.valueOf(startMillis), String.valueOf(endMillis)}, null, null, Constants.COLUMN_SALE_TIMESTAMP + " DESC");
+        if (sc != null && sc.moveToFirst()) {
+            do {
+                android.content.ContentValues cv = new android.content.ContentValues();
+                String sid = sc.getString(sc.getColumnIndexOrThrow(Constants.COLUMN_SALE_ID));
+                double total = sc.getDouble(sc.getColumnIndexOrThrow(Constants.COLUMN_SALE_TOTAL));
+                long ts = sc.getLong(sc.getColumnIndexOrThrow(Constants.COLUMN_SALE_TIMESTAMP));
+                cv.put("type", "sale");
+                cv.put("id", sid);
+                cv.put("amount", total);
+                cv.put("ts", ts);
+                list.add(cv);
+            } while (sc.moveToNext());
+            sc.close();
+        }
+
+        // Refunds allocated by original sale time (join refunds -> sales)
+        String rsql = "SELECT r.* , s." + Constants.COLUMN_SALE_TIMESTAMP + " as sale_ts FROM " + Constants.TABLE_REFUNDS + " r JOIN " + Constants.TABLE_SALES + " s ON r." + Constants.COLUMN_REFUND_SALE_ID + " = s." + Constants.COLUMN_SALE_ID + " WHERE s." + Constants.COLUMN_SALE_TIMESTAMP + " BETWEEN ? AND ? ORDER BY s." + Constants.COLUMN_SALE_TIMESTAMP + " DESC";
+        Cursor rc = db.rawQuery(rsql, new String[]{String.valueOf(startMillis), String.valueOf(endMillis)});
+        if (rc != null && rc.moveToFirst()) {
+            do {
+                android.content.ContentValues cv = new android.content.ContentValues();
+                String rid = rc.getString(rc.getColumnIndexOrThrow(Constants.COLUMN_REFUND_ID));
+                double amt = rc.getDouble(rc.getColumnIndexOrThrow(Constants.COLUMN_REFUND_AMOUNT));
+                long saleTs = rc.getLong(rc.getColumnIndexOrThrow("sale_ts"));
+                String reason = null;
+                int idx = rc.getColumnIndex(Constants.COLUMN_REFUND_REASON);
+                if (idx != -1) reason = rc.getString(idx);
+                cv.put("type", "refund");
+                cv.put("id", rid);
+                cv.put("amount", -amt);
+                cv.put("ts", saleTs);
+                if (reason != null) cv.put("reason", reason);
+                list.add(cv);
+            } while (rc.moveToNext());
+            rc.close();
+        }
+
+        // Purchases (use created_at and treat as negative expense)
+        Cursor pc = db.query(Constants.TABLE_PURCHASE_ORDERS, null, Constants.COLUMN_PO_CREATED_AT + " BETWEEN ? AND ?", new String[]{String.valueOf(startMillis), String.valueOf(endMillis)}, null, null, Constants.COLUMN_PO_CREATED_AT + " DESC");
+        if (pc != null && pc.moveToFirst()) {
+            do {
+                android.content.ContentValues cv = new android.content.ContentValues();
+                String pid = pc.getString(pc.getColumnIndexOrThrow(Constants.COLUMN_PO_ID));
+                double total = 0.0;
+                int idx = pc.getColumnIndex(Constants.COLUMN_PO_TOTAL);
+                if (idx != -1) total = pc.getDouble(idx);
+                long ts = pc.getLong(pc.getColumnIndexOrThrow(Constants.COLUMN_PO_CREATED_AT));
+                cv.put("type", "purchase");
+                cv.put("id", pid);
+                cv.put("amount", -total);
+                cv.put("ts", ts);
+                list.add(cv);
+            } while (pc.moveToNext());
+            pc.close();
+        }
+
+        return list;
+    }
+
+    // 退单（退款/撤销销售）：恢复库存并标记为已退款
+    public boolean refundSale(String saleId, String reason) {
+        if (saleId == null || saleId.isEmpty()) return false;
+        // 权限检查
+        if (ctx != null && !com.example.android_development.security.Auth.hasPermission(ctx, com.example.android_development.util.Constants.PERM_REFUND)) {
+            com.example.android_development.util.DaoResult.setError(com.example.android_development.util.DaoResult.ERR_PERMISSION, "no permission to refund");
+            return false;
+        }
+        db.beginTransaction();
+        try {
+            Sale s = getSaleById(saleId);
+            if (s == null) return false;
+            if (s.isRefunded()) return false; // already refunded
+
+            // 恢复库存：对每一行进行入库（货架）操作
+            for (SaleLine l : s.getLines()) {
+                boolean ok = InventoryDAO.adjustShelfStock(db, prefsManager, l.getProductId(), l.getQty(), "refund", "IN");
+                if (!ok) throw new Exception("Failed to restore stock for product " + l.getProductId());
+            }
+
+            // 标记已退款
+            android.content.ContentValues v = new android.content.ContentValues();
+            v.put(com.example.android_development.util.Constants.COLUMN_SALE_REFUNDED, 1);
+            long now = System.currentTimeMillis();
+            v.put(com.example.android_development.util.Constants.COLUMN_SALE_REFUNDED_AT, now);
+            int updated = db.update(com.example.android_development.util.Constants.TABLE_SALES, v, com.example.android_development.util.Constants.COLUMN_SALE_ID + " = ?", new String[]{saleId});
+            if (updated <= 0) throw new Exception("Failed to mark sale refunded");
+
+            try {
+                String uid = null, urole = null;
+                if (prefsManager != null) { uid = prefsManager.getUserId(); urole = prefsManager.getUserRole(); }
+                // 写退款记录
+                com.example.android_development.model.RefundRecord rr = new com.example.android_development.model.RefundRecord();
+                rr.setId(java.util.UUID.randomUUID().toString());
+                rr.setSaleId(saleId);
+                // 退款金额应为顾客实际支付的销售金额（不包括找零），即使用销售总额 total
+                rr.setAmount(s.getTotal());
+                rr.setUserId(uid);
+                rr.setUserRole(urole);
+                rr.setReason(reason);
+                rr.setTimestamp(now);
+                db.insert(com.example.android_development.util.Constants.TABLE_REFUNDS, null, rr.toContentValues());
+
+                com.example.android_development.util.Audit.writeSystemAudit(db, uid, urole, "sale:" + saleId, "refund", "refund_sale");
+            } catch (Exception ignored) {}
+
+            db.setTransactionSuccessful();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    // 按天汇总：返回 periodLabel=yyyy-MM-dd 的汇总列表（包含指定时间范围内）
+    public List<SalesSummary> getDailySalesSummary(long startMillis, long endMillis) {
+        List<SalesSummary> list = new ArrayList<>();
+        // 合并销售和退款，但退款按原销售时间计入（使用 refunds JOIN sales，退款金额取负）
+        String sql = "SELECT period, SUM(amount) as total, SUM(cnt) as cnt FROM (" +
+            "  SELECT strftime('%Y-%m-%d', s." + Constants.COLUMN_SALE_TIMESTAMP + "/1000, 'unixepoch', 'localtime') as period, SUM(s." + Constants.COLUMN_SALE_TOTAL + ") as amount, COUNT(*) as cnt FROM " + Constants.TABLE_SALES + " s WHERE s." + Constants.COLUMN_SALE_TIMESTAMP + " BETWEEN ? AND ? GROUP BY period" +
+            "  UNION ALL" +
+            "  SELECT strftime('%Y-%m-%d', s." + Constants.COLUMN_SALE_TIMESTAMP + "/1000, 'unixepoch', 'localtime') as period, -SUM(r." + Constants.COLUMN_REFUND_AMOUNT + ") as amount, 0 as cnt FROM " + Constants.TABLE_REFUNDS + " r JOIN " + Constants.TABLE_SALES + " s ON r." + Constants.COLUMN_REFUND_SALE_ID + " = s." + Constants.COLUMN_SALE_ID + " WHERE s." + Constants.COLUMN_SALE_TIMESTAMP + " BETWEEN ? AND ? GROUP BY period" +
+            "  UNION ALL" +
+            "  SELECT strftime('%Y-%m-%d', po." + Constants.COLUMN_PO_CREATED_AT + "/1000, 'unixepoch', 'localtime') as period, -SUM(po." + Constants.COLUMN_PO_TOTAL + ") as amount, 0 as cnt FROM " + Constants.TABLE_PURCHASE_ORDERS + " po WHERE po." + Constants.COLUMN_PO_CREATED_AT + " BETWEEN ? AND ? GROUP BY period" +
+            ") GROUP BY period ORDER BY period DESC";
+        String[] args = new String[]{String.valueOf(startMillis), String.valueOf(endMillis), String.valueOf(startMillis), String.valueOf(endMillis), String.valueOf(startMillis), String.valueOf(endMillis)};
+        Cursor c = db.rawQuery(sql, args);
+        if (c != null && c.moveToFirst()) {
+            do {
+                String period = c.getString(c.getColumnIndexOrThrow("period"));
+                double total = c.getDouble(c.getColumnIndexOrThrow("total"));
+                int cnt = c.getInt(c.getColumnIndexOrThrow("cnt"));
+                list.add(new SalesSummary(period, total, cnt));
+            } while (c.moveToNext());
+            c.close();
+        }
+        return list;
+    }
+
+    // 按月汇总：返回 periodLabel=yyyy-MM 的汇总列表
+    public List<SalesSummary> getMonthlySalesSummary(long startMillis, long endMillis) {
+        List<SalesSummary> list = new ArrayList<>();
+        String sql = "SELECT period, SUM(amount) as total, SUM(cnt) as cnt FROM (" +
+            "  SELECT strftime('%Y-%m', s." + Constants.COLUMN_SALE_TIMESTAMP + "/1000, 'unixepoch', 'localtime') as period, SUM(s." + Constants.COLUMN_SALE_TOTAL + ") as amount, COUNT(*) as cnt FROM " + Constants.TABLE_SALES + " s WHERE s." + Constants.COLUMN_SALE_TIMESTAMP + " BETWEEN ? AND ? GROUP BY period" +
+            "  UNION ALL" +
+            "  SELECT strftime('%Y-%m', s." + Constants.COLUMN_SALE_TIMESTAMP + "/1000, 'unixepoch', 'localtime') as period, -SUM(r." + Constants.COLUMN_REFUND_AMOUNT + ") as amount, 0 as cnt FROM " + Constants.TABLE_REFUNDS + " r JOIN " + Constants.TABLE_SALES + " s ON r." + Constants.COLUMN_REFUND_SALE_ID + " = s." + Constants.COLUMN_SALE_ID + " WHERE s." + Constants.COLUMN_SALE_TIMESTAMP + " BETWEEN ? AND ? GROUP BY period" +
+            "  UNION ALL" +
+            "  SELECT strftime('%Y-%m', po." + Constants.COLUMN_PO_CREATED_AT + "/1000, 'unixepoch', 'localtime') as period, -SUM(po." + Constants.COLUMN_PO_TOTAL + ") as amount, 0 as cnt FROM " + Constants.TABLE_PURCHASE_ORDERS + " po WHERE po." + Constants.COLUMN_PO_CREATED_AT + " BETWEEN ? AND ? GROUP BY period" +
+            ") GROUP BY period ORDER BY period DESC";
+        String[] args = new String[]{String.valueOf(startMillis), String.valueOf(endMillis), String.valueOf(startMillis), String.valueOf(endMillis), String.valueOf(startMillis), String.valueOf(endMillis)};
+        Cursor c = db.rawQuery(sql, args);
+        if (c != null && c.moveToFirst()) {
+            do {
+                String period = c.getString(c.getColumnIndexOrThrow("period"));
+                double total = c.getDouble(c.getColumnIndexOrThrow("total"));
+                int cnt = c.getInt(c.getColumnIndexOrThrow("cnt"));
+                list.add(new SalesSummary(period, total, cnt));
             } while (c.moveToNext());
             c.close();
         }

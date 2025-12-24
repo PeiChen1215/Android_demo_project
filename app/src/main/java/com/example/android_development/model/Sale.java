@@ -10,8 +10,11 @@ public class Sale {
     private String id;
     private double total;
     private double paid;
+    private String paymentMethod;
     private String userId;
     private long timestamp;
+    private boolean refunded;
+    private long refundedAt;
     private List<SaleLine> lines = new ArrayList<>();
 
     public Sale() { this.timestamp = System.currentTimeMillis(); }
@@ -22,6 +25,8 @@ public class Sale {
     public void setTotal(double total) { this.total = total; }
     public double getPaid() { return paid; }
     public void setPaid(double paid) { this.paid = paid; }
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
     public long getTimestamp() { return timestamp; }
@@ -34,8 +39,11 @@ public class Sale {
         if (id != null) v.put(Constants.COLUMN_SALE_ID, id);
         v.put(Constants.COLUMN_SALE_TOTAL, total);
         v.put(Constants.COLUMN_SALE_PAID, paid);
+        v.put(Constants.COLUMN_SALE_PAYMENT_METHOD, paymentMethod);
         v.put(Constants.COLUMN_SALE_USER_ID, userId);
         v.put(Constants.COLUMN_SALE_TIMESTAMP, timestamp);
+        v.put(Constants.COLUMN_SALE_REFUNDED, refunded ? 1 : 0);
+        v.put(Constants.COLUMN_SALE_REFUNDED_AT, refundedAt);
         return v;
     }
 
@@ -46,8 +54,16 @@ public class Sale {
         idx = c.getColumnIndex(Constants.COLUMN_SALE_ID); if (idx != -1) s.setId(c.getString(idx));
         idx = c.getColumnIndex(Constants.COLUMN_SALE_TOTAL); if (idx != -1) s.setTotal(c.getDouble(idx));
         idx = c.getColumnIndex(Constants.COLUMN_SALE_PAID); if (idx != -1) s.setPaid(c.getDouble(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_SALE_PAYMENT_METHOD); if (idx != -1) s.setPaymentMethod(c.getString(idx));
         idx = c.getColumnIndex(Constants.COLUMN_SALE_USER_ID); if (idx != -1) s.setUserId(c.getString(idx));
         idx = c.getColumnIndex(Constants.COLUMN_SALE_TIMESTAMP); if (idx != -1) s.setTimestamp(c.getLong(idx));
+        idx = c.getColumnIndex(Constants.COLUMN_SALE_REFUNDED); if (idx != -1) s.setRefunded(c.getInt(idx) == 1);
+        idx = c.getColumnIndex(Constants.COLUMN_SALE_REFUNDED_AT); if (idx != -1) s.setRefundedAt(c.getLong(idx));
         return s;
     }
+
+    public boolean isRefunded() { return refunded; }
+    public void setRefunded(boolean refunded) { this.refunded = refunded; }
+    public long getRefundedAt() { return refundedAt; }
+    public void setRefundedAt(long refundedAt) { this.refundedAt = refundedAt; }
 }

@@ -5,11 +5,13 @@
     android:orientation="vertical"
     android:padding="12dp">
 
-    <EditText
-        android:id="@+id/et_product_id"
+    <AutoCompleteTextView
+        android:id="@+id/et_product_key"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="商品 ID 或 条码" />
+        android:hint="商品名称或条码"
+        android:inputType="text"
+        android:imeOptions="actionDone" />
 
     <EditText
         android:id="@+id/et_qty"
@@ -38,10 +40,36 @@
         android:textSize="18sp"
         android:paddingTop="8dp" />
 
-    <Button
-        android:id="@+id/btn_checkout"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="结账" />
+        android:orientation="vertical"
+        android:paddingTop="8dp">
+
+        <Spinner
+            android:id="@+id/sp_payment_method"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <EditText
+            android:id="@+id/et_paid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:hint="已付金额" />
+
+        <TextView
+            android:id="@+id/tv_change"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="找零: 0.00" />
+
+        <Button
+            android:id="@+id/btn_checkout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="结账" />
+
+    </LinearLayout>
 
 </LinearLayout>

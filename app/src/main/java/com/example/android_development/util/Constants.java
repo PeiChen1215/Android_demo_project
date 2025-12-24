@@ -3,7 +3,7 @@ package com.example.android_development.util;
 public class Constants {
     // 数据库常量
     public static final String DATABASE_NAME = "supermarket.db";
-    public static final int DATABASE_VERSION = 7;
+    public static final int DATABASE_VERSION = 8;
 
     // 用户表
     public static final String TABLE_USERS = "users";
@@ -28,6 +28,9 @@ public class Constants {
     public static final String ROLE_STOCK = "stock";
     public static final String ROLE_BUYER = "buyer";          // 采购员（采购子系统）
     public static final String ROLE_INVENTORY = "inventory";  // 盘点员（盘点子系统）
+
+    // 财务/出纳角色
+    public static final String ROLE_FINANCE = "finance";     // 财务（营收报表、对账）
 
     // 标准化角色（别名）
     public static final String ROLE_PURCHASER = "purchaser"; // 采购员别名
@@ -85,6 +88,10 @@ public class Constants {
     public static final String PERM_APPROVE_RETURN = "APPROVE_RETURN";
     public static final String PERM_VIEW_AUDIT = "VIEW_AUDIT";
     public static final String PERM_RUN_INVENTORY = "RUN_INVENTORY";
+    // 财务相关权限
+    public static final String PERM_VIEW_REVENUE = "VIEW_REVENUE"; // 查看营收报表
+    public static final String PERM_EXPORT_REVENUE = "EXPORT_REVENUE"; // 导出/下载报表
+    public static final String PERM_REFUND = "REFUND"; // 执行退款/退货审批
 
     // 供应商表
     public static final String TABLE_SUPPLIERS = "suppliers";
@@ -169,6 +176,19 @@ public class Constants {
     public static final String COLUMN_SALE_PAID = "paid";
     public static final String COLUMN_SALE_USER_ID = "user_id";
     public static final String COLUMN_SALE_TIMESTAMP = "timestamp";
+    public static final String COLUMN_SALE_PAYMENT_METHOD = "payment_method";
+    public static final String COLUMN_SALE_REFUNDED = "refunded"; // 0/1
+    public static final String COLUMN_SALE_REFUNDED_AT = "refunded_at"; // timestamp
+
+    // 退款记录表
+    public static final String TABLE_REFUNDS = "refunds";
+    public static final String COLUMN_REFUND_ID = "refund_id";
+    public static final String COLUMN_REFUND_SALE_ID = "sale_id";
+    public static final String COLUMN_REFUND_AMOUNT = "amount";
+    public static final String COLUMN_REFUND_USER_ID = "user_id";
+    public static final String COLUMN_REFUND_USER_ROLE = "user_role";
+    public static final String COLUMN_REFUND_REASON = "reason";
+    public static final String COLUMN_REFUND_TIMESTAMP = "timestamp";
 
     public static final String TABLE_SALE_LINES = "sale_lines";
     public static final String COLUMN_SALE_LINE_ID = "line_id";

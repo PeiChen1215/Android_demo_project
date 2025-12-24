@@ -108,8 +108,19 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             products.add(p == null ? new Product() : p);
         }
 
+        // compute initial live total from lines to ensure UI matches current lines
+        double initialTotal = 0.0;
+        for (PurchaseLine l : lines) initialTotal += l.getQty() * l.getPrice();
+        po.setTotal(initialTotal);
+
         boolean editableLines = !(po.getStatus() != null && po.getStatus().equalsIgnoreCase("received"));
-        adapter = new PoLineAdapter(this, lines, products, editableLines);
+        adapter = new com.example.android_development.activities.adapter.PoLineAdapter(this, lines, products, editableLines, () -> {
+            // recalculate total live when adapter reports changes
+            double t = 0.0;
+            for (PurchaseLine l : lines) t += l.getQty() * l.getPrice();
+            po.setTotal(t);
+            if (tvTotal != null) tvTotal.setText(String.format("%.2f", po.getTotal()));
+        });
         lvLines.setAdapter(adapter);
 
         // 角色权限控制（使用 Auth）
@@ -184,6 +195,9 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             // save PO name from input
             if (etPoName != null) po.setName(etPoName.getText() == null ? null : etPoName.getText().toString().trim());
 
+            // commit any in-progress edits in list (force focus loss so listeners save values)
+            try { findViewById(android.R.id.content).requestFocus(); } catch (Exception ignored) {}
+
             // Validation
             for (int i = 0; i < lines.size(); i++) {
                 PurchaseLine l = lines.get(i);
@@ -237,7 +251,10 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             } finally {
                 db.endTransaction();
             }
-            // refresh total in UI
+            // refresh total in UI (ensure current lines reflected)
+            double liveTotal = 0.0;
+            for (PurchaseLine l : purchaseDAO.getLinesForPo(po.getId())) liveTotal += l.getQty() * l.getPrice();
+            po.setTotal(liveTotal);
             tvTotal.setText(String.format("%.2f", po.getTotal()));
             // refresh original ids
             originalLineIds.clear();
@@ -338,10 +355,14 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             nl.setPoId(po.getId());
             nl.setProductId("");
             nl.setQty(1);
-            nl.setPrice(0);
+            nl.setPrice(0.0);
             lines.add(nl);
             products.add(new Product());
             adapter.notifyDataSetChanged();
+            // notify change so total recalculates
+            if (adapter != null) adapter.setOnLinesChangeListener(() -> {
+                double t = 0.0; for (PurchaseLine l : lines) t += l.getQty() * l.getPrice(); po.setTotal(t); if (tvTotal != null) tvTotal.setText(String.format("%.2f", po.getTotal()));
+            });
         });
     }
 

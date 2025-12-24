@@ -20,6 +20,13 @@
         android:text="@string/stock_current"
         android:paddingBottom="12dp" />
 
+    <TextView
+        android:id="@+id/textViewWarehouseStock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_warehouse_stock"
+        android:paddingBottom="12dp" />
+
     <Spinner
         android:id="@+id/spinnerTxType"
         android:layout_width="match_parent"

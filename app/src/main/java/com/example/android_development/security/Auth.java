@@ -31,6 +31,10 @@ public class Auth {
         admin.add(Constants.PERM_APPROVE_RETURN);
         admin.add(Constants.PERM_VIEW_AUDIT);
         admin.add(Constants.PERM_RUN_INVENTORY);
+        // 管理员应具备查看/导出营收与退款权限
+        admin.add(Constants.PERM_VIEW_REVENUE);
+        admin.add(Constants.PERM_EXPORT_REVENUE);
+        admin.add(Constants.PERM_REFUND);
         m.put(Constants.ROLE_ADMIN, Collections.unmodifiableSet(admin));
 
         // 采购员：创建/提交/查看采购
@@ -56,6 +60,15 @@ public class Auth {
         cashier.add(Constants.PERM_ADJUST_STOCK); // POS 出库视为库存调整
         cashier.add(Constants.PERM_VIEW_AUDIT);
         m.put(Constants.ROLE_CASHIER, Collections.unmodifiableSet(cashier));
+
+        // 财务/出纳：报表与导出权限
+        Set<String> finance = new HashSet<>();
+        finance.add(Constants.PERM_VIEW_REVENUE);
+        finance.add(Constants.PERM_EXPORT_REVENUE);
+        finance.add(Constants.PERM_VIEW_AUDIT);
+        // 财务可能也需要退款权限 (可选)
+        finance.add(Constants.PERM_REFUND);
+        m.put(Constants.ROLE_FINANCE, Collections.unmodifiableSet(finance));
 
         ROLE_PERMS = Collections.unmodifiableMap(m);
     }

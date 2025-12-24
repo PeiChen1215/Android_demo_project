@@ -20,6 +20,7 @@ public class StockAdjustActivity extends AppCompatActivity {
 
     private TextView textViewProductName;
     private TextView textViewCurrentStock;
+    private TextView textViewWarehouseStock;
     private Spinner spinnerTxType;
     private EditText editTextQuantity;
     private EditText editTextReason;
@@ -51,6 +52,7 @@ public class StockAdjustActivity extends AppCompatActivity {
     private void initViews() {
         textViewProductName = findViewById(R.id.textViewProductName);
         textViewCurrentStock = findViewById(R.id.textViewCurrentStock);
+        textViewWarehouseStock = findViewById(R.id.textViewWarehouseStock);
         spinnerTxType = findViewById(R.id.spinnerTxType);
         editTextQuantity = findViewById(R.id.editTextQuantity);
         editTextReason = findViewById(R.id.editTextReason);
@@ -64,7 +66,8 @@ public class StockAdjustActivity extends AppCompatActivity {
     }
 
     private void setupSpinner() {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{getString(R.string.stock_in), getString(R.string.stock_out)});
+        // 仅保留两个操作：货架出库 与 仓库出库（仓库出库会把货放到货架）
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{getString(R.string.stock_out), getString(R.string.warehouse_out)});
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerTxType.setAdapter(adapter);
     }
@@ -92,10 +95,30 @@ public class StockAdjustActivity extends AppCompatActivity {
             }
 
             String sel = spinnerTxType.getSelectedItem().toString();
-            String type = sel.equals(getString(R.string.stock_in)) ? "IN" : "OUT";
+            // 这里我们简化为两种出库操作：货架出库（SHELF OUT）和仓库出库（WAREHOUSE OUT）
+            boolean isWarehouse = sel.equals(getString(R.string.warehouse_out));
+            String type = "OUT";
             String reason = editTextReason.getText().toString().trim();
 
-            boolean ok = productDAO.adjustStockWithTransaction(currentProduct.getId(), qty, type, currentUserId, currentUserRole, reason);
+            // 提前校验库存，给出清晰提示
+            if (isWarehouse) {
+                if ("OUT".equalsIgnoreCase(type) && currentProduct.getWarehouseStock() < qty) {
+                    Toast.makeText(this, getString(R.string.insufficient_warehouse_stock), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            } else {
+                if ("OUT".equalsIgnoreCase(type) && currentProduct.getStock() < qty) {
+                    Toast.makeText(this, getString(R.string.insufficient_shelf_stock), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+
+            boolean ok;
+            if (isWarehouse) {
+                ok = productDAO.adjustWarehouseWithTransaction(currentProduct.getId(), qty, type, currentUserId, currentUserRole, reason);
+            } else {
+                ok = productDAO.adjustStockWithTransaction(currentProduct.getId(), qty, type, currentUserId, currentUserRole, reason);
+            }
             if (ok) {
                 Toast.makeText(this, getString(R.string.stock_updated), Toast.LENGTH_SHORT).show();
                 finish();
@@ -120,5 +143,6 @@ public class StockAdjustActivity extends AppCompatActivity {
 
         textViewProductName.setText(currentProduct.getName());
         textViewCurrentStock.setText(getString(R.string.stock_current, currentProduct.getStock()));
+        textViewWarehouseStock.setText(getString(R.string.label_warehouse_stock, currentProduct.getWarehouseStock()));
     }
 }

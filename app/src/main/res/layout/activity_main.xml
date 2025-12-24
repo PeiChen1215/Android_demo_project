@@ -73,9 +73,17 @@
             android:id="@+id/buttonPOS"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="销售收银（开发中）"
+            android:text="销售收银"
             android:layout_marginBottom="12dp"
             android:enabled="false"/>
+
+        <Button
+            style="@style/AppButton"
+            android:id="@+id/buttonReceipts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="收据列表"
+            android:layout_marginBottom="12dp"/>
 
         <Button
             style="@style/AppButton"
@@ -92,6 +100,14 @@
             android:layout_height="wrap_content"
             android:text="采购管理"
             android:layout_marginBottom="32dp"/>
+
+        <Button
+            style="@style/AppButton"
+            android:id="@+id/buttonRevenue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="营收报表"
+            android:layout_marginBottom="16dp"/>
 
         <Button
             style="@style/AppButton"
