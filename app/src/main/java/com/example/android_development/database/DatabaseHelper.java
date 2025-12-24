@@ -65,6 +65,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         try {
                                 db.execSQL(DbContract.SQL_CREATE_TABLE_SALE_LINES);
                         } catch (Exception ignored) {}
+                        try {
+                                db.execSQL(DbContract.SQL_CREATE_TABLE_REFUNDS);
+                        } catch (Exception ignored) {}
                 try {
                         db.execSQL(DbContract.SQL_CREATE_TABLE_PURCHASE_ORDERS);
                 } catch (Exception ignored) {}
@@ -155,6 +158,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 Constants.COLUMN_CREATED_AT +
                 ") VALUES ('" + inventoryId + "', 'inventory1', '123456', '" +
                 Constants.ROLE_INVENTORY + "', '盘点员赵六', " + System.currentTimeMillis() + ")");
+        // 6. 财务/出纳（测试）
+        String financeId = java.util.UUID.randomUUID().toString();
+        try {
+            db.execSQL("INSERT INTO " + Constants.TABLE_USERS + " (" +
+                    Constants.COLUMN_USER_ID + ", " +
+                    Constants.COLUMN_USERNAME + ", " +
+                    Constants.COLUMN_PASSWORD + ", " +
+                    Constants.COLUMN_ROLE + ", " +
+                    Constants.COLUMN_FULL_NAME + ", " +
+                    Constants.COLUMN_CREATED_AT +
+                    ") VALUES ('" + financeId + "', 'finance1', '123456', '" + Constants.ROLE_FINANCE + "', '财务张三', " + System.currentTimeMillis() + ")");
+        } catch (Exception ignored) {}
     }
     // 添加测试商品数据
     private void insertTestProducts(SQLiteDatabase db) {
@@ -649,6 +664,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         } catch (Exception ignored) {}
                 }
 
+                if (oldVersion < 8) {
+                        // Add payment_method column to sales table
+                        try { ensureColumnExists(db, Constants.TABLE_SALES, Constants.COLUMN_SALE_PAYMENT_METHOD, "TEXT"); } catch (Exception ignored) {}
+                }
+
                 // 从版本 <3 升级：使用安全迁移脚本保留数据并为每条记录填充 user_role（如能从 users 表推断）
                 if (oldVersion < 3) {
                         Cursor c = null;
@@ -763,6 +783,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 try { db.execSQL(DbContract.SQL_CREATE_TABLE_STOCK_COUNT_LINES); } catch (Exception ignored) {}
                 try { db.execSQL(DbContract.SQL_CREATE_TABLE_SALES); } catch (Exception ignored) {}
                 try { db.execSQL(DbContract.SQL_CREATE_TABLE_SALE_LINES); } catch (Exception ignored) {}
+                try { db.execSQL(DbContract.SQL_CREATE_TABLE_REFUNDS); } catch (Exception ignored) {}
     }
 
         @Override
@@ -775,6 +796,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 try {
                         ensureColumnExists(db, Constants.TABLE_PURCHASE_ORDERS, Constants.COLUMN_PO_NAME, "TEXT");
                 } catch (Exception ignored) {}
+                try { ensureColumnExists(db, Constants.TABLE_SALES, Constants.COLUMN_SALE_PAYMENT_METHOD, "TEXT"); } catch (Exception ignored) {}
+                try { ensureColumnExists(db, Constants.TABLE_SALES, Constants.COLUMN_SALE_REFUNDED, "INTEGER"); } catch (Exception ignored) {}
+                try { ensureColumnExists(db, Constants.TABLE_SALES, Constants.COLUMN_SALE_REFUNDED_AT, "INTEGER"); } catch (Exception ignored) {}
+                try { db.execSQL(DbContract.SQL_CREATE_TABLE_REFUNDS); } catch (Exception ignored) {}
         }
 
         // 根据条码查询商品（返回 Product 对象）

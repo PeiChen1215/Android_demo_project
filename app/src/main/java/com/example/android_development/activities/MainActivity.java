@@ -93,6 +93,21 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             
+            // 营收报表入口 - 基于权限控制
+            Button buttonRevenue = findViewById(R.id.buttonRevenue);
+            if (buttonRevenue != null) {
+                boolean canViewRevenue = com.example.android_development.security.Auth.hasPermission(this, com.example.android_development.util.Constants.PERM_VIEW_REVENUE);
+                if (canViewRevenue) {
+                    buttonRevenue.setVisibility(View.VISIBLE);
+                    buttonRevenue.setOnClickListener(v -> {
+                        Intent intent = new Intent(MainActivity.this, RevenueReportActivity.class);
+                        startActivity(intent);
+                    });
+                } else {
+                    buttonRevenue.setVisibility(View.GONE);
+                }
+            }
+            
             // 销售收银入口 - 仅收银员/管理员
             Button buttonPOS = findViewById(R.id.buttonPOS);
             if (buttonPOS != null) {
@@ -105,6 +120,20 @@ public class MainActivity extends AppCompatActivity {
                     });
                 } else {
                     buttonPOS.setVisibility(View.GONE);
+                }
+            }
+
+            // 收据列表入口 - 仅收银/管理员/财务可见
+            Button buttonReceipts = findViewById(R.id.buttonReceipts);
+            if (buttonReceipts != null) {
+                if (Constants.ROLE_ADMIN.equals(role) || Constants.ROLE_CASHIER.equals(role) || Constants.ROLE_FINANCE.equals(role)) {
+                    buttonReceipts.setVisibility(View.VISIBLE);
+                    buttonReceipts.setOnClickListener(v -> {
+                        Intent intent = new Intent(MainActivity.this, ReceiptListActivity.class);
+                        startActivity(intent);
+                    });
+                } else {
+                    buttonReceipts.setVisibility(View.GONE);
                 }
             }
     }
@@ -157,6 +186,8 @@ public class MainActivity extends AppCompatActivity {
         switch (role) {
             case Constants.ROLE_ADMIN:
                 return "系统管理员";
+            case Constants.ROLE_FINANCE:
+                return "财务/出纳";
             case Constants.ROLE_BUYER:
                 return "采购员";
             case Constants.ROLE_CASHIER:
@@ -174,6 +205,8 @@ public class MainActivity extends AppCompatActivity {
         switch (role) {
             case Constants.ROLE_ADMIN:
                 return "系统管理员：拥有系统所有权限，可以管理用户和所有子系统。";
+            case Constants.ROLE_FINANCE:
+                return "财务/出纳：负责营收报表、对账、退款审核等财务相关工作。";
             case Constants.ROLE_BUYER:
                 return "采购员：负责商品采购，管理供应商信息，制定采购计划。";
             case Constants.ROLE_CASHIER:

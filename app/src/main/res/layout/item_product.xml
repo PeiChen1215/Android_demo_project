@@ -48,14 +48,15 @@
 
             <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
 
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:gravity="end">
 
                     <TextView
                         android:id="@+id/textViewProductPrice"
@@ -71,7 +72,9 @@
                             android:layout_height="wrap_content"
                             android:text=""
                             android:textSize="12sp"
-                            android:textColor="@color/gray"/>
+                            android:textColor="@color/gray"
+                            android:ellipsize="end"
+                            android:maxLines="1"/>
 
                         <TextView
                             android:id="@+id/textViewProductWarehouseStock"
@@ -79,7 +82,10 @@
                             android:layout_height="wrap_content"
                             android:text=""
                             android:textSize="12sp"
-                            android:textColor="@color/gray"/>
+                            android:textColor="@color/gray"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:paddingTop="2dp"/>
 
                 </LinearLayout>
 

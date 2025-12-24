@@ -105,6 +105,58 @@ public class ProductDAO {
         return product;
     }
 
+    // 根据商品名称精确匹配获取商品（如果有多个同名商品，返回第一条）
+    public Product getProductByName(String name) {
+        if (name == null || name.isEmpty()) return null;
+        String[] columns = getAllColumns();
+        String selection = Constants.COLUMN_PRODUCT_NAME + " = ?";
+        String[] selectionArgs = {name};
+
+        Cursor cursor = db.query(
+                Constants.TABLE_PRODUCTS,
+                columns,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null
+        );
+
+        Product product = null;
+        if (cursor != null && cursor.moveToFirst()) {
+            product = cursorToProduct(cursor);
+            cursor.close();
+        }
+        return product;
+    }
+
+    // 模糊匹配商品名称，返回匹配的商品列表（用于候选提示）
+    public List<Product> getProductsByNameLike(String q) {
+        List<Product> products = new ArrayList<>();
+        if (q == null) return products;
+        String like = "%" + q + "%";
+        String[] columns = getAllColumns();
+        String selection = Constants.COLUMN_PRODUCT_NAME + " LIKE ?";
+        String[] selectionArgs = {like};
+        Cursor cursor = db.query(
+                Constants.TABLE_PRODUCTS,
+                columns,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                Constants.COLUMN_PRODUCT_NAME + " ASC",
+                "50"
+        );
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                products.add(cursorToProduct(cursor));
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+        return products;
+    }
+
     // 获取所有商品
     public List<Product> getAllProducts() {
         List<Product> products = new ArrayList<>();
@@ -329,6 +381,18 @@ public class ProductDAO {
         return db.update(Constants.TABLE_PRODUCTS, values, whereClause, whereArgs);
     }
 
+    // 更新仓库库存数量
+    public int updateWarehouseStock(String productId, int newWarehouseStock) {
+        ContentValues values = new ContentValues();
+        values.put(Constants.COLUMN_WAREHOUSE_STOCK, newWarehouseStock);
+        values.put(Constants.COLUMN_UPDATED_AT, System.currentTimeMillis());
+
+        String whereClause = Constants.COLUMN_PRODUCT_ID + " = ?";
+        String[] whereArgs = {productId};
+
+        return db.update(Constants.TABLE_PRODUCTS, values, whereClause, whereArgs);
+    }
+
     // 增加库存（入库）
     public int increaseStock(String productId, int quantity) {
         Product product = getProductById(productId);
@@ -408,12 +472,15 @@ public class ProductDAO {
             if (product == null) return false;
 
             int before = product.getStock();
-            int after = before;
+            int after;
             if ("IN".equalsIgnoreCase(type)) {
                 after = before + quantity;
             } else if ("OUT".equalsIgnoreCase(type)) {
+                // 如果货架库存不足，拒绝出库
+                if (before < quantity) {
+                    return false;
+                }
                 after = before - quantity;
-                if (after < 0) after = 0;
             } else {
                 return false;
             }
@@ -435,6 +502,103 @@ public class ProductDAO {
             tx.setTimestamp(System.currentTimeMillis());
 
             addStockTransaction(tx);
+
+            // 当货架下架（即把货从货架移回仓库）时，同时增加仓库库存并写入对应事务记录
+            if ("OUT".equalsIgnoreCase(type)) {
+                int whBefore = product.getWarehouseStock();
+                int whAfter = whBefore + quantity;
+                int updWh = updateWarehouseStock(productId, whAfter);
+                if (updWh <= 0) {
+                    return false;
+                }
+
+                StockTransaction whTx = new StockTransaction();
+                whTx.setProductId(productId);
+                whTx.setProductName(product.getName());
+                whTx.setUserId(userId);
+                whTx.setUserRole(userRole);
+                whTx.setType("WAREHOUSE_IN_FROM_SHELF");
+                whTx.setQuantity(quantity);
+                whTx.setStockBefore(whBefore);
+                whTx.setStockAfter(whAfter);
+                whTx.setReason("货架下架: " + (reason == null ? "" : reason));
+                whTx.setTimestamp(System.currentTimeMillis());
+
+                addStockTransaction(whTx);
+            }
+
+            db.setTransactionSuccessful();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    // 调整仓库库存并写入事务（在事务中执行）
+    public boolean adjustWarehouseWithTransaction(String productId, int quantity, String type, String userId, String userRole, String reason) {
+        if (productId == null || type == null) return false;
+        db.beginTransaction();
+        try {
+            Product product = getProductById(productId);
+            if (product == null) return false;
+
+            int before = product.getWarehouseStock();
+            int after;
+            if ("IN".equalsIgnoreCase(type)) {
+                after = before + quantity;
+            } else if ("OUT".equalsIgnoreCase(type)) {
+                // 如果仓库库存不足，拒绝仓库出库
+                if (before < quantity) {
+                    return false;
+                }
+                after = before - quantity;
+            } else {
+                return false;
+            }
+
+            int updated = updateWarehouseStock(productId, after);
+            if (updated <= 0) return false;
+            // 写入仓库库存事务
+            StockTransaction tx = new StockTransaction();
+            tx.setProductId(productId);
+            tx.setProductName(product.getName());
+            tx.setUserId(userId);
+            tx.setUserRole(userRole);
+            tx.setType(("IN".equalsIgnoreCase(type) ? "WAREHOUSE_IN" : "WAREHOUSE_OUT"));
+            tx.setQuantity(quantity);
+            tx.setStockBefore(before);
+            tx.setStockAfter(after);
+            tx.setReason(reason);
+            tx.setTimestamp(System.currentTimeMillis());
+
+            addStockTransaction(tx);
+
+            // 当仓库出库（即把货从仓库放到货架）时，同时增加货架库存并写入另一条事务记录
+            if ("OUT".equalsIgnoreCase(type)) {
+                int shelfBefore = product.getStock();
+                int shelfAfter = shelfBefore + quantity;
+                int updShelf = updateStock(productId, shelfAfter);
+                if (updShelf <= 0) {
+                    return false;
+                }
+
+                StockTransaction shelfTx = new StockTransaction();
+                shelfTx.setProductId(productId);
+                shelfTx.setProductName(product.getName());
+                shelfTx.setUserId(userId);
+                shelfTx.setUserRole(userRole);
+                shelfTx.setType("IN_FROM_WAREHOUSE");
+                shelfTx.setQuantity(quantity);
+                shelfTx.setStockBefore(shelfBefore);
+                shelfTx.setStockAfter(shelfAfter);
+                shelfTx.setReason("来自仓库: " + (reason == null ? "" : reason));
+                shelfTx.setTimestamp(System.currentTimeMillis());
+
+                addStockTransaction(shelfTx);
+            }
 
             db.setTransactionSuccessful();
             return true;

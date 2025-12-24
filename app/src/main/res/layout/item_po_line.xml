@@ -21,6 +21,13 @@
         android:gravity="center"
         android:text="0" />
 
+    <EditText
+        android:id="@+id/et_price"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal"
+        android:gravity="center"
+        android:text="0.00" />
     <Button
         android:id="@+id/btn_remove"
         android:layout_width="wrap_content"

@@ -70,6 +70,30 @@ public class StockHistoryActivity extends AppCompatActivity {
         buttonHistoryBack.setOnClickListener(v -> finish());
     }
 
+    private String formatTitle(StockTransaction tx, String qtyStr) {
+        String type = tx.getType() != null ? tx.getType().toUpperCase() : "";
+        switch (type) {
+            case "IN":
+                return getString(R.string.stock_tx_type_in, qtyStr);
+            case "OUT":
+                return getString(R.string.stock_tx_type_out, qtyStr);
+            case "ADD":
+                return getString(R.string.stock_tx_type_add, qtyStr);
+            case "DELETE":
+                return getString(R.string.stock_tx_type_delete, qtyStr);
+            case "IN_FROM_WAREHOUSE":
+                return getString(R.string.stock_tx_type_in_from_warehouse, qtyStr);
+            case "WAREHOUSE_OUT":
+                return getString(R.string.stock_tx_type_warehouse_out, qtyStr);
+            case "WAREHOUSE_IN":
+                return getString(R.string.stock_tx_type_warehouse_in, qtyStr);
+            case "WAREHOUSE_IN_FROM_SHELF":
+                return getString(R.string.stock_tx_type_warehouse_in_from_shelf, qtyStr);
+            default:
+                return type.isEmpty() ? qtyStr : type + " " + qtyStr;
+        }
+    }
+
     private void loadHistory(String productId) {
         List<StockTransaction> list = productDAO.getStockHistory(productId);
 
@@ -80,7 +104,7 @@ public class StockHistoryActivity extends AppCompatActivity {
         for (StockTransaction tx : list) {
             Map<String, String> map = new HashMap<>();
             String qtyStr = tx.getQuantity() > 0 ? "+" + tx.getQuantity() : String.valueOf(tx.getQuantity());
-            String title = "IN".equalsIgnoreCase(tx.getType()) ? getString(R.string.stock_tx_type_in, qtyStr) : getString(R.string.stock_tx_type_out, qtyStr);
+            String title = formatTitle(tx, qtyStr);
             // 若在全局模式，显示产品名称以便识别已删除的商品
             if (tx.getProductName() != null && !tx.getProductName().isEmpty()) {
                 title = title + " — " + tx.getProductName();
@@ -140,24 +164,7 @@ public class StockHistoryActivity extends AppCompatActivity {
         for (StockTransaction tx : list) {
             Map<String, String> map = new HashMap<>();
             String qtyStr = tx.getQuantity() > 0 ? "+" + tx.getQuantity() : String.valueOf(tx.getQuantity());
-            String type = tx.getType() != null ? tx.getType().toUpperCase() : "";
-            String title;
-            switch (type) {
-                case "IN":
-                    title = getString(R.string.stock_tx_type_in, qtyStr);
-                    break;
-                case "OUT":
-                    title = getString(R.string.stock_tx_type_out, qtyStr);
-                    break;
-                case "ADD":
-                    title = getString(R.string.stock_tx_type_add, qtyStr);
-                    break;
-                case "DELETE":
-                    title = getString(R.string.stock_tx_type_delete, qtyStr);
-                    break;
-                default:
-                    title = type.isEmpty() ? qtyStr : type + " " + qtyStr;
-            }
+            String title = formatTitle(tx, qtyStr);
             if (tx.getProductName() != null && !tx.getProductName().isEmpty()) {
                 title = title + " — " + tx.getProductName();
             }

@@ -13,11 +13,14 @@
 
     <!-- Stock adjust -->
     <string name="stock_title">库存管理</string>
-    <string name="stock_current">当前库存: %1$d</string>
+    <string name="stock_current">货架库存: %1$d</string>
+    <string name="label_warehouse_stock">仓库库存: %1$d</string>
     <string name="stock_qty_hint">数量</string>
     <string name="stock_reason_hint">备注（可选）</string>
-    <string name="stock_in">入库</string>
-    <string name="stock_out">出库</string>
+    <string name="stock_in">货架入库</string>
+    <string name="stock_out">货架下架</string>
+    <string name="warehouse_in">仓库入库</string>
+    <string name="warehouse_out">仓库出库</string>
     <string name="no_permission">无权限执行库存操作</string>
     <string name="enter_quantity">请输入数量</string>
     <string name="quantity_positive">数量必须大于0</string>
@@ -30,6 +33,10 @@
     <string name="stock_tx_type_out">出库 %1$s</string>
     <string name="stock_tx_type_add">新增 %1$s</string>
     <string name="stock_tx_type_delete">删除 %1$s</string>
+    <string name="stock_tx_type_in_from_warehouse">来自仓库入库 %1$s</string>
+    <string name="stock_tx_type_warehouse_out">仓库出库 %1$s</string>
+    <string name="stock_tx_type_warehouse_in">仓库入库 %1$s</string>
+    <string name="stock_tx_type_warehouse_in_from_shelf">货架下架入库 %1$s</string>
     <string name="stock_tx_detail">库存: %1$d → %2$d | 操作人: %3$s</string>
     <string name="stock_tx_detail_with_role">库存: %1$d → %2$d | 操作人: %3$s (%4$s)</string>
     <string name="btn_history">记录</string>
@@ -108,4 +115,6 @@
     <string name="no_products_available">没有可选商品</string>
     <string name="select_product">选择商品</string>
     <string name="completed">已完成</string>
+        <string name="insufficient_shelf_stock">货架库存不足</string>
+        <string name="insufficient_warehouse_stock">仓库库存不足</string>
 </resources>

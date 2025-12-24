@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <Spinner
+        android:id="@+id/sp_period"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/tv_range_hint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="范围：最近30天" />
+
+    <Button
+        android:id="@+id/btn_generate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="生成报表" />
+
+    <Button
+        android:id="@+id/btn_export"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="导出 CSV"
+        android:layout_marginTop="8dp" />
+
+    <TextView
+        android:id="@+id/tv_total_summary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="总营收: 0.00"
+        android:textSize="18sp"
+        android:paddingTop="8dp" />
+
+    <ListView
+        android:id="@+id/list_summary"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+</LinearLayout>

@@ -30,4 +30,13 @@
         android:layout_height="wrap_content"
         android:text="0.00" />
 
+    <ImageButton
+        android:id="@+id/btn_line_delete"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:contentDescription="删除"
+        android:src="@android:drawable/ic_menu_delete"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:layout_marginStart="8dp" />
+
 </LinearLayout>

@@ -76,6 +76,27 @@
             android:name=".activities.SaleActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".activities.RevenueReportActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activities.ReceiptListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activities.ReceiptDetailActivity"
+            android:exported="false" />
+
+        <!-- FileProvider for sharing exported reports -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/filepaths" />
+        </provider>
+
     </application>
 
 </manifest>

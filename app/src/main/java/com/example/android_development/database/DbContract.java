@@ -184,8 +184,11 @@ public class DbContract {
                     Constants.COLUMN_SALE_ID + " TEXT PRIMARY KEY," +
                     Constants.COLUMN_SALE_TOTAL + " REAL NOT NULL," +
                     Constants.COLUMN_SALE_PAID + " REAL," +
+                    Constants.COLUMN_SALE_PAYMENT_METHOD + " TEXT," +
                     Constants.COLUMN_SALE_USER_ID + " TEXT," +
-                    Constants.COLUMN_SALE_TIMESTAMP + " INTEGER" +
+                    Constants.COLUMN_SALE_TIMESTAMP + " INTEGER," +
+                    Constants.COLUMN_SALE_REFUNDED + " INTEGER DEFAULT 0," +
+                    Constants.COLUMN_SALE_REFUNDED_AT + " INTEGER" +
                     ")";
 
     public static final String SQL_CREATE_TABLE_SALE_LINES =
@@ -196,6 +199,18 @@ public class DbContract {
                     Constants.COLUMN_SALE_LINE_PRODUCT_NAME + " TEXT," +
                     Constants.COLUMN_SALE_LINE_QTY + " INTEGER NOT NULL," +
                     Constants.COLUMN_SALE_LINE_PRICE + " REAL NOT NULL" +
+                    ")";
+
+    // 退款记录表
+    public static final String SQL_CREATE_TABLE_REFUNDS =
+            "CREATE TABLE " + Constants.TABLE_REFUNDS + " (" +
+                    Constants.COLUMN_REFUND_ID + " TEXT PRIMARY KEY," +
+                    Constants.COLUMN_REFUND_SALE_ID + " TEXT NOT NULL," +
+                    Constants.COLUMN_REFUND_AMOUNT + " REAL NOT NULL," +
+                    Constants.COLUMN_REFUND_USER_ID + " TEXT," +
+                    Constants.COLUMN_REFUND_USER_ROLE + " TEXT," +
+                    Constants.COLUMN_REFUND_REASON + " TEXT," +
+                    Constants.COLUMN_REFUND_TIMESTAMP + " INTEGER" +
                     ")";
 
     public static final String SQL_DROP_TABLE_SALES =
