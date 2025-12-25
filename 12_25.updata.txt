@@ -1,0 +1,36 @@
+2025-12-25 开发日志
+
+概述：
+- 将原有业务类 `InventoryService` 的后台监控功能改为 Android 前台 Service（`InventoryMonitorService`），实现定时库存检查并发送低库存通知。
+
+主要改动：
+- 新增：`InventoryMonitorService.java`（前台 Service，创建 NotificationChannel，startForeground，使用 ScheduledExecutorService 每 15 分钟检查一次库存，发送通知时检查 `POST_NOTIFICATIONS` 权限和用户权限）。
+- 修改：`AndroidManifest.xml`（添加 `FOREGROUND_SERVICE` 与 `POST_NOTIFICATIONS` 权限，注册 Service 并声明 `android:foregroundServiceType="dataSync"`）。
+- 修改：`MainActivity.java`（在运行时请求 `POST_NOTIFICATIONS` 权限，权限允许后启动监控 Service；在 `onResume` 中重检查权限并启动）。
+- 修改：`Constants.java`（将 `ROLE_INVENTORY` 合并为 `ROLE_STOCK` 的别名，统一角色）。
+- 修改：`Auth.java`（合并权限映射，去除重复的 `ROLE_INVENTORY` 映射）。
+- 修改：`DatabaseHelper.java`（移除单独的 inventory 测试用户，增加 `onUpgrade()` 迁移：`UPDATE users SET role = 'stock' WHERE role = 'inventory'`，保证老数据兼容）。
+
+通知与权限：
+- 新建通知通道 id: `inventory_monitor_channel_v2`，重要级别为 HIGH，带有 PendingIntent 打开主界面。
+- 服务启动并仅在已授予 `POST_NOTIFICATIONS` 时发送低库存通知。
+- 低库存通知仅发送给拥有盘点/库存权限的用户（基于 `Auth.hasPermission(..., PERM_RUN_INVENTORY)` 检查）。
+
+已解决的问题：
+- 修复了因缺少前台服务权限和 `foregroundServiceType` 导致的崩溃。
+- 修复了通知不可见的问题（创建高优先级 Channel 并请求运行时通知权限）。
+- 移除调试用的临时通知，添加日志用于调试。
+- 完成库存角色合并及数据库迁移。
+
+后续建议：
+- 考虑用 `WorkManager` 替换 `ScheduledExecutorService` 以提高系统友好性和持久性。
+- 如需开机自启，补充 `BOOT_COMPLETED` 接收器并处理相关权限与启动逻辑。
+- 注意：通知通道变更在设备上持久化，若需立即生效可建议用户卸载并重新安装应用。
+
+测试建议：
+- 使用不同角色账户验证低库存通知接收逻辑。
+- 在授予/撤销通知权限情况下测试通知行为。
+- 升级场景下检查数据库迁移是否生效（查看 users 表中 role 字段）。
+
+作者：开发者
+日期：2025-12-25
