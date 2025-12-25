@@ -68,6 +68,9 @@
             android:name=".activities.StockAdjustActivity"
             android:exported="false" />
 
+        <activity android:name=".activities.StockCountActivity"
+            android:exported="false"/>
+
         <activity
             android:name=".activities.StockHistoryActivity"
             android:exported="false" />

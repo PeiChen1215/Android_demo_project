@@ -14,18 +14,74 @@
 
         <TextView
             android:id="@+id/textViewCountTitle"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:text="@string/label_stock_counts"
             android:textSize="18sp" />
 
-        <Button
-            style="@style/AppButton"
-            android:id="@+id/buttonNewCount"
-            android:layout_width="wrap_content"
+    </LinearLayout>
+
+    <!-- 低库存预警区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@android:color/holo_red_light"
+        android:padding="8dp"
+        android:layout_marginBottom="8dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_new_count" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/textViewLowStockTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⚠️ 低库存预警"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/buttonExportLowStock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="导出CSV"
+                android:textSize="12sp"
+                android:background="@android:color/white"
+                android:textColor="@android:color/black" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/textViewLowStockCount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="共有 X 件商品库存不足"
+            android:textColor="@android:color/white"
+            android:textSize="14sp" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/listViewLowStockAlerts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxHeight="200dp"
+            android:background="@android:color/white"
+            android:padding="4dp" />
+
+        <TextView
+            android:id="@+id/textViewNoLowStock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="暂无低库存商品"
+            android:textColor="@android:color/white"
+            android:gravity="center"
+            android:padding="8dp"
+            android:visibility="gone" />
 
     </LinearLayout>
 

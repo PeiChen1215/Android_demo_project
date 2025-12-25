@@ -65,10 +65,10 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
-            // 库存盘点入口 - 仅库存管理员/盘点员/管理员
+            // 库存盘点入口 - 仅盘点员/管理员
             Button buttonStockCount = findViewById(R.id.buttonStockCount);
             if (buttonStockCount != null) {
-                if (Constants.ROLE_ADMIN.equals(role) || Constants.ROLE_STOCK.equals(role) || Constants.ROLE_INVENTORY.equals(role)) {
+                if (Constants.ROLE_ADMIN.equals(role) || Constants.ROLE_INVENTORY.equals(role)) {
                     buttonStockCount.setVisibility(View.VISIBLE);
                     buttonStockCount.setOnClickListener(v -> {
                         Intent intent = new Intent(MainActivity.this, StockCountActivity.class);
