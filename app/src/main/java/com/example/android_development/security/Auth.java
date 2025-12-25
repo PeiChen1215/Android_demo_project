@@ -53,7 +53,6 @@ public class Auth {
         warehouse.add(Constants.PERM_VIEW_AUDIT);
         m.put(Constants.ROLE_WAREHOUSE, Collections.unmodifiableSet(warehouse));
         m.put(Constants.ROLE_STOCK, Collections.unmodifiableSet(warehouse));
-        m.put(Constants.ROLE_INVENTORY, Collections.unmodifiableSet(warehouse));
 
         // 出纳/收银：销售相关权限
         Set<String> cashier = new HashSet<>();

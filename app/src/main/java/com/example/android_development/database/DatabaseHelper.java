@@ -147,17 +147,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 ") VALUES ('" + stockId + "', 'stock1', '123456', '" +
                 Constants.ROLE_STOCK + "', '库存管理员王五', " + System.currentTimeMillis() + ")");
 
-        // 5. 盘点员
-        String inventoryId = java.util.UUID.randomUUID().toString();
-        db.execSQL("INSERT INTO " + Constants.TABLE_USERS + " (" +
-                Constants.COLUMN_USER_ID + ", " +
-                Constants.COLUMN_USERNAME + ", " +
-                Constants.COLUMN_PASSWORD + ", " +
-                Constants.COLUMN_ROLE + ", " +
-                Constants.COLUMN_FULL_NAME + ", " +
-                Constants.COLUMN_CREATED_AT +
-                ") VALUES ('" + inventoryId + "', 'inventory1', '123456', '" +
-                Constants.ROLE_INVENTORY + "', '盘点员赵六', " + System.currentTimeMillis() + ")");
+        // （盘点员已并入库存管理员，故不再插入单独示例用户）
         // 6. 财务/出纳（测试）
         String financeId = java.util.UUID.randomUUID().toString();
         try {
@@ -668,6 +658,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         // Add payment_method column to sales table
                         try { ensureColumnExists(db, Constants.TABLE_SALES, Constants.COLUMN_SALE_PAYMENT_METHOD, "TEXT"); } catch (Exception ignored) {}
                 }
+
+                                // 如果数据库中存在旧的 'inventory' 角色，将其迁移为 'stock'，以合并角色权限
+                                try {
+                                        db.execSQL("UPDATE " + Constants.TABLE_USERS + " SET " + Constants.COLUMN_ROLE + " = '" + Constants.ROLE_STOCK + "' WHERE " + Constants.COLUMN_ROLE + " = 'inventory'");
+                                } catch (Exception ignored) {}
 
                 // 从版本 <3 升级：使用安全迁移脚本保留数据并为每条记录填充 user_role（如能从 users 表推断）
                 if (oldVersion < 3) {

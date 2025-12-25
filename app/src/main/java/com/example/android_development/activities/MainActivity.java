@@ -1,6 +1,8 @@
 package com.example.android_development.activities;
 
 import android.os.Bundle;
+import android.Manifest;
+import android.content.pm.PackageManager;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.android_development.R;
 import android.content.Intent;
@@ -24,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
     private PrefsManager prefsManager;
     private UserDAO userDAO;
     private User currentUser;
+    private static final int REQ_NOTIF = 1002;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +44,58 @@ public class MainActivity extends AppCompatActivity {
 
         // 设置点击事件
         setupClickListeners();
+
+        // 尝试在有权限时启动后台库存监控服务（若无权限，会请求并在回调中启动）
+        startMonitorIfAllowed();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 可能用户刚刚在系统设置中打开了通知权限，回到页面时检查并启动
+        startMonitorIfAllowed();
+    }
+
+    private void startMonitorIfAllowed() {
+        Intent svcIntent = new Intent(MainActivity.this, com.example.android_development.services.InventoryMonitorService.class);
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    // 提前提示并请求权限
+                    Toast.makeText(this, "应用需要通知权限以启用库存监控提醒", Toast.LENGTH_LONG).show();
+                    requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_NOTIF);
+                    return;
+                }
+            }
+
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                startForegroundService(svcIntent);
+            } else {
+                startService(svcIntent);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_NOTIF) {
+            boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            Intent svcIntent = new Intent(MainActivity.this, com.example.android_development.services.InventoryMonitorService.class);
+            try {
+                if (granted) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        startForegroundService(svcIntent);
+                    } else {
+                        startService(svcIntent);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     // 在initViews方法中添加
@@ -65,10 +120,10 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
-            // 库存盘点入口 - 仅盘点员/管理员
+            // 库存盘点入口 - 仅库存管理员/管理员
             Button buttonStockCount = findViewById(R.id.buttonStockCount);
             if (buttonStockCount != null) {
-                if (Constants.ROLE_ADMIN.equals(role) || Constants.ROLE_INVENTORY.equals(role)) {
+                if (Constants.ROLE_ADMIN.equals(role) || Constants.ROLE_STOCK.equals(role)) {
                     buttonStockCount.setVisibility(View.VISIBLE);
                     buttonStockCount.setOnClickListener(v -> {
                         Intent intent = new Intent(MainActivity.this, StockCountActivity.class);
@@ -194,8 +249,6 @@ public class MainActivity extends AppCompatActivity {
                 return "收银员";
             case Constants.ROLE_STOCK:
                 return "库存管理员";
-            case Constants.ROLE_INVENTORY:
-                return "盘点员";
             default:
                 return "未知角色";
         }
@@ -212,9 +265,7 @@ public class MainActivity extends AppCompatActivity {
             case Constants.ROLE_CASHIER:
                 return "收银员：负责销售收银，处理顾客结账，管理销售记录。";
             case Constants.ROLE_STOCK:
-                return "库存管理员：负责商品库存管理，包括入库、出库、调拨等操作。";
-            case Constants.ROLE_INVENTORY:
-                return "盘点员：负责库存盘点，核对实际库存与系统记录，生成盘点报告。";
+                return "库存管理员：负责商品库存管理，包括入库、出库、调拨以及盘点等操作。";
             default:
                 return "用户：可以浏览商品信息，查看个人消费记录。";
         }

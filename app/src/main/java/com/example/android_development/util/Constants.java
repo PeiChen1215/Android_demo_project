@@ -27,7 +27,8 @@ public class Constants {
     public static final String ROLE_CASHIER = "cashier";
     public static final String ROLE_STOCK = "stock";
     public static final String ROLE_BUYER = "buyer";          // 采购员（采购子系统）
-    public static final String ROLE_INVENTORY = "inventory";  // 盘点员（盘点子系统）
+    // 将旧的“盘点员”角色合并为“库存管理员”（别名）
+    public static final String ROLE_INVENTORY = ROLE_STOCK;  // 盘点员（盘点子系统）别名 -> "stock"
 
     // 财务/出纳角色
     public static final String ROLE_FINANCE = "finance";     // 财务（营收报表、对账）
