@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background">
@@ -8,113 +9,150 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="16dp">
 
-        <TextView
-            android:id="@+id/textViewWelcome"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="欢迎使用超市管理系统"
-            android:textSize="24sp"
-            android:textColor="@color/primary"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp"/>
-
-        <!-- 用户信息卡片 -->
-        <LinearLayout
+        <!-- 标题区域 -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@android:color/white"
-            android:padding="16dp"
-            android:layout_marginBottom="24dp">
-
-            <TextView
-                android:id="@+id/textViewUserInfo"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/primary">
+            
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="用户信息加载中..."
-                android:textSize="14sp"
-                android:textColor="@color/black"
-                android:lineSpacingExtra="4dp"/>
+                android:orientation="vertical"
+                android:padding="20dp">
+                
+                <TextView
+                    android:id="@+id/textViewWelcome"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="欢迎使用超市管理系统"
+                    android:textSize="24sp"
+                    android:textColor="@color/white"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp"/>
+                
+                <TextView
+                    android:id="@+id/textViewUserInfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="用户信息加载中..."
+                    android:textSize="14sp"
+                    android:textColor="@color/white"
+                    android:alpha="0.9"
+                    android:layout_marginBottom="4dp"/>
+                
+                <TextView
+                    android:id="@+id/textViewRoleDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="角色描述加载中..."
+                    android:textSize="12sp"
+                    android:textColor="@color/white"
+                    android:alpha="0.8"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-            <!-- 添加角色描述TextView -->
-            <TextView
-                android:id="@+id/textViewRoleDescription"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="角色描述加载中..."
-                android:textSize="12sp"
-                android:textColor="@color/gray"
-                android:lineSpacingExtra="2dp"/>
-        </LinearLayout>
-
-        <!-- 功能按钮区域 -->
+        <!-- 功能区域标题 -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="系统功能"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:layout_marginBottom="12dp"/>
-
-        <!-- 商品管理按钮 -->
-        <Button
-            style="@style/AppButton"
-            android:id="@+id/buttonProductManage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="商品管理"
-            android:layout_marginBottom="12dp"/>
-
-        <!-- 其他功能按钮 -->
-        <Button
-            style="@style/AppButton"
-            android:id="@+id/buttonPOS"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="销售收银"
-            android:layout_marginBottom="12dp"
-            android:enabled="false"/>
-
-        <Button
-            style="@style/AppButton"
-            android:id="@+id/buttonReceipts"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="收据列表"
-            android:layout_marginBottom="12dp"/>
-
-        <Button
-            style="@style/AppButton"
-            android:id="@+id/buttonStockCount"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="库存盘点"
-            android:layout_marginBottom="12dp"/>
-
-        <Button
-            style="@style/AppButton"
-            android:id="@+id/buttonPurchase"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="采购管理"
-            android:layout_marginBottom="32dp"/>
-
-        <Button
-            style="@style/AppButton"
-            android:id="@+id/buttonRevenue"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="营收报表"
+            android:textColor="@color/text_primary"
             android:layout_marginBottom="16dp"/>
 
-        <Button
-            style="@style/AppButton"
-            android:id="@+id/buttonLogout"
+        <!-- 功能按钮卡片 -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="退出登录"/>
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp">
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/buttonProductManage"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="📦 商品管理"
+                    android:textSize="16sp"
+                    app:cornerRadius="8dp"
+                    android:layout_marginBottom="12dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/buttonPOS"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="💳 销售收银"
+                    android:textSize="16sp"
+                    app:cornerRadius="8dp"
+                    android:enabled="false"
+                    android:layout_marginBottom="12dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/buttonReceipts"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="🧾 收据列表"
+                    android:textSize="16sp"
+                    app:cornerRadius="8dp"
+                    android:layout_marginBottom="12dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/buttonStockCount"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="📋 库存盘点"
+                    android:textSize="16sp"
+                    app:cornerRadius="8dp"
+                    android:layout_marginBottom="12dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/buttonPurchase"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="🛍️ 采购管理"
+                    android:textSize="16sp"
+                    app:cornerRadius="8dp"
+                    android:layout_marginBottom="12dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/buttonRevenue"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="📊 营收报表"
+                    android:textSize="16sp"
+                    app:cornerRadius="8dp"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 退出按钮 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonLogout"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="退出登录"
+            android:textSize="14sp"
+            android:textColor="@color/error"
+            android:layout_marginTop="16dp"/>
 
     </LinearLayout>
 </ScrollView>

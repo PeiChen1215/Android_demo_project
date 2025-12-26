@@ -1,115 +1,147 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/background">
 
     <!-- 标题栏 -->
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="@color/primary"
-        android:padding="16dp">
+        android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar">
 
-        <ImageButton
-            android:id="@+id/buttonBack"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_back"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="返回"
-            android:tint="@color/white" />
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/primary"
+            app:contentInsetStart="0dp">
 
-        <TextView
-            android:id="@+id/textViewTitle"
-            android:layout_width="0dp"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingEnd="8dp">
+
+                <ImageButton
+                    android:id="@+id/buttonBack"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_back"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="返回"
+                    android:tint="@color/white" />
+
+                <TextView
+                    android:id="@+id/textViewTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="商品管理"
+                    android:textSize="20sp"
+                    android:textColor="@color/white"
+                    android:textStyle="bold"/>
+
+                <ImageButton
+                    android:id="@+id/buttonStockHistory"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_history"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="历史"
+                    android:tint="@color/white" />
+
+                <ImageButton
+                    android:id="@+id/buttonAddProduct"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_add"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="添加"
+                    android:tint="@color/white" />
+
+            </LinearLayout>
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- 搜索区域 -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="2dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="商品管理"
-            android:textSize="20sp"
-            android:textColor="@color/white"
-            android:textStyle="bold"
-            android:gravity="center"/>
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical">
 
-        <ImageButton
-            android:id="@+id/buttonStockHistory"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_history"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="历史"
-            android:tint="@color/white" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:boxBackgroundMode="none"
+                app:hintEnabled="false">
 
-        <ImageButton
-            android:id="@+id/buttonAddProduct"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_add"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="添加"
-            android:tint="@color/white" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_search"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="搜索名称或条码"
+                    android:inputType="text"
+                    android:maxLines="1" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-    </LinearLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonSearch"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="搜索"
+                android:layout_marginStart="4dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonClearSearch"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="清除" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <!-- 商品列表 -->
-    <!-- 搜索栏 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp">
-
-        <EditText
-            android:id="@+id/et_search"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="搜索名称或条码"
-            android:inputType="text" />
-
-        <Button
-            style="@style/AppButton"
-            android:id="@+id/buttonSearch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="搜索" />
-
-        <Button
-            style="@style/AppButton"
-            android:id="@+id/buttonClearSearch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="清除" />
-
-    </LinearLayout>
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/listViewProducts"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="8dp"/>
+        android:clipToPadding="false"
+        android:paddingBottom="8dp"/>
 
-    <!-- Load more button retained for pagination -->
-    <Button
+    <!-- 加载更多按钮 -->
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLoadMore"
-        style="@style/AppButton"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="加载更多"
         android:visibility="gone"
-        android:layout_marginTop="8dp" />
+        android:layout_margin="8dp" />
 
     <!-- 空状态提示 -->
     <TextView
         android:id="@+id/textViewEmpty"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="暂无商品数据"
+        android:text="⚠️\n\n暂无商品数据"
         android:textSize="16sp"
-        android:textColor="@color/gray"
+        android:textColor="@color/text_hint"
         android:gravity="center"
         android:visibility="gone"/>
 

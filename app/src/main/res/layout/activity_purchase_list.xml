@@ -1,88 +1,129 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:background="@color/background">
 
-    <HorizontalScrollView
+    <!-- 标题栏 -->
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fillViewport="true"
-        android:scrollbars="none">
+        android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar">
+
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/primary">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/textViewPurchaseTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/label_purchase_list"
+                    android:textSize="20sp"
+                    android:textColor="@color/white"
+                    android:textStyle="bold" />
+
+                <ImageButton
+                    android:id="@+id/buttonMore"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@android:drawable/ic_menu_more"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="更多筛选"
+                    android:tint="@color/white" />
+
+                <ImageButton
+                    android:id="@+id/buttonNewPurchase"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_add"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="新建采购"
+                    android:tint="@color/white" />
+
+            </LinearLayout>
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- 搜索和筛选区域 -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="2dp">
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:padding="8dp">
+            android:padding="8dp"
+            android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/textViewPurchaseTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/label_purchase_list"
-            android:textSize="18sp" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:boxBackgroundMode="none"
+                app:hintEnabled="false">
 
-        <EditText
-            android:id="@+id/etSearch"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="搜索名称/ID"
-            android:imeOptions="actionSearch"
-            android:inputType="text"
-            android:layout_marginStart="8dp" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etSearch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="搜索名称/ID"
+                    android:imeOptions="actionSearch"
+                    android:inputType="text"
+                    android:maxLines="1" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-        <Spinner
-            android:id="@+id/spStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp" />
-
-        <ImageButton
-            android:id="@+id/buttonMore"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@android:drawable/ic_menu_more"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="更多筛选"
-            android:tint="@color/primary"
-            android:layout_marginStart="8dp" />
-
-        <ImageButton
-            android:id="@+id/buttonNewPurchase"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_add"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="新建采购"
-            android:tint="@color/primary" />
+            <Spinner
+                android:id="@+id/spStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:minWidth="100dp" />
 
         </LinearLayout>
-    </HorizontalScrollView>
+    </com.google.android.material.card.MaterialCardView>
 
+    <!-- 采购单列表 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/listViewPurchases"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:dividerHeight="1dp" />
+        android:clipToPadding="false"
+        android:paddingBottom="8dp" />
 
-    <Button
+    <!-- 加载更多按钮 -->
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonLoadMore"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="加载更多"
         android:visibility="gone"
-        android:layout_marginTop="8dp" />
+        android:layout_margin="8dp" />
 
+    <!-- 空状态提示 -->
     <TextView
         android:id="@+id/textViewNoPO"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:text="@string/no_pos"
+        android:textSize="16sp"
+        android:textColor="@color/text_hint"
         android:gravity="center"
         android:visibility="gone"
         android:padding="16dp" />

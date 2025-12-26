@@ -1,115 +1,146 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="@android:color/white"
-    android:layout_margin="4dp"
-    android:padding="12dp">
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <!-- 商品缩略图 -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginRight="12dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/light_gray">
 
             <ImageView
                 android:id="@+id/imageViewThumb"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginRight="12dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:scaleType="centerCrop"
                 android:src="@android:drawable/ic_menu_gallery"
                 android:contentDescription="缩略图" />
+        </com.google.android.material.card.MaterialCardView>
 
-            <LinearLayout
-                android:layout_width="0dp"
+        <!-- 中间信息区域 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/textViewProductName"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
+                android:text="商品名称"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:textStyle="bold"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:layout_marginBottom="4dp"/>
 
-                <TextView
-                    android:id="@+id/textViewProductName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text=""
-                    android:textSize="16sp"
-                    android:textColor="@color/black"
-                    android:textStyle="bold"/>
+            <TextView
+                android:id="@+id/textViewProductCategory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="分类"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"
+                android:background="@drawable/bg_card_rounded"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"/>
 
-                <TextView
-                    android:id="@+id/textViewProductCategory"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text=""
-                    android:textSize="12sp"
-                    android:textColor="@color/gray"/>
+        </LinearLayout>
 
-            </LinearLayout>
+        <!-- 右侧价格和库存区域 -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="end"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="8dp">
+
+            <TextView
+                android:id="@+id/textViewProductPrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="￥0.00"
+                android:textSize="18sp"
+                android:textColor="@color/error"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:layout_marginBottom="2dp">
 
-                <LinearLayout
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="end">
+                    android:text="🛍️ "
+                    android:textSize="10sp"/>
 
-                    <TextView
-                        android:id="@+id/textViewProductPrice"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="￥0.00"
-                        android:textSize="16sp"
-                        android:textColor="@color/primary"/>
+                <TextView
+                    android:id="@+id/textViewProductStock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="货架: 0"
+                    android:textSize="11sp"
+                    android:textColor="@color/text_secondary"/>
+            </LinearLayout>
 
-                        <TextView
-                            android:id="@+id/textViewProductStock"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text=""
-                            android:textSize="12sp"
-                            android:textColor="@color/gray"
-                            android:ellipsize="end"
-                            android:maxLines="1"/>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
-                        <TextView
-                            android:id="@+id/textViewProductWarehouseStock"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text=""
-                            android:textSize="12sp"
-                            android:textColor="@color/gray"
-                            android:ellipsize="end"
-                            android:maxLines="1"
-                            android:paddingTop="2dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🏭 "
+                    android:textSize="10sp"/>
 
-                </LinearLayout>
-
-                <ImageButton
-                    android:id="@+id/buttonProductAction"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:src="@android:drawable/ic_menu_more"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="操作"
-                    android:tint="@color/gray"
-                    android:layout_marginLeft="8dp"/>
-
+                <TextView
+                    android:id="@+id/textViewProductWarehouseStock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="仓库: 0"
+                    android:textSize="11sp"
+                    android:textColor="@color/text_secondary"/>
             </LinearLayout>
 
         </LinearLayout>
 
-    <!-- 备注：已移除重复的 category/stock 显示，避免 id 冲突与重复渲染 -->
+        <!-- 更多按钮 -->
+        <ImageButton
+            android:id="@+id/buttonProductAction"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_more"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="操作"
+            android:tint="@color/text_secondary"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="4dp"/>
 
-    <!-- 分隔线 -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="8dp"
-        android:background="@color/light_gray"/>
+    </LinearLayout>
 
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>

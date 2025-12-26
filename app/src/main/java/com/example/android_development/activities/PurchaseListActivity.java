@@ -25,6 +25,7 @@ public class PurchaseListActivity extends AppCompatActivity {
     private String supplierSelected = "全部";
     private String sortSelected = "按日期";
     private java.util.List<String> supNames = new java.util.ArrayList<>();
+    private java.util.List<String> sorts = new java.util.ArrayList<>();
     private final java.util.Map<String,String> supIdByName = new java.util.HashMap<>();
     private android.widget.Button buttonLoadMore;
     private android.widget.TextView textViewNoPO;
@@ -46,7 +47,9 @@ public class PurchaseListActivity extends AppCompatActivity {
         buttonMore = findViewById(R.id.buttonMore);
         buttonLoadMore = findViewById(R.id.buttonLoadMore);
 
-        if (listViewPurchases.getLayoutManager() == null) listViewPurchases.setLayoutManager(new LinearLayoutManager(this));
+        if (listViewPurchases != null && listViewPurchases.getLayoutManager() == null) {
+            listViewPurchases.setLayoutManager(new LinearLayoutManager(this));
+        }
 
         DatabaseHelper db = new DatabaseHelper(this);
         purchaseDAO = new com.example.android_development.database.PurchaseDAO(db.getWritableDatabase());
@@ -57,9 +60,11 @@ public class PurchaseListActivity extends AppCompatActivity {
         java.util.List<String> statuses = new java.util.ArrayList<>();
         statuses.add("全部");
         statuses.add("OPEN"); statuses.add("SUBMITTED"); statuses.add("APPROVED"); statuses.add("RECEIVED"); statuses.add("REJECTED"); statuses.add("DRAFT"); statuses.add("PENDING");
-        spStatus.setAdapter(new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_item, statuses));
+        if (spStatus != null) {
+            spStatus.setAdapter(new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_item, statuses));
+        }
 
-        java.util.List<String> sorts = new java.util.ArrayList<>();
+        sorts.clear();
         sorts.add("按日期"); sorts.add("按名称"); sorts.add("按状态");
 
         // populate supplier list with '全部' + suppliers (used in More dialog)
@@ -72,23 +77,28 @@ public class PurchaseListActivity extends AppCompatActivity {
             supIdByName.put(n, s.getId());
         }
 
-        buttonNewPurchase.setOnClickListener(v -> {
-            // create a minimal PO and refresh
-            com.example.android_development.model.PurchaseOrder po = new com.example.android_development.model.PurchaseOrder();
-            po.setStatus("OPEN");
-            long res = purchaseDAO.addPurchaseOrder(po);
-            if (res != -1) loadPurchaseOrders();
-        });
+        if (buttonNewPurchase != null) {
+            buttonNewPurchase.setOnClickListener(v -> {
+                // create a minimal PO and refresh
+                com.example.android_development.model.PurchaseOrder po = new com.example.android_development.model.PurchaseOrder();
+                po.setStatus("OPEN");
+                long res = purchaseDAO.addPurchaseOrder(po);
+                if (res != -1) loadPurchaseOrders();
+            });
+        }
 
         // apply filters on search action or spinner change
         android.widget.AdapterView.OnItemSelectedListener reloadListener = new android.widget.AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(android.widget.AdapterView<?> parent, android.view.View view, int position, long id) { applyFiltersAndShow(); }
             @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
         };
-        spStatus.setOnItemSelectedListener(reloadListener);
+        if (spStatus != null) {
+            spStatus.setOnItemSelectedListener(reloadListener);
+        }
 
         // More button shows supplier/sort dialogs
-        buttonMore.setOnClickListener(v -> {
+        if (buttonMore != null) {
+            buttonMore.setOnClickListener(v -> {
             android.widget.PopupMenu pm = new android.widget.PopupMenu(PurchaseListActivity.this, buttonMore);
             pm.getMenu().add(0, 1, 0, "供应商筛选");
             pm.getMenu().add(0, 2, 1, "排序");
@@ -121,10 +131,14 @@ public class PurchaseListActivity extends AppCompatActivity {
             });
             pm.show();
         });
+        }
 
-        etSearch.setOnEditorActionListener((v, actionId, event) -> { applyFiltersAndShow(); return false; });
+        if (etSearch != null) {
+            etSearch.setOnEditorActionListener((v, actionId, event) -> { applyFiltersAndShow(); return false; });
+        }
 
-        buttonLoadMore.setOnClickListener(v -> {
+        if (buttonLoadMore != null) {
+            buttonLoadMore.setOnClickListener(v -> {
             // load next page
             int nextOffset = currentOffset + pageSize;
             if (nextOffset < filteredPOs.size()) {
@@ -136,19 +150,20 @@ public class PurchaseListActivity extends AppCompatActivity {
                 buttonLoadMore.setVisibility(android.view.View.GONE);
             }
         });
+        }
     }
 
     private void loadPurchaseOrders() {
         allPOs = purchaseDAO.getAllPurchaseOrders();
         if (allPOs == null || allPOs.isEmpty()) {
-            listViewPurchases.setVisibility(android.view.View.GONE);
-            textViewNoPO.setVisibility(android.view.View.VISIBLE);
+            if (listViewPurchases != null) listViewPurchases.setVisibility(android.view.View.GONE);
+            if (textViewNoPO != null) textViewNoPO.setVisibility(android.view.View.VISIBLE);
             return;
         }
-        listViewPurchases.setVisibility(android.view.View.VISIBLE);
-        textViewNoPO.setVisibility(android.view.View.GONE);
+        if (listViewPurchases != null) listViewPurchases.setVisibility(android.view.View.VISIBLE);
+        if (textViewNoPO != null) textViewNoPO.setVisibility(android.view.View.GONE);
 
-        if (adapter == null) {
+        if (adapter == null && listViewPurchases != null) {
             adapter = new PurchaseAdapter(this, new java.util.ArrayList<>());
             adapter.setOnItemClickListener((position, po) -> {
                 if (po != null && po.getId() != null) {
@@ -165,8 +180,12 @@ public class PurchaseListActivity extends AppCompatActivity {
     }
 
     private void applyFiltersAndShow() {
-        String q = etSearch.getText() == null ? "" : etSearch.getText().toString().trim().toLowerCase();
-        String statusSel = spStatus.getSelectedItem() == null ? "全部" : spStatus.getSelectedItem().toString();
+        if (adapter == null) {
+            return; // adapter not initialized yet
+        }
+        
+        String q = etSearch != null && etSearch.getText() != null ? etSearch.getText().toString().trim().toLowerCase() : "";
+        String statusSel = spStatus != null && spStatus.getSelectedItem() != null ? spStatus.getSelectedItem().toString() : "全部";
         String supplierSel = supplierSelected == null ? "全部" : supplierSelected;
         String sortSel = sortSelected == null ? "按日期" : sortSelected;
 
@@ -215,6 +234,12 @@ public class PurchaseListActivity extends AppCompatActivity {
         int end = Math.min(pageSize, filteredPOs.size());
         if (end > 0) adapter.appendData(filteredPOs.subList(0, end));
         currentOffset = end - 1 < 0 ? 0 : end - 1;
-        if (filteredPOs.size() > end) buttonLoadMore.setVisibility(android.view.View.VISIBLE); else buttonLoadMore.setVisibility(android.view.View.GONE);
+        if (buttonLoadMore != null) {
+            if (filteredPOs.size() > end) {
+                buttonLoadMore.setVisibility(android.view.View.VISIBLE);
+            } else {
+                buttonLoadMore.setVisibility(android.view.View.GONE);
+            }
+        }
     }
 }

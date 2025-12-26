@@ -1,32 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Primary app colors -->
-    <color name="colorPrimary">#6200EE</color>
-    <color name="colorPrimaryVariant">#3700B3</color>
-    <color name="colorAccent">#03DAC5</color>
-
-    <!-- Background gradient for login -->
-    <color name="bgGradientStart">#4C8BF5</color>
-    <color name="bgGradientEnd">#A366FF</color>
-
-    <!-- Card / surface -->
-    <color name="cardBackground">#FFFFFFFF</color>
-
-    <!-- Input and text -->
-    <color name="inputStroke">#22000000</color>
-    <color name="textPrimary">#FF212121</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="black">#FF000000</color>
-
-    <color name="primary">#2196F3</color>
-    <color name="primary_dark">#1976D2</color>
-    <color name="app_primary">#1565C0</color>
-    <color name="app_primary_dark">#0D47A1</color>
-    <color name="app_accent">#FF7043</color>
-    <color name="app_surface">#FFFFFF</color>
+    <!-- 主色调 - 统一使用蓝色系 -->
+    <color name="primary">#1976D2</color>
+    <color name="primary_dark">#0D47A1</color>
+    <color name="primary_light">#BBDEFB</color>
+    
+    <!-- 次要色 - 绿色 -->
     <color name="secondary">#4CAF50</color>
     <color name="secondary_dark">#388E3C</color>
-    <color name="background">#FAFAFA</color>
+    <color name="secondary_light">#C8E6C9</color>
+    
+    <!-- 强调色 -->
+    <color name="accent">#FF7043</color>
+    <color name="accent_dark">#E64A19</color>
+    
+    <!-- 状态色 -->
+    <color name="success">#4CAF50</color>
+    <color name="warning">#FF9800</color>
+    <color name="error">#F44336</color>
+    <color name="info">#2196F3</color>
+    
+    <!-- 背景色 -->
+    <color name="background">#F5F5F5</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="divider">#E0E0E0</color>
+    
+    <!-- 文字颜色 -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_hint">#BDBDBD</color>
+    <color name="text_disabled">#9E9E9E</color>
+    
+    <!-- 基础色 -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
     <color name="gray">#757575</color>
     <color name="light_gray">#E0E0E0</color>
+    <color name="dark_gray">#424242</color>
+    
+    <!-- 渐变色（登录背景） -->
+    <color name="gradient_start">#1976D2</color>
+    <color name="gradient_end">#64B5F6</color>
+    
+    <!-- 卡片阴影 -->
+    <color name="shadow">#1A000000</color>
+    
+    <!-- 兼容旧代码 -->
+    <color name="colorPrimary">@color/primary</color>
+    <color name="colorPrimaryVariant">@color/primary_dark</color>
+    <color name="colorAccent">@color/accent</color>
+    <color name="app_primary">@color/primary</color>
+    <color name="app_primary_dark">@color/primary_dark</color>
+    <color name="app_accent">@color/accent</color>
+    <color name="app_surface">@color/surface</color>
+    <color name="cardBackground">@color/surface</color>
+    <color name="textPrimary">@color/text_primary</color>
+    <color name="bgGradientStart">@color/gradient_start</color>
+    <color name="bgGradientEnd">@color/gradient_end</color>
+    <color name="inputStroke">#22000000</color>
 </resources>
