@@ -176,6 +176,8 @@ v0.1.0 - 销售与图片支持（草稿） - 2025-12-22
 
 ---
 
-发布分支: `release/sales-pos-thumb`（已创建并推送到远程，可用于发起 PR）。
+## 注：
+
+懒得更新readme了，具体使用手册可以查看docs/USER_GUIDE_CN.md
 
 
