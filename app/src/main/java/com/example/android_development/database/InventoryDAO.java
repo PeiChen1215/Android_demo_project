@@ -11,6 +11,12 @@ import com.example.android_development.util.Constants;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 库存相关 DAO。
+ *
+ * <p>包含货架库存与仓库库存的调整、补货、采购入库，以及盘点记录的读写。
+ * 部分方法通过“条件更新（CAS）”实现并发保护，并写入库存事务与系统审计。</p>
+ */
 public class InventoryDAO {
     private SQLiteDatabase db;
     private PrefsManager prefsManager;
@@ -24,7 +30,20 @@ public class InventoryDAO {
         if (ctx != null) this.prefsManager = new PrefsManager(ctx);
     }
 
-    // 并发保护的货架库存调整（可用于销售等场景）
+    /**
+     * 并发保护的货架库存调整（可用于销售/退款等场景）。
+     *
+     * <p>实现方式：读取 before 值后，以 (product_id + before) 作为条件更新（CAS），避免并发覆盖。
+     * 该方法在需要时会开启本地事务，并写入库存事务与系统审计。</p>
+     *
+     * @param db 数据库连接
+     * @param prefsManager 用于读取当前用户信息（可为空）
+     * @param productId 商品 id
+     * @param delta 变更量（可为负）
+     * @param reason 原因/来源（用于审计）
+     * @param type 事务类型（例如 IN/OUT）
+     * @return 成功返回 true；并发冲突或失败返回 false
+     */
     public static boolean adjustShelfStock(SQLiteDatabase db, PrefsManager prefsManager, String productId, int delta, String reason, String type) {
         if (productId == null) return false;
         if (delta == 0) return true;
@@ -86,12 +105,24 @@ public class InventoryDAO {
         }
     }
 
+    /**
+     * 新建一条盘点记录（主表）。
+     *
+     * @param sc 盘点对象
+     * @return 插入结果；失败返回 -1
+     */
     public long createStockCount(StockCount sc) {
         if (sc == null) return -1;
         ContentValues v = sc.toContentValues();
         return db.insert(Constants.TABLE_STOCK_COUNTS, null, v);
     }
 
+    /**
+     * 根据 id 获取盘点记录。
+     *
+     * @param id 盘点 id
+     * @return 盘点对象；未找到返回 null
+     */
     public StockCount getStockCountById(String id) {
         if (id == null) return null;
         Cursor c = db.query(Constants.TABLE_STOCK_COUNTS, null, Constants.COLUMN_STOCK_COUNT_ID + " = ?", new String[]{id}, null, null, null);
@@ -103,6 +134,11 @@ public class InventoryDAO {
         return null;
     }
 
+    /**
+     * 获取所有盘点记录。
+     *
+     * @return 盘点列表（按创建时间倒序）
+     */
     public List<StockCount> getAllStockCounts() {
         List<StockCount> list = new ArrayList<>();
         Cursor c = db.query(Constants.TABLE_STOCK_COUNTS, null, null, null, null, null, Constants.COLUMN_STOCK_COUNT_CREATED_AT + " DESC");
@@ -115,7 +151,15 @@ public class InventoryDAO {
         return list;
     }
 
-    // 内部补货：仓库 -> 货架（read→update，带并发保护与审计）
+    /**
+     * 内部补货：仓库 -> 货架（read→update，带并发保护与审计）。
+     *
+     * <p>需要 ADJUST_STOCK 权限；会在必要时开启本地事务。</p>
+     *
+     * @param productId 商品 id
+     * @param qty 补货数量（>0）
+     * @return 成功返回 true；仓库库存不足/并发冲突/失败返回 false
+     */
     public boolean restockShelf(String productId, int qty) {
         if (productId == null) return false;
         if (qty <= 0) return false;
@@ -194,7 +238,15 @@ public class InventoryDAO {
         }
     }
 
-    // 外部采购入库：供应商 -> 仓库
+    /**
+     * 外部采购入库：供应商 -> 仓库。
+     *
+     * <p>需要 RECEIVE_PO 权限；会在必要时开启本地事务，并写入库存事务与系统审计。</p>
+     *
+     * @param productId 商品 id
+     * @param qty 入库数量（>0）
+     * @return 成功返回 true；商品不存在/失败返回 false
+     */
     public boolean receivePurchase(String productId, int qty) {
         if (productId == null) return false;
         if (qty <= 0) return false; // 不接受 0 或负数入库
@@ -213,7 +265,7 @@ public class InventoryDAO {
             Cursor c = db.rawQuery("SELECT " + Constants.COLUMN_WAREHOUSE_STOCK + " FROM " + Constants.TABLE_PRODUCTS + " WHERE " + Constants.COLUMN_PRODUCT_ID + " = ?", new String[]{productId});
             if (c == null) return false;
             try {
-                if (!c.moveToFirst()) return false; // product not found
+                if (!c.moveToFirst()) return false; // 未找到商品
                 int current = c.getInt(0);
                 int updated = current + qty;
                 android.content.ContentValues v = new android.content.ContentValues();

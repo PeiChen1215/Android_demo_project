@@ -9,7 +9,17 @@ import com.example.android_development.adapters.PurchaseAdapter;
 import com.example.android_development.R;
 import com.example.android_development.database.DatabaseHelper;
 
+/**
+ * 采购单列表页面。
+ *
+ * <p>提供采购单的查询与管理入口：
+ * 支持关键字搜索、按状态筛选、按供应商筛选、排序，以及分页加载更多。
+ * 点击某条采购单进入 {@link PurchaseDetailActivity} 查看/编辑/提交/审批/入库等流程。</p>
+ */
 public class PurchaseListActivity extends AppCompatActivity {
+    /**
+     * Activity 创建：初始化控件与数据源，并加载采购单列表。
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +48,12 @@ public class PurchaseListActivity extends AppCompatActivity {
     private int pageSize = 20;
     private int currentOffset = 0;
 
+    /**
+     * 初始化页面控件与事件。
+     *
+     * <p>包含：RecyclerView、搜索框、状态筛选、更多筛选/排序弹窗、分页按钮。
+     * 同时初始化 DAO 与筛选项数据源（供应商列表、排序列表）。</p>
+     */
     private void initViews() {
         listViewPurchases = findViewById(R.id.listViewPurchases);
         textViewNoPO = findViewById(R.id.textViewNoPO);
@@ -53,10 +69,10 @@ public class PurchaseListActivity extends AppCompatActivity {
 
         DatabaseHelper db = new DatabaseHelper(this);
         purchaseDAO = new com.example.android_development.database.PurchaseDAO(db.getWritableDatabase());
-        // supplierDAO intentionally not used for list display
+        // supplierDAO 仅用于筛选弹窗的供应商列表；列表展示主要依赖采购单自身字段
         supplierDAO = new com.example.android_development.database.SupplierDAO(db.getWritableDatabase());
 
-        // setup filter spinners
+        // 初始化状态筛选下拉框
         java.util.List<String> statuses = new java.util.ArrayList<>();
         statuses.add("全部");
         statuses.add("OPEN"); statuses.add("SUBMITTED"); statuses.add("APPROVED"); statuses.add("RECEIVED"); statuses.add("REJECTED"); statuses.add("DRAFT"); statuses.add("PENDING");
@@ -67,7 +83,7 @@ public class PurchaseListActivity extends AppCompatActivity {
         sorts.clear();
         sorts.add("按日期"); sorts.add("按名称"); sorts.add("按状态");
 
-        // populate supplier list with '全部' + suppliers (used in More dialog)
+        // 准备供应商筛选列表：'全部' + 供应商名称（用于“更多”弹窗）
         supNames.clear();
         supNames.add("全部");
         java.util.List<com.example.android_development.model.Supplier> allSups = supplierDAO.getAllSuppliers();
@@ -79,7 +95,7 @@ public class PurchaseListActivity extends AppCompatActivity {
 
         if (buttonNewPurchase != null) {
             buttonNewPurchase.setOnClickListener(v -> {
-                // create a minimal PO and refresh
+                // 创建一个最小采购单（OPEN）并刷新列表
                 com.example.android_development.model.PurchaseOrder po = new com.example.android_development.model.PurchaseOrder();
                 po.setStatus("OPEN");
                 long res = purchaseDAO.addPurchaseOrder(po);
@@ -87,7 +103,7 @@ public class PurchaseListActivity extends AppCompatActivity {
             });
         }
 
-        // apply filters on search action or spinner change
+        // 搜索/筛选变更时重新应用过滤条件
         android.widget.AdapterView.OnItemSelectedListener reloadListener = new android.widget.AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(android.widget.AdapterView<?> parent, android.view.View view, int position, long id) { applyFiltersAndShow(); }
             @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
@@ -96,7 +112,7 @@ public class PurchaseListActivity extends AppCompatActivity {
             spStatus.setOnItemSelectedListener(reloadListener);
         }
 
-        // More button shows supplier/sort dialogs
+        // “更多”按钮：弹出供应商筛选/排序方式对话框
         if (buttonMore != null) {
             buttonMore.setOnClickListener(v -> {
             android.widget.PopupMenu pm = new android.widget.PopupMenu(PurchaseListActivity.this, buttonMore);
@@ -104,7 +120,7 @@ public class PurchaseListActivity extends AppCompatActivity {
             pm.getMenu().add(0, 2, 1, "排序");
             pm.setOnMenuItemClickListener(item -> {
                 if (item.getItemId() == 1) {
-                    // supplier single-choice dialog
+                    // 供应商单选对话框
                     androidx.appcompat.app.AlertDialog.Builder b = new androidx.appcompat.app.AlertDialog.Builder(PurchaseListActivity.this);
                     b.setTitle("选择供应商");
                     String[] arr = supNames.toArray(new String[0]);
@@ -139,7 +155,7 @@ public class PurchaseListActivity extends AppCompatActivity {
 
         if (buttonLoadMore != null) {
             buttonLoadMore.setOnClickListener(v -> {
-            // load next page
+            // 加载下一页
             int nextOffset = currentOffset + pageSize;
             if (nextOffset < filteredPOs.size()) {
                 java.util.List<com.example.android_development.model.PurchaseOrder> more = filteredPOs.subList(nextOffset, Math.min(nextOffset + pageSize, filteredPOs.size()));
@@ -153,6 +169,11 @@ public class PurchaseListActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 从数据库加载采购单列表。
+     *
+     * <p>会初始化 Adapter（若尚未创建），并在加载完成后重置分页并应用当前筛选条件。</p>
+     */
     private void loadPurchaseOrders() {
         allPOs = purchaseDAO.getAllPurchaseOrders();
         if (allPOs == null || allPOs.isEmpty()) {
@@ -174,14 +195,20 @@ public class PurchaseListActivity extends AppCompatActivity {
             });
             listViewPurchases.setAdapter(adapter);
         }
-        // reset paging and apply current filters
+        // 重置分页并应用当前筛选条件
         currentOffset = 0;
         applyFiltersAndShow();
     }
 
+    /**
+     * 根据搜索/状态/供应商/排序条件过滤并刷新列表展示。
+     *
+     * <p>注意：Spinner/搜索事件可能早于 Adapter 初始化触发，因此这里需要判空保护，
+     * 防止初始化时序导致的空指针崩溃。</p>
+     */
     private void applyFiltersAndShow() {
         if (adapter == null) {
-            return; // adapter not initialized yet
+            return; // 适配器尚未初始化（Spinner/搜索事件可能早于 adapter 创建）
         }
         
         String q = etSearch != null && etSearch.getText() != null ? etSearch.getText().toString().trim().toLowerCase() : "";
@@ -189,7 +216,7 @@ public class PurchaseListActivity extends AppCompatActivity {
         String supplierSel = supplierSelected == null ? "全部" : supplierSelected;
         String sortSel = sortSelected == null ? "按日期" : sortSelected;
 
-        // filter
+        // 过滤
         filteredPOs.clear();
         for (com.example.android_development.model.PurchaseOrder po : allPOs) {
             if (po == null) continue;
@@ -202,16 +229,16 @@ public class PurchaseListActivity extends AppCompatActivity {
                 if (po.getStatus() == null || !po.getStatus().equalsIgnoreCase(statusSel)) continue;
             }
             if (!"全部".equals(supplierSel)) {
-                // match supplier by name or id
+                // 供应商筛选：按 supplierId（或名称映射）尽力匹配
                 String sid = po.getSupplierId() == null ? "" : po.getSupplierId();
                 if (!sid.equals(supplierSel) && (po.getSupplierId() == null || !po.getSupplierId().equals(supplierSel)) ) {
-                    // best-effort: if supplier spinner shows names, skip strict match (supplier filtering may be approximate)
+                    // 尽力而为：当筛选项为名称而采购单存的是 id 时，可能无法严格匹配
                 }
             }
             filteredPOs.add(po);
         }
 
-        // sort
+        // 排序
         if ("按名称".equals(sortSel)) {
             java.util.Collections.sort(filteredPOs, (a,b) -> {
                 String an = a.getName() == null ? "" : a.getName();
@@ -228,7 +255,7 @@ public class PurchaseListActivity extends AppCompatActivity {
             java.util.Collections.sort(filteredPOs, (a,b) -> Long.compare(b.getCreatedAt(), a.getCreatedAt()));
         }
 
-        // show first page
+        // 首屏展示（分页）
         adapter.updateData(new java.util.ArrayList<>());
         currentOffset = 0;
         int end = Math.min(pageSize, filteredPOs.size());

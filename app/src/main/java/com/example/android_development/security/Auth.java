@@ -11,8 +11,13 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 简单的本地权限检查 helper。将角色映射到一组权限项。
- * 注意：客户端权限仅作为 UI/本地控制，关键权限必须在受信任层（服务/后端）再次校验。
+ * 本地权限检查工具类。
+ *
+ * <p>将“角色”映射到一组权限常量（见 {@link Constants}），用于：
+ * 1）控制 UI 入口显示/隐藏；2）在本地关键操作前做兜底拦截。</p>
+ *
+ * <p>重要：客户端权限仅是体验层控制手段；若存在真正的安全边界（联网/多用户/外部输入），
+ * 关键权限仍应在受信任层（例如后端/服务端）再次校验。</p>
  */
 public class Auth {
     private static final Map<String, Set<String>> ROLE_PERMS;
@@ -72,6 +77,9 @@ public class Auth {
         ROLE_PERMS = Collections.unmodifiableMap(m);
     }
 
+    /**
+     * 按角色检查是否具备指定权限。
+     */
     public static boolean hasPermission(String role, String permission) {
         if (role == null || permission == null) return false;
         Set<String> perms = ROLE_PERMS.get(role);
@@ -79,6 +87,9 @@ public class Auth {
         return perms.contains(permission);
     }
 
+    /**
+     * 从本地登录态读取当前用户角色，并检查是否具备指定权限。
+     */
     public static boolean hasPermission(Context ctx, String permission) {
         if (ctx == null) return false;
         try {

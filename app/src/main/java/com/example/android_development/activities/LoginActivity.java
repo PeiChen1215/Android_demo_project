@@ -18,7 +18,14 @@ import com.example.android_development.util.Constants;
 import com.example.android_development.util.PrefsManager;
 
 
+/**
+ * 登录页面。
+ *
+ * <p>负责：用户名/密码校验、调用 {@link UserDAO} 进行鉴权、保存登录态到 {@link PrefsManager}，
+ * 并在登录成功后跳转到 {@link MainActivity}。</p>
+ */
 public class LoginActivity extends AppCompatActivity {
+    // 调试开关：true 时在 Logcat 打印数据库内容（仅开发调试使用，发布版本建议保持 false）
     final boolean ischeckuserdb = false;
     final boolean ischeckproductdb = false;
 
@@ -30,6 +37,9 @@ public class LoginActivity extends AppCompatActivity {
     private PrefsManager prefsManager;
 
     @Override
+    /**
+     * Activity 创建：初始化控件、数据库、点击事件，并检查是否已登录。
+     */
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
@@ -47,12 +57,20 @@ public class LoginActivity extends AppCompatActivity {
         checkIfAlreadyLoggedIn();
     }
 
+    /**
+     * 初始化页面控件引用。
+     */
     private void initViews() {
         editTextUsername = findViewById(R.id.editTextUsername);
         editTextPassword = findViewById(R.id.editTextPassword);
         buttonLogin = findViewById(R.id.buttonLogin);
     }
 
+    /**
+     * 初始化数据库访问与本地登录态存储。
+     *
+     * <p>注意：这里会打开 {@link UserDAO} 的数据库连接，并在 {@link #onDestroy()} 关闭。</p>
+     */
     private void initDatabase() {
         DatabaseHelper dbHelper = new DatabaseHelper(this);
         userDAO = new UserDAO(dbHelper);
@@ -60,14 +78,16 @@ public class LoginActivity extends AppCompatActivity {
 
         prefsManager = new PrefsManager(this);
 
-        //debug输出所有的用户数据库成员
+        // 调试：输出 users 表内容
         if(ischeckuserdb) debugPrintAllUsers();
 
-        //debug输出检测商品数据库
+        // 调试：输出 products 表内容
         if(ischeckproductdb) debugPrintAllProducts();
     }
 
-    //debug输出所有的用户数据库成员
+    /**
+     * 调试：输出 users 表全部用户信息（仅开发调试使用）。
+     */
     private void debugPrintAllUsers() {
         try {
             // 直接查询数据库
@@ -106,7 +126,9 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    //debug打印所有商品
+    /**
+     * 调试：输出 products 表全部商品信息（仅开发调试使用）。
+     */
     private void debugPrintAllProducts() {
         try {
             SQLiteDatabase db = new DatabaseHelper(this).getReadableDatabase();
@@ -144,6 +166,10 @@ public class LoginActivity extends AppCompatActivity {
             android.util.Log.e("DEBUG", "查询商品表错误: " + e.getMessage());
         }
     }
+
+    /**
+     * 绑定按钮点击事件。
+     */
     private void setupClickListeners() {
         buttonLogin.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -153,6 +179,9 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * 若已存在登录态，则直接跳转主页面。
+     */
     private void checkIfAlreadyLoggedIn() {
         if (prefsManager.isLoggedIn()) {
             // 如果已经登录，直接跳转到主页面
@@ -160,6 +189,9 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 执行登录流程：读取输入、校验、鉴权、处理成功/失败。
+     */
     private void attemptLogin() {
         // 获取输入的用户名和密码
         String username = editTextUsername.getText().toString().trim();
@@ -180,6 +212,13 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 校验登录输入。
+     *
+     * @param username 用户名
+     * @param password 密码
+     * @return 校验通过返回 true
+     */
     private boolean validateInput(String username, String password) {
         if (username.isEmpty()) {
             editTextUsername.setError("请输入用户名");
@@ -196,8 +235,11 @@ public class LoginActivity extends AppCompatActivity {
         return true;
     }
 
+    /**
+     * 登录成功：保存登录态并跳转主页面。
+     */
     private void loginSuccess(User user) {
-        // 保存登录信息到SharedPreferences
+        // 保存登录信息到 SharedPreferences（登录态 / userId / role）
         prefsManager.saveLoginStatus(true);
         prefsManager.saveUserId(user.getId());
         prefsManager.saveUserRole(user.getRole());
@@ -209,6 +251,9 @@ public class LoginActivity extends AppCompatActivity {
         goToMainActivity();
     }
 
+    /**
+     * 登录失败：提示用户并清空密码框。
+     */
     private void loginFailed() {
         String username = editTextUsername.getText().toString().trim();
 
@@ -224,6 +269,9 @@ public class LoginActivity extends AppCompatActivity {
         editTextPassword.requestFocus();
     }
 
+    /**
+     * 跳转到主页面并关闭登录页，避免返回键回到登录。
+     */
     private void goToMainActivity() {
         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
         startActivity(intent);
@@ -231,6 +279,9 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     @Override
+    /**
+     * Activity 销毁：关闭数据库连接。
+     */
     protected void onDestroy() {
         super.onDestroy();
         // 关闭数据库连接

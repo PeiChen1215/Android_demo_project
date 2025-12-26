@@ -4,6 +4,12 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import com.example.android_development.util.Constants;
 
+/**
+ * 采购单明细行实体。
+ * <p>
+ * 对应采购单中的某一条商品：商品ID/SKU、采购数量、采购单价等。
+ * </p>
+ */
 public class PurchaseLine {
     private String id;
     private String poId;
@@ -27,6 +33,14 @@ public class PurchaseLine {
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
 
+    /**
+     * 转换为 ContentValues（用于插入/更新采购单明细表）。
+     * <p>
+     * 当 id 为空时会自动生成 UUID。
+     * </p>
+     *
+     * @return ContentValues
+     */
     public ContentValues toContentValues() {
         ContentValues v = new ContentValues();
         if (id == null) id = java.util.UUID.randomUUID().toString();
@@ -39,6 +53,12 @@ public class PurchaseLine {
         return v;
     }
 
+    /**
+     * 从查询游标构建采购单明细对象。
+     *
+     * @param c 数据库游标
+     * @return 明细对象；c 为 null 时返回 null
+     */
     public static PurchaseLine fromCursor(Cursor c) {
         if (c == null) return null;
         PurchaseLine l = new PurchaseLine();

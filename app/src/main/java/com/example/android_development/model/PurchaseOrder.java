@@ -4,6 +4,12 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import com.example.android_development.util.Constants;
 
+/**
+ * 采购单主表实体。
+ * <p>
+ * 对应采购单的基础信息：供应商、单名/备注、状态、创建时间、预计到货时间、合计金额等。
+ * </p>
+ */
 public class PurchaseOrder {
     private String id;
     private String supplierId;
@@ -30,6 +36,14 @@ public class PurchaseOrder {
     public double getTotal() { return total; }
     public void setTotal(double total) { this.total = total; }
 
+    /**
+     * 转换为 ContentValues（用于插入/更新采购单主表）。
+     * <p>
+     * 当 id 为空时会自动生成 UUID；当 createdAt 为 0 时会自动写入当前时间戳。
+     * </p>
+     *
+     * @return ContentValues
+     */
     public ContentValues toContentValues() {
         ContentValues v = new ContentValues();
         if (id == null) id = java.util.UUID.randomUUID().toString();
@@ -43,6 +57,12 @@ public class PurchaseOrder {
         return v;
     }
 
+    /**
+     * 从查询游标构建采购单主表对象。
+     *
+     * @param c 数据库游标
+     * @return 采购单对象；c 为 null 时返回 null
+     */
     public static PurchaseOrder fromCursor(Cursor c) {
         if (c == null) return null;
         PurchaseOrder p = new PurchaseOrder();

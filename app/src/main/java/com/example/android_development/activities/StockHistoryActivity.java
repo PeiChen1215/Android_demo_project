@@ -16,6 +16,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * 库存变动历史页面。
+ *
+ * <p>支持两种模式：
+ * 1）单商品历史：通过 Intent 传入 product_id，仅显示该商品的库存事务；
+ * 2）全局历史：不传 product_id，展示全部库存事务，并提供按商品名称搜索。</p>
+ *
+ * <p>注意：为了兼容旧的历史记录，进入全局模式时会尝试回填历史表中的 product_name 字段，
+ * 以便即使商品已删除也能显示名称。</p>
+ */
 public class StockHistoryActivity extends AppCompatActivity {
 
     private RecyclerView listViewStockHistory;
@@ -26,6 +36,9 @@ public class StockHistoryActivity extends AppCompatActivity {
     private android.widget.Button buttonSearchHistory;
     private android.widget.Button buttonClearHistorySearch;
 
+    /**
+     * Activity 创建：初始化列表与 DAO，并根据是否传入 product_id 决定进入“单商品历史”或“全局历史”。
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,6 +83,9 @@ public class StockHistoryActivity extends AppCompatActivity {
         buttonHistoryBack.setOnClickListener(v -> finish());
     }
 
+    /**
+     * 将库存事务类型与数量格式化为列表标题。
+     */
     private String formatTitle(StockTransaction tx, String qtyStr) {
         String type = tx.getType() != null ? tx.getType().toUpperCase() : "";
         switch (type) {
@@ -94,6 +110,9 @@ public class StockHistoryActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 加载指定商品的库存事务历史并展示。
+     */
     private void loadHistory(String productId) {
         List<StockTransaction> list = productDAO.getStockHistory(productId);
 
@@ -134,11 +153,11 @@ public class StockHistoryActivity extends AppCompatActivity {
         // 使用类型化 StockTransactionAdapter
         java.util.List<StockTransaction> txList = new java.util.ArrayList<>();
         for (Map<String, String> m : data) {
-            // We already have titles/details in map; we'll create dummy StockTransaction to hold displayed strings
+            // title/detail 已在 map 中拼好；这里创建一个“展示用”的 StockTransaction 承载字符串
             StockTransaction t = new StockTransaction();
             t.setType(m.get("title"));
             t.setReason(m.get("reason"));
-            // reuse detail in user field
+            // 复用 userId 字段存放详情文本（仅用于列表展示）
             t.setUserId(m.get("detail"));
             txList.add(t);
         }
@@ -146,17 +165,29 @@ public class StockHistoryActivity extends AppCompatActivity {
         listViewStockHistory.setAdapter(adapter);
     }
 
+    /**
+     * 加载全部库存事务历史并展示（全局模式）。
+     */
     private void loadAllHistory() {
         List<StockTransaction> list = productDAO.getAllStockHistory();
 
         populateListFromTransactions(list);
     }
 
+    /**
+     * 按商品名称模糊搜索库存事务历史并展示（全局模式）。
+     */
     private void loadHistoryByProductName(String productName) {
         List<StockTransaction> list = productDAO.searchStockHistoryByProductName(productName);
         populateListFromTransactions(list);
     }
 
+    /**
+     * 将库存事务列表转换为适配器数据并绑定到 RecyclerView。
+     *
+     * <p>当前实现中，会把展示用字符串“塞入” StockTransaction 的部分字段中以便复用适配器：
+     * type 字段承载 title，reason 字段承载时间/原因，userId 字段承载 detail（仅用于展示）。</p>
+     */
     private void populateListFromTransactions(List<StockTransaction> list) {
         List<Map<String, String>> data = new ArrayList<>();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());

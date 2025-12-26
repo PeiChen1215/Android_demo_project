@@ -16,6 +16,13 @@ import com.example.android_development.model.Product;
 import com.example.android_development.util.Constants;
 import com.example.android_development.util.PrefsManager;
 
+/**
+ * 库存调整页面（出库/仓库出库）。
+ *
+ * <p>用于对单个商品进行库存出库操作：
+ * 1）货架出库：减少货架库存；2）仓库出库：减少仓库库存（通常意味着补货到货架或出库处理）。
+ * 页面会基于当前用户角色做权限校验，并写入库存事务记录。</p>
+ */
 public class StockAdjustActivity extends AppCompatActivity {
 
     private TextView textViewProductName;
@@ -33,6 +40,9 @@ public class StockAdjustActivity extends AppCompatActivity {
     private String currentUserId;
     private String currentUserRole;
 
+    /**
+     * Activity 创建：读取当前用户信息、初始化视图/数据库/下拉选项/监听器，并加载目标商品。
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,6 +59,9 @@ public class StockAdjustActivity extends AppCompatActivity {
         loadProduct();
     }
 
+    /**
+     * 初始化控件引用。
+     */
     private void initViews() {
         textViewProductName = findViewById(R.id.textViewProductName);
         textViewCurrentStock = findViewById(R.id.textViewCurrentStock);
@@ -60,11 +73,19 @@ public class StockAdjustActivity extends AppCompatActivity {
         buttonCancelStock = findViewById(R.id.buttonCancelStock);
     }
 
+    /**
+     * 初始化数据库访问对象（DAO）。
+     */
     private void initDatabase() {
         DatabaseHelper dbHelper = new DatabaseHelper(this);
         productDAO = new ProductDAO(dbHelper.getWritableDatabase());
     }
 
+    /**
+     * 初始化操作类型下拉框。
+     *
+     * <p>当前版本仅保留两类出库：货架出库、仓库出库。</p>
+     */
     private void setupSpinner() {
         // 仅保留两个操作：货架出库 与 仓库出库（仓库出库会把货放到货架）
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{getString(R.string.stock_out), getString(R.string.warehouse_out)});
@@ -72,6 +93,11 @@ public class StockAdjustActivity extends AppCompatActivity {
         spinnerTxType.setAdapter(adapter);
     }
 
+    /**
+     * 绑定按钮事件：取消/保存。
+     *
+     * <p>保存时会做角色权限校验、数量合法性校验、库存充足性校验，并写入库存事务记录。</p>
+     */
     private void setupListeners() {
         buttonCancelStock.setOnClickListener(v -> finish());
 
@@ -128,6 +154,9 @@ public class StockAdjustActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * 加载 Intent 传入的商品并刷新页面显示。
+     */
     private void loadProduct() {
         String productId = getIntent().getStringExtra("product_id");
         if (productId == null) {

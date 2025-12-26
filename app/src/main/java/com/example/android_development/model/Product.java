@@ -4,6 +4,12 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import com.example.android_development.util.Constants;
 
+/**
+ * 商品实体。
+ *
+ * <p>包含基础信息（名称、分类、条码等）以及两套库存：货架库存与仓库库存。
+ * 库存预警分别对应 minStock（货架）与 minWarehouseStock（仓库）。</p>
+ */
 public class Product {
     private String id;
     private String name;
@@ -11,10 +17,10 @@ public class Product {
     private String brand;
     private double price;
     private double cost;
-    private int stock; // Shelf stock
-    private int warehouseStock; // Warehouse stock
-    private int minStock; // Shelf min stock
-    private int minWarehouseStock; // Warehouse min stock
+    private int stock; // 货架库存
+    private int warehouseStock; // 仓库库存
+    private int minStock; // 货架最低库存预警
+    private int minWarehouseStock; // 仓库最低库存预警
     private String unit;
     private long productionDate;
     private long expirationDate;
@@ -25,7 +31,12 @@ public class Product {
     private long createdAt;
     private long updatedAt;
 
-    // 构造方法
+    /**
+     * 创建商品对象。
+     * <p>
+     * 默认会初始化创建时间/更新时间为当前时间戳。
+     * </p>
+     */
     public Product() {
         this.createdAt = System.currentTimeMillis();
         this.updatedAt = System.currentTimeMillis();
@@ -40,7 +51,7 @@ public class Product {
         this.updatedAt = System.currentTimeMillis();
     }
 
-    // Getter和Setter方法
+    // 访问器/修改器：大部分 setter 会同步刷新 updatedAt
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -146,21 +157,43 @@ public class Product {
     public long getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(long updatedAt) { this.updatedAt = updatedAt; }
 
-    // 辅助方法
+    /**
+     * 判断货架库存是否触发预警。
+     *
+     * @return 当 minStock &gt; 0 且 stock &lt;= minStock 时返回 true
+     */
     public boolean isLowStock() {
         return minStock > 0 && stock <= minStock;
     }
 
+    /**
+     * 计算当前货架库存的成本总额。
+     *
+     * @return 成本总额（cost * stock）
+     */
     public double getTotalValue() {
         return cost * stock;
     }
 
+    /**
+     * 计算毛利率（百分比）。
+     *
+     * @return 毛利率百分比；当 cost 为 0 时返回 0
+     */
     public double getProfitMargin() {
         if (cost == 0) return 0;
         return ((price - cost) / cost) * 100;
     }
 
-    // 转换：从 Cursor 创建对象
+    /**
+     * 从数据库游标构建商品对象。
+     * <p>
+     * 该方法按列名读取字段；若列不存在则跳过，便于兼容不同查询字段集合。
+     * </p>
+     *
+     * @param c 数据库查询游标
+     * @return 商品对象；c 为 null 时返回 null
+     */
     public static Product fromCursor(Cursor c) {
         if (c == null) return null;
         Product p = new Product();
@@ -187,7 +220,14 @@ public class Product {
         return p;
     }
 
-    // 转换：对象 -> ContentValues
+    /**
+     * 将对象转换为 ContentValues（用于写入数据库）。
+     * <p>
+     * 注意：该方法不会强制生成 id；调用方可在插入前自行决定是否生成。
+     * </p>
+     *
+     * @return ContentValues
+     */
     public ContentValues toContentValues() {
         ContentValues v = new ContentValues();
         if (id != null) v.put(Constants.COLUMN_PRODUCT_ID, id);

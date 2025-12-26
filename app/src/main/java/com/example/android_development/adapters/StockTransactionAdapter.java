@@ -14,10 +14,17 @@ import com.example.android_development.model.StockTransaction;
 
 import java.util.List;
 
+/**
+ * 库存事务（出入库/调整等）列表 RecyclerView 适配器。
+ *
+ * <p>用于 StockHistory 列表展示。当前实现复用了 {@link StockTransaction} 的字段承载“展示用字符串”：
+ * type 作为标题、userId 作为详情文本、reason 作为时间/原因文本。</p>
+ */
 public class StockTransactionAdapter extends RecyclerView.Adapter<StockTransactionAdapter.ViewHolder> {
     private final Context context;
     private final List<StockTransaction> data;
 
+    /** 构造函数：传入要展示的事务列表 */
     public StockTransactionAdapter(Context context, List<StockTransaction> data) {
         this.context = context;
         this.data = data;
@@ -34,13 +41,13 @@ public class StockTransactionAdapter extends RecyclerView.Adapter<StockTransacti
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         StockTransaction tx = data.get(position);
         if (tx == null) return;
-        // title stored in type (may include product name already)
+        // 这里将 type 字段作为列表标题展示（可能已拼接了商品名）
         holder.title.setText(tx.getType() == null ? "" : tx.getType());
-        // detail stored in userId field for lightweight display; show as-is
+        // 这里将 userId 字段复用为“详情文本”展示（仅用于轻量展示，直接原样显示）
         holder.detail.setText(tx.getUserId() == null ? "-" : tx.getUserId());
         holder.reason.setText(tx.getReason() == null ? "" : tx.getReason());
 
-        // click shows detail dialog with full info
+        // 点击弹窗显示完整详情
         holder.itemView.setOnClickListener(v -> {
             android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(v.getContext());
             b.setTitle(holder.title.getText());

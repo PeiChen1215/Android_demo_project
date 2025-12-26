@@ -14,6 +14,12 @@ import com.example.android_development.R;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 通用的 Map->布局绑定 RecyclerView 适配器。
+ *
+ * <p>通过 {@code fromKeys}/{@code toViewIds} 建立映射关系，将 Map 中的字符串值绑定到指定的 TextView 上。
+ * 适用于轻量“标题/详情/备注”等列表展示场景。</p>
+ */
 public class SimpleMapRecyclerAdapter extends RecyclerView.Adapter<SimpleMapRecyclerAdapter.ViewHolder> {
     private final Context context;
     private final List<Map<String, String>> data;
@@ -22,8 +28,12 @@ public class SimpleMapRecyclerAdapter extends RecyclerView.Adapter<SimpleMapRecy
     private final int[] toViewIds;
     private OnItemClickListener onItemClickListener;
 
+    /** 列表项点击/长按回调（仅回传位置）。 */
     public interface OnItemClickListener {
+        /** 点击列表项 */
         void onItemClick(int position);
+
+        /** 长按列表项（返回 true 表示消费事件） */
         boolean onItemLongClick(int position);
     }
 
@@ -35,6 +45,7 @@ public class SimpleMapRecyclerAdapter extends RecyclerView.Adapter<SimpleMapRecy
         this.toViewIds = toViewIds;
     }
 
+    /** 设置点击/长按回调 */
     public void setOnItemClickListener(OnItemClickListener l) { this.onItemClickListener = l; }
 
     @NonNull
@@ -48,7 +59,7 @@ public class SimpleMapRecyclerAdapter extends RecyclerView.Adapter<SimpleMapRecy
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Map<String, String> map = data.get(position);
         if (map == null) return;
-        // bind each mapping
+        // 按 fromKeys -> toViewIds 的映射关系逐个绑定文本
         for (int i = 0; i < fromKeys.length && i < toViewIds.length; i++) {
             String key = fromKeys[i];
             int viewId = toViewIds[i];

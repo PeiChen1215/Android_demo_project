@@ -22,6 +22,12 @@ import java.util.ArrayList;
 import com.example.android_development.activities.adapters.SaleLineAdapter;
 import android.widget.AdapterView;
 
+/**
+ * 收银/销售开单页面。
+ *
+ * <p>支持通过“商品名称/条码”联想输入快速添加销售明细行，实时计算合计与找零，
+ * 并在结账时校验库存与付款金额，最终调用 {@link SaleDAO#addSale(Sale)} 落库并扣减货架库存。</p>
+ */
 public class SaleActivity extends AppCompatActivity {
 
     private android.widget.AutoCompleteTextView etProductKey;
@@ -40,6 +46,9 @@ public class SaleActivity extends AppCompatActivity {
     private Sale currentSale;
     private SaleLineAdapter adapter;
 
+    /**
+     * Activity 创建：初始化控件/DAO，配置商品联想输入与明细列表，并绑定添加/结账等事件。
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,7 +64,7 @@ public class SaleActivity extends AppCompatActivity {
         tvTotal = findViewById(R.id.tv_total);
         listViewLines = findViewById(R.id.list_lines);
 
-        // setup payment method spinner
+        // 初始化支付方式下拉框
         ArrayAdapter<String> pmAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"现金", "银行卡", "微信", "支付宝"});
         pmAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spPaymentMethod.setAdapter(pmAdapter);
@@ -64,20 +73,20 @@ public class SaleActivity extends AppCompatActivity {
         saleDAO = new SaleDAO(dbHelper.getWritableDatabase(), this);
         productDAO = new ProductDAO(dbHelper.getReadableDatabase());
 
-        // setup AutoComplete suggestions for product names
+        // 初始化商品名称联想输入（AutoComplete）
         android.widget.AutoCompleteTextView atv = etProductKey;
         android.widget.ArrayAdapter<String> suggestionAdapter = new android.widget.ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line);
         atv.setAdapter(suggestionAdapter);
         atv.setThreshold(1);
         atv.setOnItemClickListener((parent, view, position, id) -> {
-            // when user selects suggestion, keep text (name) — addLine will resolve it
+            // 用户选择建议项时仅保留文本（商品名）；真正解析在 addLine 中完成
         });
         atv.addTextChangedListener(new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 String q = s.toString().trim();
                 if (q.length() >= 1) {
-                    // query product names like q
+                    // 按关键字模糊查询商品名称
                     java.util.List<com.example.android_development.model.Product> results = productDAO.getProductsByNameLike(q);
                     suggestionAdapter.clear();
                     for (com.example.android_development.model.Product p : results) suggestionAdapter.add(p.getName());
@@ -87,7 +96,7 @@ public class SaleActivity extends AppCompatActivity {
             @Override public void afterTextChanged(android.text.Editable s) {}
         });
 
-        // support Enter (actionDone) to add line
+        // 支持回车/完成键直接添加一行
         atv.setOnEditorActionListener((v, actionId, event) -> {
             boolean handled = false;
             if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE || (event != null && event.getKeyCode() == android.view.KeyEvent.KEYCODE_ENTER)) {
@@ -109,9 +118,9 @@ public class SaleActivity extends AppCompatActivity {
 
         btnAddLine.setOnClickListener(v -> addLine());
         btnCheckout.setOnClickListener(v -> checkout());
-        // adapter for list
+        // 初始化销售明细列表适配器
         adapter = new SaleLineAdapter(this, currentSale.getLines());
-        // set delete callback
+        // 设置删除回调：从销售明细中移除并重新计算合计
         adapter.setOnDeleteListener(position -> {
             if (position >= 0 && position < currentSale.getLines().size()) {
                 currentSale.getLines().remove(position);
@@ -126,7 +135,7 @@ public class SaleActivity extends AppCompatActivity {
         listViewLines.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                // remove line
+                // 长按删除该行
                 currentSale.getLines().remove(position);
                 adapter.clear();
                 adapter.addAll(currentSale.getLines());
@@ -137,6 +146,14 @@ public class SaleActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * 添加一条销售明细行到当前销售单。
+     *
+     * <p>规则：
+     * 1) 优先按条码查询商品，其次按名称查询；
+     * 2) 会校验数量格式与库存（包含当前单已添加同商品的数量）；
+     * 3) 添加成功后刷新列表并重新计算合计与找零。</p>
+     */
     private void addLine() {
         String key = etProductKey.getText().toString().trim();
         String qtyS = etQty.getText().toString().trim();
@@ -144,7 +161,7 @@ public class SaleActivity extends AppCompatActivity {
         int qty = 1;
         try { qty = Integer.parseInt(qtyS); } catch (NumberFormatException e) { Toast.makeText(this, "数量格式不正确", Toast.LENGTH_SHORT).show(); return; }
 
-        // Try barcode first (using DatabaseHelper helper), then name
+        // 优先按条码查询（DatabaseHelper 帮助方法），再回退按名称查询
         Product p = null;
         try { p = dbHelper.getProductByBarcodeObject(key); } catch (Exception ignored) {}
         if (p == null) {
@@ -179,12 +196,15 @@ public class SaleActivity extends AppCompatActivity {
         recalcTotal();
     }
 
+    /**
+     * 重新计算当前销售单合计，并根据“实收金额”更新找零。
+     */
     private void recalcTotal() {
         double t = 0;
         for (SaleLine l : currentSale.getLines()) t += l.getQty() * l.getPrice();
         currentSale.setTotal(t);
         tvTotal.setText(String.format("合计: %.2f", t));
-        // update change display if paid value present
+        // 若已输入实收金额，则同步更新找零显示
         try {
             String paidS = etPaid.getText().toString().trim();
             if (!paidS.isEmpty()) {
@@ -197,8 +217,17 @@ public class SaleActivity extends AppCompatActivity {
         } catch (Exception ignored) {}
     }
 
+    /**
+     * 结账并保存销售单。
+     *
+     * <p>流程：
+     * 1) 校验销售明细不为空；
+     * 2) 聚合校验同商品总数量与货架库存；
+     * 3) 校验实收金额 >= 合计；
+     * 4) 调用 {@link SaleDAO#addSale(Sale)} 在数据库中落单并扣减库存。</p>
+     */
     private void checkout() {
-        // validate lines
+        // 校验：必须先添加销售明细
         if (currentSale.getLines() == null || currentSale.getLines().isEmpty()) {
             Toast.makeText(this, "请先添加销售行", Toast.LENGTH_SHORT).show();
             return;

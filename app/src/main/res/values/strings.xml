@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Android_development</string>
+    <string name="app_name">超市管理系统</string>
     <string name="login_title">登录</string>
     <string name="username_hint">用户名或邮箱</string>
     <string name="password_hint">密码</string>

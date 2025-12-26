@@ -11,8 +11,16 @@ import com.example.android_development.R;
 import com.example.android_development.model.SaleLine;
 import java.util.List;
 
+/**
+ * 收银明细行 ListView 适配器。
+ *
+ * <p>用于在收银页面展示 {@link SaleLine}：商品名、数量与单价、以及小计。
+ * 支持点击删除按钮删除某一行（通过回调把删除动作交给页面处理）。</p>
+ */
 public class SaleLineAdapter extends ArrayAdapter<SaleLine> {
     private LayoutInflater inflater;
+
+    /** 删除按钮回调（回传 position）。 */
     public interface OnDeleteListener { void onDelete(int position); }
     private OnDeleteListener deleteListener;
 
@@ -21,8 +29,14 @@ public class SaleLineAdapter extends ArrayAdapter<SaleLine> {
         inflater = LayoutInflater.from(ctx);
     }
 
+    /** 设置删除回调 */
     public void setOnDeleteListener(OnDeleteListener l) { this.deleteListener = l; }
 
+    /**
+     * 渲染单行视图。
+     *
+     * <p>注意：position 是 ListView 的位置索引，删除时由外部根据 position 进行数据移除与刷新。</p>
+     */
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {

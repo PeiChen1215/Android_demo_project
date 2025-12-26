@@ -6,6 +6,13 @@ import com.example.android_development.util.Constants;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 销售单主表实体。
+ * <p>
+ * 表示一次收银/销售行为：总金额、实收金额、支付方式、收银员用户ID、时间戳等。
+ * lines 为内存中的明细列表，通常由调用方另行查询/组装（数据库中通常拆为主表+明细表）。
+ * </p>
+ */
 public class Sale {
     private String id;
     private double total;
@@ -34,6 +41,11 @@ public class Sale {
     public List<SaleLine> getLines() { return lines; }
     public void setLines(List<SaleLine> lines) { this.lines = lines; }
 
+    /**
+     * 转换为 ContentValues（用于插入/更新销售单主表）。
+     *
+     * @return ContentValues
+     */
     public ContentValues toContentValues() {
         ContentValues v = new ContentValues();
         if (id != null) v.put(Constants.COLUMN_SALE_ID, id);
@@ -47,6 +59,15 @@ public class Sale {
         return v;
     }
 
+    /**
+     * 从查询游标构建销售单对象。
+     * <p>
+     * 仅构建主表字段，不包含明细 lines（需由调用方单独查询销售明细表后填充）。
+     * </p>
+     *
+     * @param c 数据库游标
+     * @return 销售单对象；c 为 null 时返回 null
+     */
     public static Sale fromCursor(Cursor c) {
         if (c == null) return null;
         Sale s = new Sale();

@@ -11,6 +11,12 @@ import com.example.android_development.model.StockTransaction;
 import com.example.android_development.util.Audit;
 import java.util.UUID;
 
+/**
+ * 商品相关 DAO。
+ *
+ * <p>负责商品（products）表的增删改查、分页/搜索、低库存查询，以及库存事务（stock_transactions）记录。
+ * 注意：该类多数方法不做权限校验；权限控制通常由上层 Activity/业务流程完成。</p>
+ */
 public class ProductDAO {
 
     private SQLiteDatabase db;
@@ -19,7 +25,12 @@ public class ProductDAO {
         this.db = db;
     }
 
-    // 添加商品
+    /**
+     * 添加商品。
+     *
+     * @param product 商品对象
+     * @return 插入结果；失败返回 -1
+     */
     public long addProduct(Product product) {
         ContentValues values = new ContentValues();
         values.put(Constants.COLUMN_PRODUCT_ID, product.getId());
@@ -45,7 +56,14 @@ public class ProductDAO {
         return db.insert(Constants.TABLE_PRODUCTS, null, values);
     }
 
-    // 更新商品
+    /**
+     * 更新商品信息（以商品 id 为主键）。
+     *
+     * <p>会刷新 updated_at 字段为当前时间。</p>
+     *
+     * @param product 商品对象
+     * @return 受影响行数
+     */
     public int updateProduct(Product product) {
         ContentValues values = new ContentValues();
         values.put(Constants.COLUMN_PRODUCT_NAME, product.getName());
@@ -72,7 +90,12 @@ public class ProductDAO {
         return db.update(Constants.TABLE_PRODUCTS, values, whereClause, whereArgs);
     }
 
-    // 删除商品
+    /**
+     * 删除商品。
+     *
+     * @param productId 商品 id
+     * @return 删除行数
+     */
     public int deleteProduct(String productId) {
         String whereClause = Constants.COLUMN_PRODUCT_ID + " = ?";
         String[] whereArgs = {productId};
@@ -80,7 +103,12 @@ public class ProductDAO {
         return db.delete(Constants.TABLE_PRODUCTS, whereClause, whereArgs);
     }
 
-    // 根据ID获取商品
+    /**
+     * 根据商品 id 获取商品。
+     *
+     * @param productId 商品 id
+     * @return 商品对象；未找到返回 null
+     */
     public Product getProductById(String productId) {
         String[] columns = getAllColumns();
         String selection = Constants.COLUMN_PRODUCT_ID + " = ?";
@@ -105,7 +133,14 @@ public class ProductDAO {
         return product;
     }
 
-    // 根据商品名称精确匹配获取商品（如果有多个同名商品，返回第一条）
+    /**
+     * 根据商品名称精确匹配获取商品。
+     *
+     * <p>如果存在多个同名商品，返回第一条。</p>
+     *
+     * @param name 商品名称
+     * @return 商品对象；未找到返回 null
+     */
     public Product getProductByName(String name) {
         if (name == null || name.isEmpty()) return null;
         String[] columns = getAllColumns();
@@ -130,7 +165,12 @@ public class ProductDAO {
         return product;
     }
 
-    // 模糊匹配商品名称，返回匹配的商品列表（用于候选提示）
+    /**
+     * 模糊匹配商品名称，返回匹配的商品列表（用于联想提示）。
+     *
+     * @param q 关键字
+     * @return 最多返回 50 条
+     */
     public List<Product> getProductsByNameLike(String q) {
         List<Product> products = new ArrayList<>();
         if (q == null) return products;
@@ -157,7 +197,11 @@ public class ProductDAO {
         return products;
     }
 
-    // 获取所有商品
+    /**
+     * 获取所有商品列表。
+     *
+     * @return 商品列表（按名称升序）
+     */
     public List<Product> getAllProducts() {
         List<Product> products = new ArrayList<>();
 
@@ -185,7 +229,12 @@ public class ProductDAO {
         return products;
     }
 
-    // 根据分类获取商品
+    /**
+     * 根据分类获取商品。
+     *
+     * @param category 分类
+     * @return 商品列表（按名称升序）
+     */
     public List<Product> getProductsByCategory(String category) {
         List<Product> products = new ArrayList<>();
 
@@ -215,7 +264,12 @@ public class ProductDAO {
         return products;
     }
 
-    // 搜索商品（按名称或条码）
+    /**
+     * 搜索商品（按名称或条码模糊匹配）。
+     *
+     * @param keyword 关键字
+     * @return 匹配列表（按名称升序）
+     */
     public List<Product> searchProducts(String keyword) {
         List<Product> products = new ArrayList<>();
 
@@ -246,7 +300,13 @@ public class ProductDAO {
         return products;
     }
 
-    // 分页获取商品（limit, offset）
+    /**
+     * 分页获取商品。
+     *
+     * @param limit 每页条数
+     * @param offset 偏移量
+     * @return 商品列表
+     */
     public List<Product> getProductsPage(int limit, int offset) {
         List<Product> products = new ArrayList<>();
 
@@ -277,7 +337,14 @@ public class ProductDAO {
         return products;
     }
 
-    // 分页搜索（按名称或条码）
+    /**
+     * 分页搜索商品（按名称或条码模糊匹配）。
+     *
+     * @param keyword 关键字
+     * @param limit 每页条数
+     * @param offset 偏移量
+     * @return 商品列表
+     */
     public List<Product> searchProductsPage(String keyword, int limit, int offset) {
         List<Product> products = new ArrayList<>();
         String[] columns = getAllColumns();
@@ -309,7 +376,9 @@ public class ProductDAO {
         return products;
     }
 
-    // 获取低库存商品 (货架库存 < 货架预警)
+    /**
+     * 获取低库存商品（货架库存 <= 货架预警值，且预警值 > 0）。
+     */
     public List<Product> getLowStockProducts() {
         List<Product> products = new ArrayList<>();
 
@@ -339,7 +408,9 @@ public class ProductDAO {
         return products;
     }
 
-    // 获取低仓库库存商品 (仓库库存 < 仓库预警)
+    /**
+     * 获取低仓库库存商品（仓库库存 <= 仓库预警值，且预警值 > 0）。
+     */
     public List<Product> getLowWarehouseStockProducts() {
         List<Product> products = new ArrayList<>();
 
@@ -369,7 +440,13 @@ public class ProductDAO {
         return products;
     }
 
-    // 更新库存数量
+    /**
+     * 直接更新货架库存数量。
+     *
+     * @param productId 商品 id
+     * @param newStock 新货架库存
+     * @return 受影响行数
+     */
     public int updateStock(String productId, int newStock) {
         ContentValues values = new ContentValues();
         values.put(Constants.COLUMN_STOCK, newStock);
@@ -381,7 +458,13 @@ public class ProductDAO {
         return db.update(Constants.TABLE_PRODUCTS, values, whereClause, whereArgs);
     }
 
-    // 更新仓库库存数量
+    /**
+     * 直接更新仓库库存数量。
+     *
+     * @param productId 商品 id
+     * @param newWarehouseStock 新仓库库存
+     * @return 受影响行数
+     */
     public int updateWarehouseStock(String productId, int newWarehouseStock) {
         ContentValues values = new ContentValues();
         values.put(Constants.COLUMN_WAREHOUSE_STOCK, newWarehouseStock);
@@ -393,7 +476,9 @@ public class ProductDAO {
         return db.update(Constants.TABLE_PRODUCTS, values, whereClause, whereArgs);
     }
 
-    // 增加库存（入库）
+    /**
+     * 增加货架库存（简单 +quantity）。
+     */
     public int increaseStock(String productId, int quantity) {
         Product product = getProductById(productId);
         if (product == null) return 0;
@@ -402,7 +487,9 @@ public class ProductDAO {
         return updateStock(productId, newStock);
     }
 
-    // 减少库存（出库/销售）
+    /**
+     * 减少货架库存（简单 -quantity，结果不小于 0）。
+     */
     public int decreaseStock(String productId, int quantity) {
         Product product = getProductById(productId);
         if (product == null) return 0;
@@ -413,7 +500,14 @@ public class ProductDAO {
         return updateStock(productId, newStock);
     }
 
-    // 添加库存事务记录
+    /**
+     * 添加一条库存事务记录。
+     *
+     * <p>兼容：如果旧数据库 schema 缺少 product_name 列，会尝试 ALTER TABLE 补列后重试插入。</p>
+     *
+     * @param tx 库存事务
+     * @return 插入结果；失败返回 -1
+     */
     public long addStockTransaction(StockTransaction tx) {
         if (tx == null) return -1;
         ContentValues values = new ContentValues();
@@ -463,7 +557,14 @@ public class ProductDAO {
         }
     }
 
-    // 调整库存并写入事务（在事务中执行）
+    /**
+     * 调整货架库存并写入事务记录（事务内执行）。
+     *
+     * <p>规则：
+     * - type=IN：库存增加；
+     * - type=OUT：库存减少，若货架库存不足则返回 false；
+     * - OUT 场景会同步把数量加到“仓库库存”（表示从货架下架回仓库），并写入第二条事务记录。</p>
+     */
     public boolean adjustStockWithTransaction(String productId, int quantity, String type, String userId, String userRole, String reason) {
         if (productId == null || type == null) return false;
         db.beginTransaction();
@@ -537,7 +638,14 @@ public class ProductDAO {
         }
     }
 
-    // 调整仓库库存并写入事务（在事务中执行）
+    /**
+     * 调整仓库库存并写入事务记录（事务内执行）。
+     *
+     * <p>规则：
+     * - type=IN：仓库库存增加；
+     * - type=OUT：仓库库存减少，若仓库库存不足则返回 false；
+     * - OUT 场景会同步把数量加到“货架库存”（表示从仓库补到货架），并写入第二条事务记录。</p>
+     */
     public boolean adjustWarehouseWithTransaction(String productId, int quantity, String type, String userId, String userRole, String reason) {
         if (productId == null || type == null) return false;
         db.beginTransaction();
@@ -610,7 +718,9 @@ public class ProductDAO {
         }
     }
 
-    // 获取商品的库存事务历史（按时间倒序）
+    /**
+     * 获取指定商品的库存事务历史（按时间倒序）。
+     */
     public List<StockTransaction> getStockHistory(String productId) {
         List<StockTransaction> list = new ArrayList<>();
         String selection = Constants.COLUMN_STOCK_TX_PRODUCT_ID + " = ?";
@@ -629,7 +739,11 @@ public class ProductDAO {
         return list;
     }
 
-    // 获取所有库存事务（全局历史）
+    /**
+     * 获取所有库存事务（全局历史，按时间倒序）。
+     *
+     * <p>兼容：旧 schema 缺列时会降级为 rawQuery，失败则返回空列表，避免 UI 闪退。</p>
+     */
     public List<StockTransaction> getAllStockHistory() {
         List<StockTransaction> list = new ArrayList<>();
         String orderBy = Constants.COLUMN_STOCK_TX_TIMESTAMP + " DESC";
@@ -663,7 +777,11 @@ public class ProductDAO {
         return list;
     }
 
-    // 回填历史表中的 product_name 字段（从 products 表拷贝），用于修复老数据
+    /**
+     * 回填库存事务表中的 product_name 字段（从 products 表拷贝），用于修复老数据。
+     *
+     * <p>该操作为“最佳努力”，失败会被吞掉并打印日志，不影响主流程。</p>
+     */
     public void backfillStockTransactionProductNames() {
         try {
             String sql = "UPDATE " + Constants.TABLE_STOCK_TRANSACTIONS + " SET " + Constants.COLUMN_STOCK_TX_PRODUCT_NAME + " = (SELECT " + Constants.COLUMN_PRODUCT_NAME + " FROM " + Constants.TABLE_PRODUCTS + " p WHERE p." + Constants.COLUMN_PRODUCT_ID + " = " + Constants.TABLE_STOCK_TRANSACTIONS + "." + Constants.COLUMN_STOCK_TX_PRODUCT_ID + ") WHERE " + Constants.COLUMN_STOCK_TX_PRODUCT_NAME + " IS NULL";
@@ -674,7 +792,16 @@ public class ProductDAO {
         }
     }
 
-    // 按产品名称搜索库存事务（支持模糊匹配）
+    /**
+     * 按产品名称搜索库存事务（支持模糊匹配）。
+     *
+     * <p>兼容：
+     * - 若事务表包含 product_name 列，直接按该列 LIKE；
+     * - 否则通过 JOIN products 表按商品名称过滤。</p>
+     *
+     * @param productName 商品名称关键字
+     * @return 事务列表（按时间倒序）
+     */
     public List<StockTransaction> searchStockHistoryByProductName(String productName) {
         List<StockTransaction> list = new ArrayList<>();
         String orderBy = Constants.COLUMN_STOCK_TX_TIMESTAMP + " DESC";
@@ -749,9 +876,13 @@ public class ProductDAO {
         };
     }
 
-    // 将Cursor转换为Product对象
+    /**
+     * 将 Cursor 转换为 Product 对象。
+     *
+     * <p>委托给 {@link Product#fromCursor(Cursor)}，以便统一处理缺列/旧 schema 兼容逻辑。</p>
+     */
     private Product cursorToProduct(Cursor cursor) {
-        // Delegate to Product.fromCursor which handles thumb_url and missing columns safely
+        // 委托给 Product.fromCursor：内部会兼容 thumb_url 以及缺列等老版本 schema 场景
         return Product.fromCursor(cursor);
     }
 }

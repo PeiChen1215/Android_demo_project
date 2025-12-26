@@ -29,6 +29,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * 采购单详情页面。
+ *
+ * <p>用于查看与编辑采购单头信息与明细行，并根据采购单状态与当前用户权限显示不同操作：
+ * 保存/提交/批准/拒绝/收货入库/查看审批历史等。
+ * 明细行变更会触发合计实时计算；关键写操作通常在事务中执行以保证一致性。</p>
+ */
 public class PurchaseDetailActivity extends AppCompatActivity {
     private DatabaseHelper dbh;
     private SQLiteDatabase db;
@@ -52,6 +59,9 @@ public class PurchaseDetailActivity extends AppCompatActivity {
     private PoLineAdapter adapter;
     private Set<String> originalLineIds = new HashSet<>();
 
+    /**
+     * Activity 创建：加载采购单、初始化供应商与明细行数据，按权限与状态配置按钮，并绑定各操作事件。
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -89,16 +99,16 @@ public class PurchaseDetailActivity extends AppCompatActivity {
         tvPoStatus = findViewById(R.id.tv_po_status);
         tvTotal = findViewById(R.id.tv_total);
 
-        // populate header
+        // 填充采购单头部信息
         tvPoId.setText("PO: " + (po.getId() == null ? "-" : po.getId()));
         etPoName.setText(po.getName() == null ? "" : po.getName());
         tvPoStatus.setText(po.getStatus() == null ? "" : po.getStatus().toUpperCase());
         tvTotal.setText(String.format("%.2f", po.getTotal()));
 
-        // apply status badge color
+        // 按状态设置状态标签颜色
         try { applyStatusBadge(tvPoStatus, po.getStatus()); } catch (Exception ignored) {}
 
-        // load lines
+        // 加载采购明细行
         lines = purchaseDAO.getLinesForPo(po.getId());
         products.clear();
         originalLineIds.clear();
@@ -108,14 +118,14 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             products.add(p == null ? new Product() : p);
         }
 
-        // compute initial live total from lines to ensure UI matches current lines
+        // 根据明细行计算初始合计，确保 UI 与当前明细一致
         double initialTotal = 0.0;
         for (PurchaseLine l : lines) initialTotal += l.getQty() * l.getPrice();
         po.setTotal(initialTotal);
 
         boolean editableLines = !(po.getStatus() != null && po.getStatus().equalsIgnoreCase("received"));
         adapter = new com.example.android_development.activities.adapter.PoLineAdapter(this, lines, products, editableLines, () -> {
-            // recalculate total live when adapter reports changes
+            // 当适配器回调“行已变更”时实时重算合计
             double t = 0.0;
             for (PurchaseLine l : lines) t += l.getQty() * l.getPrice();
             po.setTotal(t);
@@ -140,7 +150,7 @@ public class PurchaseDetailActivity extends AppCompatActivity {
 
         // 动态显示/隐藏按钮，基于采购单状态和权限
         String status = po.getStatus() == null ? "" : po.getStatus().toLowerCase();
-        // default hide all action buttons, then enable relevant ones
+        // 默认隐藏所有操作按钮，再按状态/权限打开相应按钮
         btnSave.setVisibility(View.GONE);
         btnSubmit.setVisibility(View.GONE);
         btnApprove.setVisibility(View.GONE);
@@ -165,7 +175,7 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             if (canReceive) btnReceive.setVisibility(View.VISIBLE);
         } else if ("received".equalsIgnoreCase(status)) {
             // 已入库，不显示操作按钮
-            // keep everything hidden
+            // 保持全部隐藏
         } else {
             // 其它状态，允许查看历史
         }
@@ -192,13 +202,13 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             }
             int idx = spSupplier.getSelectedItemPosition();
             if (idx >= 0 && idx < supList.size()) po.setSupplierId(supList.get(idx).getId());
-            // save PO name from input
+            // 从输入框保存采购单名称
             if (etPoName != null) po.setName(etPoName.getText() == null ? null : etPoName.getText().toString().trim());
 
-            // commit any in-progress edits in list (force focus loss so listeners save values)
+            // 提交列表中“正在编辑但未失焦”的输入（强制失焦触发监听器保存值）
             try { findViewById(android.R.id.content).requestFocus(); } catch (Exception ignored) {}
 
-            // Validation
+            // 校验：每一行必须有商品与有效数量
             for (int i = 0; i < lines.size(); i++) {
                 PurchaseLine l = lines.get(i);
                 if (l.getProductId() == null || l.getProductId().trim().isEmpty()) {
@@ -211,10 +221,10 @@ public class PurchaseDetailActivity extends AppCompatActivity {
                 }
             }
 
-            // Persist lines (add/update) inside a DB transaction
+            // 事务内持久化明细（新增/更新），并同步删除已移除的行
             db.beginTransaction();
             try {
-                // validate PO name if required
+                // 校验采购单名称（若配置为必填）
                 String nameInput = etPoName.getText() == null ? "" : etPoName.getText().toString().trim();
                 if (com.example.android_development.util.Constants.PO_NAME_REQUIRED && (nameInput.isEmpty())) {
                     Toast.makeText(this, "采购单名称为必填项", Toast.LENGTH_SHORT).show();
@@ -236,7 +246,7 @@ public class PurchaseDetailActivity extends AppCompatActivity {
                     total += l.getQty() * l.getPrice();
                 }
 
-                // delete removed lines
+                // 删除已从界面移除的旧明细行
                 for (String oldId : new ArrayList<>(originalLineIds)) {
                     if (!currentIds.contains(oldId)) purchaseDAO.deletePurchaseLine(oldId);
                 }
@@ -251,12 +261,12 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             } finally {
                 db.endTransaction();
             }
-            // refresh total in UI (ensure current lines reflected)
+            // 刷新 UI 合计（确保以数据库中最新明细为准）
             double liveTotal = 0.0;
             for (PurchaseLine l : purchaseDAO.getLinesForPo(po.getId())) liveTotal += l.getQty() * l.getPrice();
             po.setTotal(liveTotal);
             tvTotal.setText(String.format("%.2f", po.getTotal()));
-            // refresh original ids
+            // 刷新 originalLineIds（用于后续对比删除）
             originalLineIds.clear();
             for (PurchaseLine l : purchaseDAO.getLinesForPo(po.getId())) if (l.getId() != null) originalLineIds.add(l.getId());
 
@@ -292,12 +302,12 @@ public class PurchaseDetailActivity extends AppCompatActivity {
         });
 
         btnSubmit.setOnClickListener(v -> {
-            // prevent submitting an empty PO in the UI
+            // UI 侧拦截：空采购单不允许提交
             if (lines == null || lines.isEmpty()) {
                 Toast.makeText(this, "空的采购单不能提交", Toast.LENGTH_SHORT).show();
                 return;
             }
-            // validate PO name before submit
+            // 提交前校验采购单名称
             String nameInput = etPoName.getText() == null ? "" : etPoName.getText().toString().trim();
             if (com.example.android_development.util.Constants.PO_NAME_REQUIRED && (nameInput.isEmpty())) {
                 Toast.makeText(this, "采购单名称为必填项", Toast.LENGTH_SHORT).show();
@@ -359,17 +369,23 @@ public class PurchaseDetailActivity extends AppCompatActivity {
             lines.add(nl);
             products.add(new Product());
             adapter.notifyDataSetChanged();
-            // notify change so total recalculates
+            // 通知变更：触发合计重新计算
             if (adapter != null) adapter.setOnLinesChangeListener(() -> {
                 double t = 0.0; for (PurchaseLine l : lines) t += l.getQty() * l.getPrice(); po.setTotal(t); if (tvTotal != null) tvTotal.setText(String.format("%.2f", po.getTotal()));
             });
         });
     }
 
+    /**
+     * 审批操作回调：用于提交“备注/审批意见”等文本。
+     */
     private interface ApprovalCallback {
         void onSubmit(String comment);
     }
 
+    /**
+     * 弹出备注输入对话框，并将输入内容回传给回调。
+     */
     private void showCommentDialog(String title, ApprovalCallback cb) {
         final EditText input = new EditText(this);
         input.setSingleLine(false);
@@ -385,6 +401,11 @@ public class PurchaseDetailActivity extends AppCompatActivity {
         b.show();
     }
 
+    /**
+     * 根据采购单状态设置状态标签的背景/前景色。
+     *
+     * <p>仅影响 UI 展示，不改变业务状态。</p>
+     */
     private void applyStatusBadge(android.widget.TextView v, String status) {
         if (v == null) return;
         if (status == null) status = "";

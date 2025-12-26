@@ -4,6 +4,12 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import com.example.android_development.util.Constants;
 
+/**
+ * 销售单明细行实体。
+ * <p>
+ * 对应一次销售中的某一条商品：商品ID/名称、数量、成交价等。
+ * </p>
+ */
 public class SaleLine {
     private String id;
     private String saleId;
@@ -25,6 +31,11 @@ public class SaleLine {
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
 
+    /**
+     * 转换为 ContentValues（用于插入/更新销售明细表）。
+     *
+     * @return ContentValues
+     */
     public ContentValues toContentValues() {
         ContentValues v = new ContentValues();
         if (id != null) v.put(Constants.COLUMN_SALE_LINE_ID, id);
@@ -36,6 +47,12 @@ public class SaleLine {
         return v;
     }
 
+    /**
+     * 从查询游标构建销售明细对象。
+     *
+     * @param c 数据库游标
+     * @return 明细对象；c 为 null 时返回 null
+     */
     public static SaleLine fromCursor(Cursor c) {
         if (c == null) return null;
         SaleLine l = new SaleLine();

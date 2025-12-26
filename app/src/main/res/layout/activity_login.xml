@@ -6,7 +6,8 @@
     android:orientation="vertical"
     android:background="@drawable/bg_login_gradient"
     android:gravity="center"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:fitsSystemWindows="true">
 
     <!-- Logo区域 -->
     <TextView

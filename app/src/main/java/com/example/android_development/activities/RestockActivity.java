@@ -18,6 +18,12 @@ import com.example.android_development.model.Product;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 货架补货（从仓库调拨）页面。
+ *
+ * <p>展示“货架库存低于预警值”的商品列表，点击商品后输入补货数量，
+ * 调用 {@link InventoryDAO#restockShelf(String, int)} 将仓库库存转移到货架库存，并刷新列表。</p>
+ */
 public class RestockActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
@@ -25,6 +31,9 @@ public class RestockActivity extends AppCompatActivity {
     private ProductDAO productDAO;
     private InventoryDAO inventoryDAO;
 
+    /**
+     * Activity 创建：初始化列表与 DAO，并加载低库存商品。
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +49,9 @@ public class RestockActivity extends AppCompatActivity {
         loadLowStockProducts();
     }
 
+    /**
+     * 加载低货架库存商品并绑定到列表。
+     */
     private void loadLowStockProducts() {
         List<Product> list = productDAO.getLowStockProducts();
         if (list == null) list = new ArrayList<>();
@@ -69,6 +81,9 @@ public class RestockActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
     }
 
+    /**
+     * 弹出补货对话框：输入补货数量后执行补货并刷新列表。
+     */
     private void showRestockDialog(Product p) {
         View v = LayoutInflater.from(this).inflate(R.layout.dialog_restock, null, false);
         EditText etQty = v.findViewById(R.id.et_restock_qty);

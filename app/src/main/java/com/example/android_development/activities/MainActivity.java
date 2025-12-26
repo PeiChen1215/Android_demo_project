@@ -16,6 +16,12 @@ import com.example.android_development.model.User;
 import com.example.android_development.util.PrefsManager;
 import com.example.android_development.util.Constants;
 
+/**
+ * 主页面（功能入口）。
+ *
+ * <p>显示当前用户信息，并根据角色/权限展示不同的功能入口。
+ * 同时在权限允许时启动库存监控前台服务，用于低库存通知提醒。</p>
+ */
 public class MainActivity extends AppCompatActivity {
 
     private TextView textViewWelcome;
@@ -28,6 +34,9 @@ public class MainActivity extends AppCompatActivity {
     private User currentUser;
     private static final int REQ_NOTIF = 1002;
 
+    /**
+     * Activity 创建：初始化界面与数据，并尝试启动库存监控服务。
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,6 +58,9 @@ public class MainActivity extends AppCompatActivity {
         startMonitorIfAllowed();
     }
 
+    /**
+     * 页面回到前台：可能用户刚在系统设置打开通知权限，这里做兜底再尝试启动监控服务。
+     */
     @Override
     protected void onResume() {
         super.onResume();
@@ -56,6 +68,11 @@ public class MainActivity extends AppCompatActivity {
         startMonitorIfAllowed();
     }
 
+    /**
+     * 在权限允许时启动库存监控服务。
+     *
+     * <p>Android 13+ 需要 POST_NOTIFICATIONS 权限；Android O+ 使用前台服务启动方式。</p>
+     */
     private void startMonitorIfAllowed() {
         Intent svcIntent = new Intent(MainActivity.this, com.example.android_development.services.InventoryMonitorService.class);
         try {
@@ -78,6 +95,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 权限请求结果回调：用于在用户授权通知权限后启动库存监控服务。
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -98,7 +118,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // 在initViews方法中添加
+    /**
+     * 初始化页面控件与各功能入口按钮。
+     *
+     * <p>说明：这里根据角色/权限决定按钮是否可见（或隐藏）。</p>
+     */
     private void initViews() {
         textViewWelcome = findViewById(R.id.textViewWelcome);
         textViewUserInfo = findViewById(R.id.textViewUserInfo);
@@ -193,6 +217,9 @@ public class MainActivity extends AppCompatActivity {
             }
     }
 
+    /**
+     * 初始化业务数据：检查登录态并加载当前用户信息。
+     */
     private void initData() {
         prefsManager = new PrefsManager(this);
 
@@ -219,6 +246,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 将当前用户信息展示到页面（欢迎语、用户信息、角色说明）。
+     */
     private void displayUserInfo() {
         if (currentUser != null) {
             // 欢迎信息
@@ -237,6 +267,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 将角色编码转换为中文角色名称。
+     */
     private String getRoleName(String role) {
         switch (role) {
             case Constants.ROLE_ADMIN:
@@ -254,6 +287,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 获取角色权限说明文案（用于主页面展示）。
+     */
     private String getRoleDescription(String role) {
         switch (role) {
             case Constants.ROLE_ADMIN:
@@ -271,11 +307,17 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 获取当前时间字符串（HH:mm:ss）。
+     */
     private String getCurrentTime() {
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm:ss");
         return sdf.format(new java.util.Date());
     }
 
+    /**
+     * 绑定退出登录按钮点击事件。
+     */
     private void setupClickListeners() {
         buttonLogout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -285,6 +327,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * 退出登录：清理登录态、关闭数据库连接并跳转登录页。
+     */
     private void logout() {
         // 清除登录信息
         prefsManager.clearLoginInfo();
@@ -301,12 +346,18 @@ public class MainActivity extends AppCompatActivity {
         goToLoginActivity();
     }
 
+    /**
+     * 跳转到登录页并关闭当前页面。
+     */
     private void goToLoginActivity() {
         Intent intent = new Intent(MainActivity.this, LoginActivity.class);
         startActivity(intent);
         finish(); // 关闭当前Activity
     }
 
+    /**
+     * Activity 销毁：关闭数据库连接。
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();

@@ -72,7 +72,7 @@ public class Constants {
     public static final String COLUMN_STOCK_TX_PRODUCT_NAME = "product_name";
     public static final String COLUMN_STOCK_TX_USER_ID = "user_id";
     public static final String COLUMN_STOCK_TX_USER_ROLE = "user_role";
-    public static final String COLUMN_STOCK_TX_TYPE = "tx_type"; // IN/OUT
+    public static final String COLUMN_STOCK_TX_TYPE = "tx_type"; // IN/OUT（入库/出库）
     public static final String COLUMN_STOCK_TX_QUANTITY = "quantity";
     public static final String COLUMN_STOCK_TX_BEFORE = "stock_before";
     public static final String COLUMN_STOCK_TX_AFTER = "stock_after";
@@ -102,7 +102,7 @@ public class Constants {
     public static final String COLUMN_SUPPLIER_PHONE = "phone";
     public static final String COLUMN_SUPPLIER_EMAIL = "email";
 
-    // 采购订单（Purchase Orders）
+    // 采购订单（Purchase Order / PO）
     public static final String TABLE_PURCHASE_ORDERS = "purchase_orders";
     public static final String COLUMN_PO_ID = "po_id";
     public static final String COLUMN_PO_SUPPLIER_ID = "supplier_id";
@@ -121,7 +121,7 @@ public class Constants {
     public static final String PO_STATUS_RECEIVED = "received";
 
     // PO 名称规则（可配置）
-    public static final boolean PO_NAME_REQUIRED = true; // set true to require name before save/submit
+    public static final boolean PO_NAME_REQUIRED = true; // true 表示保存/提交前必须填写采购单名称
     public static final int PO_NAME_MAX_LENGTH = 120;
 
     // 采购审批表
@@ -130,16 +130,16 @@ public class Constants {
     public static final String COLUMN_PO_APPROVAL_PO_ID = "po_id";
     public static final String COLUMN_PO_APPROVAL_APPROVER_ID = "approver_id";
     public static final String COLUMN_PO_APPROVAL_APPROVER_ROLE = "approver_role";
-    public static final String COLUMN_PO_APPROVAL_DECISION = "decision"; // approved/rejected
+    public static final String COLUMN_PO_APPROVAL_DECISION = "decision"; // approved/rejected（批准/拒绝）
     public static final String COLUMN_PO_APPROVAL_COMMENT = "comment";
     public static final String COLUMN_PO_APPROVAL_TIMESTAMP = "timestamp";
 
     // 系统审计表（通用的操作审计）
     public static final String TABLE_SYSTEM_AUDIT = "system_audit";
     public static final String COLUMN_SYSTEM_AUDIT_ID = "audit_id";
-    public static final String COLUMN_SYSTEM_AUDIT_ENTITY = "entity"; // e.g., purchase_order
+    public static final String COLUMN_SYSTEM_AUDIT_ENTITY = "entity"; // 例如：purchase_order
     public static final String COLUMN_SYSTEM_AUDIT_ENTITY_ID = "entity_id";
-    public static final String COLUMN_SYSTEM_AUDIT_ACTION = "action"; // submit/approve/reject
+    public static final String COLUMN_SYSTEM_AUDIT_ACTION = "action"; // submit/approve/reject（提交/批准/拒绝）
     public static final String COLUMN_SYSTEM_AUDIT_USER_ID = "user_id";
     public static final String COLUMN_SYSTEM_AUDIT_USER_ROLE = "user_role";
     public static final String COLUMN_SYSTEM_AUDIT_DETAIL = "detail";
@@ -178,8 +178,8 @@ public class Constants {
     public static final String COLUMN_SALE_USER_ID = "user_id";
     public static final String COLUMN_SALE_TIMESTAMP = "timestamp";
     public static final String COLUMN_SALE_PAYMENT_METHOD = "payment_method";
-    public static final String COLUMN_SALE_REFUNDED = "refunded"; // 0/1
-    public static final String COLUMN_SALE_REFUNDED_AT = "refunded_at"; // timestamp
+    public static final String COLUMN_SALE_REFUNDED = "refunded"; // 0/1（未退单/已退单）
+    public static final String COLUMN_SALE_REFUNDED_AT = "refunded_at"; // 时间戳
 
     // 退款记录表
     public static final String TABLE_REFUNDS = "refunds";

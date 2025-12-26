@@ -4,6 +4,13 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import com.example.android_development.util.Constants;
 
+/**
+ * 退款记录实体。
+ * <p>
+ * 用于记录某笔销售的退款信息：退款金额、操作者、原因与时间戳等。
+ * 该实体通常与销售单（Sale）通过 saleId 关联。
+ * </p>
+ */
 public class RefundRecord {
     private String id;
     private String saleId;
@@ -30,6 +37,11 @@ public class RefundRecord {
     public long getTimestamp() { return timestamp; }
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
 
+    /**
+     * 转换为 ContentValues（用于插入/更新退款记录表）。
+     *
+     * @return ContentValues
+     */
     public ContentValues toContentValues() {
         ContentValues v = new ContentValues();
         if (id != null) v.put(Constants.COLUMN_REFUND_ID, id);
@@ -42,6 +54,12 @@ public class RefundRecord {
         return v;
     }
 
+    /**
+     * 从查询游标构建退款记录对象。
+     *
+     * @param c 数据库游标
+     * @return 退款记录对象；c 为 null 时返回 null
+     */
     public static RefundRecord fromCursor(Cursor c) {
         if (c == null) return null;
         RefundRecord r = new RefundRecord();

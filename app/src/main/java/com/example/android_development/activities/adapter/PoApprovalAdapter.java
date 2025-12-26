@@ -13,6 +13,12 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * 采购单审批历史 ListView 适配器。
+ *
+ * <p>数据源为 {@link ContentValues} 列表，字段名由 {@link Constants} 中的列常量提供。
+ * 主要展示：决策（approve/reject）、审批人、角色、时间与备注。</p>
+ */
 public class PoApprovalAdapter extends BaseAdapter {
     private Context ctx;
     private List<ContentValues> items;
@@ -34,6 +40,11 @@ public class PoApprovalAdapter extends BaseAdapter {
     public long getItemId(int position) { return position; }
 
     @Override
+    /**
+     * 渲染审批历史行。
+     *
+     * <p>第一行：DECISION + 审批人 + 角色；第二行：时间 + 备注。</p>
+     */
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder h;
         if (convertView == null) {

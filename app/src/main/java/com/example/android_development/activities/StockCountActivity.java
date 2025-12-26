@@ -13,6 +13,12 @@ import com.example.android_development.services.InventoryService;
 import com.example.android_development.model.Product;
 import java.util.List;
 
+/**
+ * 库存盘点与低库存预警页面。
+ *
+ * <p>上半部分展示历史盘点记录；下半部分展示低库存预警列表，并支持导出 CSV 进行分享。
+ * 低库存数据由 {@link InventoryService} 统一计算。</p>
+ */
 public class StockCountActivity extends AppCompatActivity {
 
     private RecyclerView listViewCounts;
@@ -24,6 +30,9 @@ public class StockCountActivity extends AppCompatActivity {
     private com.example.android_development.database.InventoryDAO inventoryDAO;
     private InventoryService inventoryService;
 
+    /**
+     * Activity 创建：初始化视图与服务对象，并加载盘点记录与低库存预警。
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,6 +42,9 @@ public class StockCountActivity extends AppCompatActivity {
         loadLowStockAlerts();
     }
 
+    /**
+     * 页面回到前台：刷新低库存预警（库存可能在其他页面被修改）。
+     */
     @Override
     protected void onResume() {
         super.onResume();
@@ -40,6 +52,9 @@ public class StockCountActivity extends AppCompatActivity {
         loadLowStockAlerts();
     }
 
+    /**
+     * 初始化控件引用、RecyclerView 布局管理器，以及 DAO/Service。
+     */
     private void initViews() {
         listViewCounts = findViewById(R.id.listViewCounts);
         listViewLowStockAlerts = findViewById(R.id.listViewLowStockAlerts);
@@ -58,6 +73,9 @@ public class StockCountActivity extends AppCompatActivity {
         buttonExportLowStock.setOnClickListener(v -> exportLowStockCsv());
     }
 
+    /**
+     * 加载并展示盘点记录列表。
+     */
     private void loadCounts() {
         java.util.List<com.example.android_development.model.StockCount> list = inventoryDAO.getAllStockCounts();
         if (list == null || list.isEmpty()) {
@@ -70,11 +88,14 @@ public class StockCountActivity extends AppCompatActivity {
 
         StockCountAdapter adapter = new StockCountAdapter(this, list);
         adapter.setOnItemClickListener((position, sc) -> {
-            // TODO: open count detail
+            // 预留扩展点：后续可在此打开“盘点记录详情页”
         });
         listViewCounts.setAdapter(adapter);
     }
 
+    /**
+     * 加载并展示低库存预警列表，同时更新预警数量。
+     */
     private void loadLowStockAlerts() {
         List<Product> lowStockProducts = inventoryService.getLowStockAlerts();
         int alertCount = inventoryService.getLowStockAlertCount();
@@ -125,6 +146,9 @@ public class StockCountActivity extends AppCompatActivity {
         listViewLowStockAlerts.setAdapter(adapter);
     }
 
+    /**
+     * 导出低库存预警为 CSV，并通过系统分享。
+     */
     private void exportLowStockCsv() {
         List<Product> lowStockProducts = inventoryService.getLowStockAlerts();
         if (lowStockProducts == null || lowStockProducts.isEmpty()) {
@@ -133,10 +157,10 @@ public class StockCountActivity extends AppCompatActivity {
         }
 
         StringBuilder sb = new StringBuilder();
-        // CSV header
+        // CSV 表头
         sb.append("商品名称,条码,当前货架库存,最低库存预警,仓库库存,分类,品牌,单位,价格,成本\n");
 
-        // CSV data
+        // CSV 数据行
         for (Product product : lowStockProducts) {
             sb.append(escapeCsvValue(product.getName())).append(',');
             sb.append(escapeCsvValue(product.getBarcode() != null ? product.getBarcode() : "")).append(',');
@@ -170,6 +194,9 @@ public class StockCountActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * CSV 字段转义：当包含逗号/引号/换行时进行包裹与转义。
+     */
     private String escapeCsvValue(String value) {
         if (value == null) return "";
         if (value.contains(",") || value.contains("\"") || value.contains("\n")) {

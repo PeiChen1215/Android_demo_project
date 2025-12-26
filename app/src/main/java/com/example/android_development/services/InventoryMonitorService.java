@@ -22,7 +22,13 @@ import com.example.android_development.model.Product;
 import java.util.List;
 
 /**
- * 后台库存监控 Service：定期检查低库存并发送通知
+ * 后台库存监控前台服务。
+ *
+ * <p>服务启动后会进入前台（startForeground），并通过定时任务周期性检查低库存商品：
+ * 当存在低库存时，向具备权限的用户发送系统通知提醒。</p>
+ *
+ * <p>注意：Android 13+ 需要 {@code POST_NOTIFICATIONS} 通知权限；
+ * 本服务也会通过 {@link Auth#hasPermission(Context, String)} 判断当前登录角色是否应接收提醒。</p>
  */
 public class InventoryMonitorService extends Service {
 
@@ -33,6 +39,9 @@ public class InventoryMonitorService extends Service {
     private static final int NOTIF_ID = 1001;
 
     @Override
+    /**
+     * Service 创建：初始化业务服务对象与调度器，并创建通知通道。
+     */
     public void onCreate() {
         super.onCreate();
         inventoryService = new com.example.android_development.services.InventoryService(this);
@@ -41,6 +50,9 @@ public class InventoryMonitorService extends Service {
         scheduler = Executors.newSingleThreadScheduledExecutor();
     }
 
+    /**
+     * 创建通知通道（Android O+）。
+     */
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel ch = new NotificationChannel(CHANNEL_ID, "库存监控", NotificationManager.IMPORTANCE_HIGH);
@@ -50,6 +62,10 @@ public class InventoryMonitorService extends Service {
     }
 
     @Override
+    /**
+     * Service 启动：
+     * <p>1）构建前台常驻通知并进入前台；2）在进入前台后启动定时任务进行低库存检查与通知推送。</p>
+     */
     public int onStartCommand(Intent intent, int flags, int startId) {
         try {
             // 点击通知打开主界面
@@ -112,6 +128,9 @@ public class InventoryMonitorService extends Service {
     }
 
     @Override
+    /**
+     * Service 销毁：停止定时任务并退出前台。
+     */
     public void onDestroy() {
         if (scheduler != null) {
             scheduler.shutdownNow();
@@ -122,6 +141,9 @@ public class InventoryMonitorService extends Service {
     }
 
     @Override
+    /**
+     * 本服务不提供绑定能力。
+     */
     public IBinder onBind(Intent intent) {
         return null;
     }

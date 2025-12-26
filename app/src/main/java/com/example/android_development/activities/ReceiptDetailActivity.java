@@ -16,6 +16,12 @@ import com.example.android_development.model.SaleLine;
 import com.example.android_development.activities.adapters.SaleLineAdapter;
 import java.util.List;
 
+/**
+ * 收据详情页面。
+ *
+ * <p>展示指定销售单（sale_id）的收据信息：时间、支付方式、合计、明细行。
+ * 在具备退单权限且未退单时，允许执行退单并恢复库存；支持将收据文本分享给其他应用。</p>
+ */
 public class ReceiptDetailActivity extends AppCompatActivity {
 
     private TextView tvHeader, tvMeta;
@@ -27,6 +33,9 @@ public class ReceiptDetailActivity extends AppCompatActivity {
     private SaleDAO saleDAO;
     private Sale currentSale;
 
+    /**
+     * Activity 创建：读取 sale_id，加载销售单并渲染头部信息与明细列表；按权限控制退单按钮显示。
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -101,13 +110,19 @@ public class ReceiptDetailActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 执行退单流程。
+     *
+     * <p>包含二次确认与“退单原因”输入；最终调用 {@link SaleDAO#refundSale(String, String)}
+     * 完成退单、恢复库存与记录退款信息，并刷新 UI 状态。</p>
+     */
     private void doRefund() {
-        // confirm
+        // 二次确认：退单会恢复货架库存
         new android.app.AlertDialog.Builder(this)
                 .setTitle("确认退单")
                 .setMessage("是否确认对该收据进行退单并恢复库存？此操作可恢复货架库存。")
                 .setPositiveButton("确定", (dialog, which) -> {
-                    // show input for reason
+                // 弹出原因输入框（必填）
                     android.widget.EditText et = new android.widget.EditText(this);
                     et.setHint("请输入退单原因（必填）");
                     new android.app.AlertDialog.Builder(this)
@@ -123,7 +138,7 @@ public class ReceiptDetailActivity extends AppCompatActivity {
                                 boolean ok = dao.refundSale(currentSale.getId(), reason);
                                 if (ok) {
                                     android.widget.Toast.makeText(this, "退单成功", android.widget.Toast.LENGTH_SHORT).show();
-                                    // refresh UI
+                                    // 刷新 UI：重新读取销售单并更新按钮状态
                                     currentSale = dao.getSaleById(currentSale.getId());
                                     tvMeta.setText(java.text.SimpleDateFormat.getDateTimeInstance().format(new java.util.Date(currentSale.getTimestamp()))
                                             + "  |  支付:" + (currentSale.getPaymentMethod() == null ? "未指定" : currentSale.getPaymentMethod())
@@ -141,6 +156,9 @@ public class ReceiptDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * 分享收据：将收据信息与明细行拼接为纯文本，并通过系统分享。
+     */
     private void shareReceipt() {
         StringBuilder sb = new StringBuilder();
         sb.append("收据 ").append(currentSale.getId()).append("\n");

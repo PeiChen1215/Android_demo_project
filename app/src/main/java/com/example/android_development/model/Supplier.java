@@ -4,6 +4,12 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import com.example.android_development.util.Constants;
 
+/**
+ * 供应商实体。
+ * <p>
+ * 保存供应商基础资料：名称、联系人、电话、邮箱等。
+ * </p>
+ */
 public class Supplier {
     private String id;
     private String name;
@@ -24,6 +30,14 @@ public class Supplier {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
+    /**
+     * 转换为 ContentValues（用于插入/更新供应商表）。
+     * <p>
+     * 当 id 为空时会自动生成 UUID。
+     * </p>
+     *
+     * @return ContentValues
+     */
     public ContentValues toContentValues() {
         ContentValues v = new ContentValues();
         if (id == null) id = java.util.UUID.randomUUID().toString();
@@ -35,6 +49,12 @@ public class Supplier {
         return v;
     }
 
+    /**
+     * 从查询游标构建供应商对象。
+     *
+     * @param c 数据库游标
+     * @return 供应商对象；c 为 null 时返回 null
+     */
     public static Supplier fromCursor(Cursor c) {
         if (c == null) return null;
         Supplier s = new Supplier();

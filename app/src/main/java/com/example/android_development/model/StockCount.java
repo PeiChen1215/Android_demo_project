@@ -4,6 +4,13 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import com.example.android_development.util.Constants;
 
+/**
+ * 盘点单主表实体。
+ * <p>
+ * 表示一次盘点任务的基本信息（状态、创建人、创建时间）。
+ * 盘点明细通常在其他表中维护，并与该 id 关联。
+ * </p>
+ */
 public class StockCount {
     private String id;
     private String status;
@@ -21,6 +28,14 @@ public class StockCount {
     public long getCreatedAt() { return createdAt; }
     public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
 
+    /**
+     * 转换为 ContentValues（用于插入/更新盘点单主表）。
+     * <p>
+     * 当 id 为空时会自动生成 UUID；当 createdAt 为 0 时会自动写入当前时间戳。
+     * </p>
+     *
+     * @return ContentValues
+     */
     public ContentValues toContentValues() {
         ContentValues v = new ContentValues();
         if (id == null) id = java.util.UUID.randomUUID().toString();
@@ -31,6 +46,12 @@ public class StockCount {
         return v;
     }
 
+    /**
+     * 从查询游标构建盘点单对象。
+     *
+     * @param c 数据库游标
+     * @return 盘点单对象；c 为 null 时返回 null
+     */
     public static StockCount fromCursor(Cursor c) {
         if (c == null) return null;
         StockCount s = new StockCount();

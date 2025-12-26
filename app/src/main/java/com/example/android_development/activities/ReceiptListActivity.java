@@ -12,6 +12,12 @@ import com.example.android_development.model.Sale;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 收据列表页面。
+ *
+ * <p>加载最近的销售记录并以列表方式展示，点击某条记录进入 {@link ReceiptDetailActivity} 查看收据详情。
+ * 列表展示会附带是否已退单、以及尽力显示操作人信息（从 userId 映射到用户名/姓名）。</p>
+ */
 public class ReceiptListActivity extends AppCompatActivity {
 
     private ListView listReceipts;
@@ -19,6 +25,9 @@ public class ReceiptListActivity extends AppCompatActivity {
     private SaleDAO saleDAO;
     private List<Sale> currentSales = new ArrayList<>();
 
+    /**
+     * Activity 创建：初始化列表与 DAO，加载收据列表并绑定点击跳转。
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,8 +50,11 @@ public class ReceiptListActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * 加载并展示最近的收据（销售单）列表。
+     */
     private void loadReceipts() {
-        // load recent 200 sales
+        // 加载最近 200 条销售记录
         currentSales = saleDAO.getRecentSales(200);
         List<String> display = new ArrayList<>();
         for (Sale s : currentSales) {

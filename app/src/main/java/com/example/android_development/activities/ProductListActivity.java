@@ -23,6 +23,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 商品列表页面。
+ *
+ * <p>提供商品分页浏览、关键词搜索（支持分页继续加载）、查看详情、库存历史查看等能力；
+ * 并根据当前用户角色控制新增/删除等管理操作入口。</p>
+ */
 public class ProductListActivity extends AppCompatActivity {
 
     private RecyclerView listViewProducts;
@@ -45,6 +51,9 @@ public class ProductListActivity extends AppCompatActivity {
     private PrefsManager prefsManager;
     private String currentUserRole;
 
+    /**
+     * Activity 创建：读取登录用户角色，初始化视图/数据库/事件，并加载商品列表。
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,6 +89,9 @@ public class ProductListActivity extends AppCompatActivity {
         loadProducts();
     }
 
+    /**
+     * 初始化页面控件引用。
+     */
     private void initViews() {
         listViewProducts = findViewById(R.id.listViewProducts);
         btnLoadMore = findViewById(R.id.btnLoadMore);
@@ -93,6 +105,9 @@ public class ProductListActivity extends AppCompatActivity {
         buttonBack = findViewById(R.id.buttonBack);
     }
 
+    /**
+     * 按当前用户角色配置页面 UI（标题、按钮可见性等）。
+     */
     private void setupUIByRole() {
         // 根据角色设置标题
         if (Constants.ROLE_ADMIN.equals(currentUserRole) ||
@@ -105,11 +120,17 @@ public class ProductListActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 初始化数据库访问对象（DAO）。
+     */
     private void initDatabase() {
         DatabaseHelper dbHelper = new DatabaseHelper(this);
         productDAO = new ProductDAO(dbHelper.getWritableDatabase());
     }
 
+    /**
+     * 绑定页面交互事件：返回、搜索/清空、新增商品、查看库存历史等。
+     */
     private void setupClickListeners() {
         buttonBack.setOnClickListener(v -> finish());
 
@@ -148,6 +169,11 @@ public class ProductListActivity extends AppCompatActivity {
         // 列表项点击 / 长按通过适配器回调处理（在 loadProducts 中绑定）
     }
 
+    /**
+     * 弹出删除确认对话框。
+     *
+     * <p>实际删除由 {@link #deleteProduct(Product)} 执行，并提供撤销入口。</p>
+     */
     private void showDeleteConfirmation(Product product) {
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle(getString(R.string.confirm_delete))
@@ -159,6 +185,12 @@ public class ProductListActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * 删除商品。
+     *
+     * <p>通过 {@link DatabaseHelper#deleteProductAsUser(String, String)} 做基于 userId 的权限校验；
+     * 删除成功后使用 Snackbar 提供“撤销”操作。</p>
+     */
     private void deleteProduct(Product product) {
         // 使用 DatabaseHelper 的基于 userId 的权限校验删除, 并提供撤销
         DatabaseHelper dbHelper = new DatabaseHelper(this);
@@ -191,6 +223,11 @@ public class ProductListActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 加载商品列表（分页第一页）。
+     *
+     * <p>会重置分页偏移量，并根据结果控制“加载更多”按钮显示。</p>
+     */
     private void loadProducts() {
         // 分页加载：重置偏移并加载第一页
         currentOffset = 0;
@@ -289,6 +326,9 @@ public class ProductListActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 加载下一页商品并追加到当前列表。
+     */
     private void loadNextPage() {
         loadingMore = true;
         btnLoadMore.setEnabled(false);
@@ -314,6 +354,11 @@ public class ProductListActivity extends AppCompatActivity {
         loadingMore = false;
     }
 
+    /**
+     * 按关键词搜索商品（分页第一页）。
+     *
+     * <p>搜索模式下同样支持“加载更多”继续分页追加。</p>
+     */
     private void performSearch(String keyword) {
         if (keyword == null) keyword = "";
         // 分页搜索：重置偏移并加载第一页
@@ -408,6 +453,9 @@ public class ProductListActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 将分类编码转换为中文名称。
+     */
     private String getCategoryName(String category) {
         if (category == null) return "未分类";
 
@@ -429,10 +477,15 @@ public class ProductListActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 页面回到前台：刷新列表数据。
+     *
+     * <p>这里额外做 LayoutManager 兜底，避免 RecyclerView 未正确初始化导致异常。</p>
+     */
     @Override
     protected void onResume() {
         super.onResume();
-        // Ensure layout manager is set
+        // 兜底：确保 RecyclerView 已设置 LayoutManager
         if (listViewProducts.getLayoutManager() == null) {
             listViewProducts.setLayoutManager(new LinearLayoutManager(this));
         }

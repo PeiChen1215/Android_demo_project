@@ -2,6 +2,11 @@ package com.example.android_development.database;
 
 import com.example.android_development.util.Constants;
 
+/**
+ * 数据库表结构契约（DDL 常量）。
+ *
+ * <p>集中维护各业务表的 CREATE/DROP SQL 语句与索引创建语句，供 {@link DatabaseHelper} 在创建/升级数据库时调用。</p>
+ */
 public class DbContract {
 
     // 用户表创建SQL

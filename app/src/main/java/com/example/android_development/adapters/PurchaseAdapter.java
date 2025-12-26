@@ -14,12 +14,18 @@ import com.example.android_development.model.PurchaseOrder;
 
 import java.util.List;
 
+/**
+ * 采购单列表 RecyclerView 适配器。
+ *
+ * <p>用于展示采购单的标题（名称/ID）与状态，并提供点击回调进入采购单详情页。</p>
+ */
 public class PurchaseAdapter extends RecyclerView.Adapter<PurchaseAdapter.ViewHolder> {
     private final Context context;
     private final List<PurchaseOrder> data;
     private OnItemClickListener listener;
     private final java.util.List<String> supplierNames;
 
+    /** 采购单点击回调 */
     public interface OnItemClickListener {
         void onItemClick(int position, PurchaseOrder po);
     }
@@ -34,6 +40,7 @@ public class PurchaseAdapter extends RecyclerView.Adapter<PurchaseAdapter.ViewHo
         this.supplierNames = supplierNames;
     }
 
+    /** 设置列表项点击回调 */
     public void setOnItemClickListener(OnItemClickListener l) { this.listener = l; }
 
     @NonNull
@@ -51,7 +58,7 @@ public class PurchaseAdapter extends RecyclerView.Adapter<PurchaseAdapter.ViewHo
         holder.t1.setText(title);
         String status = po.getStatus() == null ? "-" : po.getStatus();
         holder.t2.setText(status);
-        // color status portion if possible (best-effort)
+        // 尝试按状态给文本上色（尽力而为：失败则忽略）
         try {
             int color = android.graphics.Color.DKGRAY;
             if ("approved".equalsIgnoreCase(po.getStatus())) color = android.graphics.Color.parseColor("#388E3C");
@@ -68,12 +75,18 @@ public class PurchaseAdapter extends RecyclerView.Adapter<PurchaseAdapter.ViewHo
     @Override
     public int getItemCount() { return data == null ? 0 : data.size(); }
 
+    /**
+     * 用新数据替换当前列表并刷新。
+     */
     public void updateData(java.util.List<PurchaseOrder> newData) {
         data.clear();
         if (newData != null) data.addAll(newData);
         notifyDataSetChanged();
     }
 
+    /**
+     * 追加更多数据（分页加载场景）。
+     */
     public void appendData(java.util.List<PurchaseOrder> more) {
         if (more == null || more.isEmpty()) return;
         int start = data.size();

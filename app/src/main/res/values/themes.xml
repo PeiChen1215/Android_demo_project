@@ -18,6 +18,11 @@
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
         <item name="android:textColorHint">@color/text_hint</item>
+        
+        <!-- 状态栏配置 -->
+        <item name="android:statusBarColor">@color/primary</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="android:fitsSystemWindows">true</item>
     </style>
     
     <!-- 按钮样式 -->

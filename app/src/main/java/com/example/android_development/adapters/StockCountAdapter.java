@@ -14,11 +14,17 @@ import com.example.android_development.model.StockCount;
 
 import java.util.List;
 
+/**
+ * 盘点记录列表 RecyclerView 适配器。
+ *
+ * <p>用于展示 {@link StockCount} 的 ID 与状态，并提供点击回调（例如打开盘点详情页）。</p>
+ */
 public class StockCountAdapter extends RecyclerView.Adapter<StockCountAdapter.ViewHolder> {
     private final Context context;
     private final List<StockCount> data;
     private OnItemClickListener listener;
 
+    /** 盘点记录点击回调 */
     public interface OnItemClickListener {
         void onItemClick(int position, StockCount sc);
     }
@@ -28,6 +34,7 @@ public class StockCountAdapter extends RecyclerView.Adapter<StockCountAdapter.Vi
         this.data = data;
     }
 
+    /** 设置列表项点击回调 */
     public void setOnItemClickListener(OnItemClickListener l) { this.listener = l; }
 
     @NonNull

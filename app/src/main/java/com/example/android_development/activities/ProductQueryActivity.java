@@ -18,6 +18,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 商品查询页面（只读）。
+ *
+ * <p>从数据库加载全部商品并展示；默认不提供编辑/删除/调整库存等操作。
+ * 点击商品仅提示查看信息（可按需扩展为跳转详情页）。</p>
+ */
 public class ProductQueryActivity extends AppCompatActivity {
 
     private RecyclerView listViewProducts;
@@ -27,6 +33,9 @@ public class ProductQueryActivity extends AppCompatActivity {
     private ProductDAO productDAO;
     private List<Product> productList;
 
+    /**
+     * Activity 创建：初始化视图与数据库，并加载商品列表。
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,6 +54,9 @@ public class ProductQueryActivity extends AppCompatActivity {
         loadProducts();
     }
 
+    /**
+     * 初始化控件引用与 RecyclerView 布局。
+     */
     private void initViews() {
         listViewProducts = findViewById(R.id.listViewProducts);
         textViewEmpty = findViewById(R.id.textViewEmpty);
@@ -52,17 +64,26 @@ public class ProductQueryActivity extends AppCompatActivity {
         if (listViewProducts.getLayoutManager() == null) listViewProducts.setLayoutManager(new LinearLayoutManager(this));
     }
 
+    /**
+     * 初始化数据库访问对象（DAO）。
+     */
     private void initDatabase() {
         DatabaseHelper dbHelper = new DatabaseHelper(this);
         productDAO = new ProductDAO(dbHelper.getWritableDatabase());
     }
 
+    /**
+     * 绑定页面交互事件（返回等）。
+     */
     private void setupClickListeners() {
         buttonBack.setOnClickListener(v -> finish());
 
         // 点击通过适配器回调处理（在 loadProducts 中绑定）
     }
 
+    /**
+     * 加载商品列表并展示。
+     */
     private void loadProducts() {
         // 从数据库获取所有商品
         productList = productDAO.getAllProducts();
@@ -109,6 +130,9 @@ public class ProductQueryActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 将分类编码转换为中文名称。
+     */
     private String getCategoryName(String category) {
         if (category == null) return "未分类";
 
@@ -130,6 +154,9 @@ public class ProductQueryActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 页面回到前台：刷新列表数据。
+     */
     @Override
     protected void onResume() {
         super.onResume();

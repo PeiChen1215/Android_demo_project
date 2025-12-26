@@ -3,13 +3,18 @@ package com.example.android_development.model;
 import android.database.Cursor;
 import com.example.android_development.util.Constants;
 
+/**
+ * 库存事务记录。
+ *
+ * <p>用于记录库存变更（IN/OUT）及其前后库存、数量、原因、操作者信息等。</p>
+ */
 public class StockTransaction {
     private String id;
     private String productId;
     private String productName;
     private String userId;
     private String userRole;
-    private String type; // IN or OUT
+    private String type; // IN/OUT（入库/出库）
     private int quantity;
     private int stockBefore;
     private int stockAfter;
@@ -41,6 +46,15 @@ public class StockTransaction {
     public long getTimestamp() { return timestamp; }
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
 
+    /**
+     * 从查询游标构建库存事务记录。
+     * <p>
+     * 该实体通常用于库存流水/历史记录展示与追溯。
+     * </p>
+     *
+     * @param c 数据库游标
+     * @return 事务记录对象
+     */
     public static StockTransaction fromCursor(Cursor c) {
         StockTransaction tx = new StockTransaction();
         int idx;

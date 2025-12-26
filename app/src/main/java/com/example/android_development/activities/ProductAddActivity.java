@@ -13,10 +13,17 @@ import com.example.android_development.R;
 import com.example.android_development.database.DatabaseHelper;
 import com.example.android_development.model.Product;
 
+/**
+ * 商品新增/编辑页面。
+ *
+ * <p>当 Intent 传入 product_id 时进入编辑模式；否则为新增模式。
+ * 保存时会进行字段格式校验（价格/库存/日期/条码等），并通过 DatabaseHelper 的“按用户权限”方法
+ * 执行新增/更新（例如 {@code addProductAsUser/updateProductAsUser}）。</p>
+ */
 public class ProductAddActivity extends AppCompatActivity {
 
     private EditText etName, etPrice, etStock;
-    private EditText etWarehouseStock, etMinWarehouseStock, etExpiryDate; // New fields
+    private EditText etWarehouseStock, etMinWarehouseStock, etExpiryDate; // 新增字段：仓库库存/最低仓库库存/到期日
     private Button btnAdd;
     private EditText etBrand, etCategory, etMinStock, etUnit, etBarcode, etDescription, etSupplier, etThumbUrl;
     private boolean editMode = false;
@@ -24,6 +31,9 @@ public class ProductAddActivity extends AppCompatActivity {
     private DatabaseHelper dbHelper;
     private Button btnCancel;
 
+    /**
+     * Activity 创建：初始化表单控件并绑定保存/取消事件；如为编辑模式则回填商品信息。
+     */
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,9 +44,9 @@ public class ProductAddActivity extends AppCompatActivity {
         etCategory = findViewById(R.id.et_category);
         etPrice = findViewById(R.id.et_price);
         etStock = findViewById(R.id.et_stock);
-        etWarehouseStock = findViewById(R.id.et_warehouse_stock); // Need to add to layout
-        etMinWarehouseStock = findViewById(R.id.et_min_warehouse_stock); // Need to add to layout
-        etExpiryDate = findViewById(R.id.et_expiry_date); // Need to add to layout
+        etWarehouseStock = findViewById(R.id.et_warehouse_stock); // 布局中对应输入框：仓库库存
+        etMinWarehouseStock = findViewById(R.id.et_min_warehouse_stock); // 布局中对应输入框：最低仓库库存
+        etExpiryDate = findViewById(R.id.et_expiry_date); // 布局中对应输入框：到期日
         etMinStock = findViewById(R.id.et_min_stock);
         etUnit = findViewById(R.id.et_unit);
         etBarcode = findViewById(R.id.et_barcode);
@@ -71,6 +81,12 @@ public class ProductAddActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * 保存商品：根据新增/编辑模式执行不同写入逻辑。
+     *
+     * <p>主要包含：必填校验、数字/日期解析、最小库存/价格/库存非负校验、条码格式与唯一性校验，
+     * 最终构建 {@link Product} 并调用 DatabaseHelper 进行持久化。</p>
+     */
     private void saveProduct() {
         String name = etName.getText().toString().trim();
         String brand = etBrand.getText().toString().trim();
@@ -113,7 +129,7 @@ public class ProductAddActivity extends AppCompatActivity {
             if (!warehouseStockS.isEmpty()) warehouseStock = Integer.parseInt(warehouseStockS);
             if (!minWarehouseStockS.isEmpty()) minWarehouseStock = Integer.parseInt(minWarehouseStockS);
             if (!expiryDateS.isEmpty()) {
-                // Simple parsing for YYYY-MM-DD
+                // 简单解析日期（yyyy-MM-dd）
                 java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
                 java.util.Date date = sdf.parse(expiryDateS);
                 if (date != null) expiryDate = date.getTime();
@@ -205,6 +221,9 @@ public class ProductAddActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 编辑模式下：读取商品并回填到表单。
+     */
     private void loadProductForEdit(String productId) {
         Product p = dbHelper.getProductByIdObject(productId);
         if (p == null) return;

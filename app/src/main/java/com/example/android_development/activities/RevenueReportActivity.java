@@ -19,6 +19,12 @@ import java.util.Calendar;
 import java.util.Locale;
 import java.util.List;
 
+/**
+ * 营收报表页面。
+ *
+ * <p>支持按日/按月汇总最近 30 天营收，并可点击某个 period 查看该区间的明细条目。
+ * 在具备导出权限时，支持导出 CSV（包含汇总与明细两部分）并通过系统分享。</p>
+ */
 public class RevenueReportActivity extends AppCompatActivity {
 
     private Spinner spPeriod;
@@ -31,6 +37,9 @@ public class RevenueReportActivity extends AppCompatActivity {
     private DatabaseHelper dbHelper;
     private SaleDAO saleDAO;
 
+    /**
+     * Activity 创建：初始化控件与 DAO，配置周期选择与导出权限，并默认生成一次报表。
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,10 +65,15 @@ public class RevenueReportActivity extends AppCompatActivity {
             btnExport.setOnClickListener(v -> exportCsv());
         }
 
-        // generate default report
+        // 默认生成一次报表（最近 30 天）
         generateReport();
     }
 
+    /**
+     * 生成报表（默认最近 30 天），根据选择的周期（按日/按月）查询汇总数据并刷新列表。
+     *
+     * <p>同时会缓存结果到 {@code currentItems}，用于后续导出 CSV。</p>
+     */
     private void generateReport() {
         // 默认最近30天
         long now = System.currentTimeMillis();
@@ -70,7 +84,7 @@ public class RevenueReportActivity extends AppCompatActivity {
         } else {
             items = saleDAO.getDailySalesSummary(start, now);
         }
-        // cache items for export
+        // 缓存结果，用于导出
         currentItems.clear();
         currentItems.addAll(items);
         double total = 0;
@@ -138,19 +152,22 @@ public class RevenueReportActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * 导出当前报表为 CSV：包含汇总与各周期的明细条目，并通过 FileProvider 分享。
+     */
     private void exportCsv() {
         if (currentItems == null || currentItems.isEmpty()) return;
         StringBuilder sb = new StringBuilder();
-        // summary section
+        // 1) 汇总部分
         sb.append("period,total,count\n");
         for (SalesSummary s : currentItems) {
             sb.append(s.getPeriodLabel()).append(',').append(String.format("%.2f", s.getTotal())).append(',').append(s.getCount()).append('\n');
         }
 
-        // details section header
+        // 2) 明细部分（表头）
         sb.append('\n');
         sb.append("period,type,id,amount,timestamp,reason\n");
-        // for each period, compute period bounds and fetch details
+        // 对每个 period 计算区间边界并获取明细
         for (SalesSummary s : currentItems) {
             String label = s.getPeriodLabel();
             boolean monthly = (spPeriod.getSelectedItemPosition() == 1);

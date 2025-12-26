@@ -20,17 +20,39 @@ import com.bumptech.glide.Glide;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+/**
+ * 商品列表 RecyclerView 适配器。
+ *
+ * <p>负责将 {@link Product} 渲染为列表项，并在 {@code showActions=true} 时提供“更多操作”菜单：
+ * 编辑 / 删除 / 调整库存。列表项支持点击与长按回调。</p>
+ *
+ * <p>注意：本适配器内部持有的 {@code data} 需要是可变列表（会在 {@link #submitList(List)} 中 clear/addAll）。</p>
+ */
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHolder> {
     private final Context context;
     private final List<Product> data;
     private OnItemClickListener listener;
     private boolean showActions = true;
 
+    /**
+     * 列表项交互回调。
+     *
+     * <p>当 {@code showActions=false} 时，适配器会隐藏操作按钮，但点击/长按回调仍然可用。</p>
+     */
     public interface OnItemClickListener {
+        /** 点击列表项 */
         void onItemClick(int position, Product product);
+
+        /** 长按列表项（返回 true 表示消费事件） */
         boolean onItemLongClick(int position, Product product);
+
+        /** 操作菜单：编辑 */
         void onActionEdit(int position, Product product);
+
+        /** 操作菜单：删除 */
         void onActionDelete(int position, Product product);
+
+        /** 操作菜单：调整库存 */
         void onActionAdjustStock(int position, Product product);
     }
 
@@ -46,9 +68,14 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         this.showActions = showActions;
     }
 
+    /**
+     * 提交新列表并使用 DiffUtil 刷新 UI。
+     *
+     * <p>会用新列表替换内部 data 的内容（clear/addAll），并把差量结果分发给 RecyclerView。</p>
+     */
     public void submitList(List<Product> newList) {
         if (this.data == null) {
-            // set directly
+            // 兜底：若内部列表未初始化，则直接设置并刷新
             this.data.clear();
             if (newList != null) this.data.addAll(newList);
             notifyDataSetChanged();
@@ -77,12 +104,13 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
             }
         });
 
-        // apply
+        // 应用 Diff 结果
         this.data.clear();
         if (newList != null) this.data.addAll(newList);
         diffResult.dispatchUpdatesTo(this);
     }
 
+    /** 设置列表项回调 */
     public void setOnItemClickListener(OnItemClickListener l) { this.listener = l; }
 
     @NonNull
@@ -100,7 +128,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         holder.price.setText(String.format("￥%.2f", p.getPrice()));
         holder.stock.setText(String.format("货架: %d", p.getStock()));
         if (holder.getClass().getDeclaredFields() != null) {
-            // best-effort set warehouse stock if view exists
+            // 尽力设置“仓库库存”字段（布局存在则显示）
         }
         if (holder.itemView.findViewById(R.id.textViewProductWarehouseStock) != null) {
             TextView wh = holder.itemView.findViewById(R.id.textViewProductWarehouseStock);

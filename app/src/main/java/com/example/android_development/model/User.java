@@ -4,6 +4,13 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import com.example.android_development.util.Constants;
 
+/**
+ * 用户实体。
+ * <p>
+ * 用于本地登录/权限：包含用户名、密码（明文存储并不安全，仅适用于本地演示/离线场景）、角色等。
+ * role 字段会被权限工具类用于功能入口与关键操作的授权判断。
+ * </p>
+ */
 public class User {
     private String id;
     private String username;
@@ -14,7 +21,9 @@ public class User {
     private String email;
     private long createdAt;
 
-    // 构造方法
+    /**
+     * 创建空用户对象。
+     */
     public User() {}
 
     public User(String id, String username, String password, String role, String fullName) {
@@ -26,7 +35,7 @@ public class User {
         this.createdAt = System.currentTimeMillis();
     }
 
-    // Getter 和 Setter 方法
+    // 访问器/修改器
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -51,7 +60,12 @@ public class User {
     public long getCreatedAt() { return createdAt; }
     public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
 
-    // 从 Cursor 创建 User
+    /**
+     * 从查询游标构建用户对象。
+     *
+     * @param c 数据库游标
+     * @return 用户对象；c 为 null 时返回 null
+     */
     public static User fromCursor(Cursor c) {
         if (c == null) return null;
         User u = new User();
@@ -67,7 +81,11 @@ public class User {
         return u;
     }
 
-    // 转换为 ContentValues
+    /**
+     * 转换为 ContentValues（用于插入/更新用户表）。
+     *
+     * @return ContentValues
+     */
     public ContentValues toContentValues() {
         ContentValues v = new ContentValues();
         if (id != null) v.put(Constants.COLUMN_USER_ID, id);
