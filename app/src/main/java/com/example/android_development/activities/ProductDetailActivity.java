@@ -2,13 +2,7 @@ package com.example.android_development.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Patterns;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,9 +14,6 @@ import com.example.android_development.database.ProductDAO;
 import com.example.android_development.model.Product;
 import com.example.android_development.util.Constants;
 import com.example.android_development.util.PrefsManager;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * 商品详情页面。
@@ -45,7 +36,6 @@ public class ProductDetailActivity extends AppCompatActivity {
     private TextView textViewProductDescription;
     private TextView textViewProductExpiry; // 新增：到期日
 
-    private EditText editTextThumbUrl;
     private ImageView imageViewThumbPreview;
 
     private Button buttonBack;
@@ -56,11 +46,6 @@ public class ProductDetailActivity extends AppCompatActivity {
     private Product currentProduct;
     private PrefsManager prefsManager;
     private String currentUserRole;
-
-    private Handler previewHandler;
-    private Runnable previewRunnable;
-    private final int PREVIEW_DELAY_MS = 600;
-    private ExecutorService networkExecutor = Executors.newSingleThreadExecutor();
 
     /**
      * Activity 创建：初始化视图、权限相关 UI、数据库对象与点击事件，并加载商品数据。
@@ -108,8 +93,6 @@ public class ProductDetailActivity extends AppCompatActivity {
         buttonBack = findViewById(R.id.buttonBack);
         buttonHistory = findViewById(R.id.buttonHistory);
         buttonEdit = findViewById(R.id.buttonEdit);
-        // 缩略图 URL 输入 + 预览
-        editTextThumbUrl = findViewById(R.id.editTextThumbUrl);
         imageViewThumbPreview = findViewById(R.id.imageViewThumbPreview);
     }
 
@@ -191,48 +174,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Activity 可见时：初始化缩略图 URL 预览的防抖逻辑（输入停止后延迟加载预览）。
-     */
-    @Override
-    protected void onStart() {
-        super.onStart();
-        // 初始化预览 handler 和 runnable
-        previewHandler = new Handler(Looper.getMainLooper());
-        previewRunnable = new Runnable() {
-            @Override
-            public void run() {
-                String url = editTextThumbUrl.getText() != null ? editTextThumbUrl.getText().toString().trim() : "";
-                if (isValidImageUrl(url)) {
-                    Glide.with(ProductDetailActivity.this)
-                            .load(url)
-                            .centerCrop()
-                            .into(imageViewThumbPreview);
-                } else {
-                    imageViewThumbPreview.setImageDrawable(null);
-                }
-            }
-        };
 
-        // TextWatcher: 防抖处理，输入停止后进行预览
-        if (editTextThumbUrl != null) {
-            editTextThumbUrl.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (previewHandler != null && previewRunnable != null) {
-                        previewHandler.removeCallbacks(previewRunnable);
-                        previewHandler.postDelayed(previewRunnable, PREVIEW_DELAY_MS);
-                    }
-                }
-
-                @Override
-                public void afterTextChanged(Editable s) { }
-            });
-        }
-    }
 
     /**
      * 将商品信息渲染到界面。
@@ -248,6 +190,19 @@ public class ProductDetailActivity extends AppCompatActivity {
             textViewWarehouseStock.setText("仓库库存: " + currentProduct.getWarehouseStock());
         }
         textViewProductBrand.setText(getString(R.string.label_brand, (currentProduct.getBrand() != null ? currentProduct.getBrand() : "未设置")));
+        
+        // 加载并显示商品缩略图
+        String thumbUrl = currentProduct.getThumbUrl();
+        if (thumbUrl != null && !thumbUrl.isEmpty()) {
+            Glide.with(this)
+                    .load(thumbUrl)
+                    .centerCrop()
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .error(android.R.drawable.ic_menu_gallery)
+                    .into(imageViewThumbPreview);
+        } else {
+            imageViewThumbPreview.setImageResource(android.R.drawable.ic_menu_gallery);
+        }
         textViewProductUnit.setText(getString(R.string.label_unit, (currentProduct.getUnit() != null ? currentProduct.getUnit() : "未设置")));
         textViewProductBarcode.setText(getString(R.string.label_barcode, (currentProduct.getBarcode() != null ? currentProduct.getBarcode() : "未设置")));
         textViewProductDescription.setText(getString(R.string.label_description, (currentProduct.getDescription() != null ? currentProduct.getDescription() : "无")));
@@ -287,18 +242,5 @@ public class ProductDetailActivity extends AppCompatActivity {
             default:
                 return category;
         }
-    }
-
-    /**
-     * 校验是否为可用于图片预览的 URL。
-     *
-     * <p>规则：必须是 http/https 且以常见图片后缀结尾。</p>
-     */
-    private boolean isValidImageUrl(String url) {
-        if (url == null || url.isEmpty()) return false;
-        if (!Patterns.WEB_URL.matcher(url).matches()) return false;
-        String lower = url.toLowerCase();
-        if (!(lower.startsWith("http://") || lower.startsWith("https://"))) return false;
-        return lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".gif") || lower.endsWith(".webp") || lower.endsWith(".bmp") || lower.endsWith(".svg");
     }
 }
